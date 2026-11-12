@@ -75,6 +75,20 @@ function makeFakeDb() {
     if (t.startsWith('SELECT slug, name, hsn, price_paise FROM products')) {
       return { rows: [...products.values()].filter((p) => params[0].includes(p.slug)) };
     }
+    if (t.startsWith('SELECT * FROM products') && t.includes('LIMIT $')) {
+      // Admin catalogue paging relies on q + limit + offset working together.
+      const limit = Number(params[params.length - 2]) || 50;
+      const offset = Number(params[params.length - 1]) || 0;
+      const args = params.slice(0, -2);
+      let term = null;
+      if (t.includes('name ILIKE $')) {
+        term = String(args[0] || '').replace(/%/g, '').toLowerCase();
+      }
+      const rows = [...products.values()]
+        .filter((p) => !term || `${p.slug} ${p.name} ${p.brand || ''}`.toLowerCase().includes(term))
+        .slice(offset, offset + limit);
+      return { rows };
+    }
     if (t.startsWith('SELECT * FROM products WHERE slug =')) {
       const p = products.get(params[0]);
       return { rows: p ? [{ ...p, specs: {}, images: [] }] : [] };
@@ -842,6 +856,25 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('product list supports search + paging (admin catalogue)', async () => {
+  const page1 = await api('GET', '/store/products?limit=1&offset=0');
+  assert.equal(page1.status, 200);
+  assert.equal(page1.json.products.length, 1);
+
+  const page2 = await api('GET', '/store/products?limit=1&offset=1');
+  assert.equal(page2.status, 200);
+  assert.equal(page2.json.products.length, 1);
+  assert.notEqual(page2.json.products[0].slug, page1.json.products[0].slug, 'offset must move the window');
+
+  const search = await api('GET', '/store/products?q=NoSuchProductXyz&limit=10');
+  assert.equal(search.status, 200);
+  assert.deepEqual(search.json.products, []);
+
+  const match = await api('GET', '/store/products?q=drill&limit=10');
+  assert.ok(match.json.products.length >= 1);
+  assert.ok(match.json.products.every((p) => /drill/i.test(`${p.name} ${p.slug}`)));
 });
 
 test('deals endpoint filters and sorts by discount in SQL, not the first page', async () => {

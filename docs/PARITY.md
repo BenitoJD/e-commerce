@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 130 (deals computed in SQL, verified in HTML).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 131 (admin catalogue search + paging, 151 backend tests).
 
 ## Storefront
 
@@ -14,7 +14,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
-| Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
+| Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab (search by name/brand/slug, **paged with Load more** so nothing beyond 100 is unreachable) + `POST/DELETE /admin/products` |
 | Accounting export | ✅ `GET /admin/orders/export.csv` with **status + date-range (from/to)** filters, RFC-style quoting, shipping column; Orders tab has from/to date pickers for both the list and the export |
 | Dashboard metrics | ✅ Overview shows **orders today, revenue today, 7-day revenue**, unpaid/COD-pending count and **manual refunds needing action** (computed by a tested summariser) |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
@@ -83,7 +83,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 150 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 151 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

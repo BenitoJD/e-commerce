@@ -98,6 +98,8 @@ export default function AdminPage() {
   const [returns, setReturns] = useState([]);
   const [returnFilter, setReturnFilter] = useState('');
   const [catalog, setCatalog] = useState([]);
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const [catalogHasMore, setCatalogHasMore] = useState(false);
   const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
   const [prodMsg, setProdMsg] = useState('');
 
@@ -240,14 +242,18 @@ export default function AdminPage() {
     }
   }
 
-  async function loadCatalog() {
+  async function loadCatalog({ append = false, query = catalogQuery } = {}) {
     if (!token) return;
     setLoading(true);
     setError('');
     try {
-      const data = await fetchProducts({ limit: 100 });
+      // Paged + searchable: a flat limit of 100 made products beyond that unreachable.
+      const offset = append ? catalog.length : 0;
+      const term = String(query || '').trim();
+      const data = await fetchProducts({ limit: 100, offset, ...(term ? { search: term } : {}) });
       const list = Array.isArray(data) ? data : data.products || data.items || [];
-      setCatalog(list);
+      setCatalog((prev) => (append ? [...prev, ...list] : list));
+      setCatalogHasMore(list.length === 100);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -930,6 +936,17 @@ export default function AdminPage() {
                 {prodMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{prodMsg}</p> : null}
               </div>
 
+              <div className="flex flex-wrap gap-2 items-center mt-4">
+                <input
+                  value={catalogQuery}
+                  onChange={(e) => setCatalogQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') loadCatalog({ query: e.target.value }); }}
+                  placeholder="Search catalogue by name / brand / slug"
+                  className="input !w-auto flex-1 min-w-[200px]"
+                />
+                <button onClick={() => loadCatalog({ query: catalogQuery })} className="btn-outline !py-2">Search</button>
+                <span className="text-xs text-gray-500">{catalog.length} shown</span>
+              </div>
               <div className="overflow-x-auto card mt-4">
                 <table className="w-full text-sm">
                   <thead>
@@ -965,6 +982,11 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+              {catalogHasMore ? (
+                <button onClick={() => loadCatalog({ append: true })} disabled={loading} className="btn-outline !py-2 mt-3 disabled:opacity-50">
+                  {loading ? 'Loading...' : 'Load more products'}
+                </button>
+              ) : null}
             </div>
           )}
 

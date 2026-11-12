@@ -1,4 +1,4 @@
-# ToolsKart â€” Toolsvilla-style Machinery & Tools Store
+# ToolsKart Ã¢â‚¬â€ Toolsvilla-style Machinery & Tools Store
 
 Production-shaped ecommerce monorepo for the Indian tools/machinery market:
 Next.js storefront + Express/Postgres backend + Razorpay payments, deployable on a single VPS.
@@ -18,7 +18,7 @@ toolsvilla-clone/
     src/lib/__tests__ 62 tests (unit + route-level integration with in-memory DB)
   apps/storefront/    Next.js 14 App Router (25 routes)
     app/              homepage, category, product, cart, checkout, orders,
-                      tracking, invoice, returns, admin, policiesâ€¦
+                      tracking, invoice, returns, admin, policiesÃ¢â‚¬Â¦
     lib/              api client, cart, wishlist, store config
     test/             23 client-logic tests (no install needed)
   packages/shared/    INR / GST / EMI helpers
@@ -61,38 +61,38 @@ Compose runs postgres + backend + storefront + nginx + nginx (single domain: sto
 API at `/api/*`). Drop the `nginx:` block for a two-subdomain Cloudflare Tunnel setup.
 Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
-`NEXT_PUBLIC_*` values are baked in at **build** time â€” changing them requires a rebuild.
+`NEXT_PUBLIC_*` values are baked in at **build** time Ã¢â‚¬â€ changing them requires a rebuild.
 
 ## Storefront features
 
-Shopping: homepage strips (deals, brands, recently viewed) Â· category listing with
-brand/sort/load-more Â· product pages with specs, EMI 3/6/9/12, video embeds, pincode ETA,
-reviews + Q&A, related items Â· search Â· wishlist Â· cart with coupons Â· Razorpay checkout
-(UPI/cards/netbanking/EMI) + COD with high-value notice Â· server-authoritative totals.
-After the sale: order success with live status polling Â· track order + customer cancel Â·
-my orders by phone Â· printable GST invoice (balanced with coupon line) Â· returns/exchange
-form Â· back-in-stock alerts.
+Shopping: homepage strips (deals, brands, recently viewed) Ã‚Â· category listing with
+brand/sort/load-more Ã‚Â· product pages with specs, EMI 3/6/9/12, video embeds, pincode ETA,
+reviews + Q&A, related items Ã‚Â· search Ã‚Â· wishlist Ã‚Â· cart with coupons Ã‚Â· Razorpay checkout
+(UPI/cards/netbanking/EMI) + COD with high-value notice Ã‚Â· server-authoritative totals.
+After the sale: order success with live status polling Ã‚Â· track order + customer cancel Ã‚Â·
+my orders by phone Ã‚Â· printable GST invoice (balanced with coupon line) Ã‚Â· returns/exchange
+form Ã‚Â· back-in-stock alerts.
 Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter.
 Hardening: per-IP rate limit on public writes (checkout, quotes, contact, reviews,
 stock alerts) via `RATE_LIMIT_MAX`/`RATE_LIMIT_WINDOW_MS`; reads unmetered.
 
 ## Admin console (`/admin`, header `x-admin-token`)
 
-Overview (revenue incl. delivered, orders by status, low stock, new quotes) Â·
+Overview (revenue incl. delivered, orders by status, low stock, new quotes) Ã‚Â·
 Orders (filter, search by receipt/name/phone, **open an order for items/address/payment**,
-coupon + payment ID, guarded status transitions) Â· **Products (create/edit/delete without
-touching seed files)** Â· Returns Â· Quotes (convert to order at an agreed price) Â·
-Coupons (CRUD with expiry/usage caps) Â· Messages Â· Reviews/Questions (verify, answer,
-delete) Â· Stock (update by slug).
+coupon + payment ID, guarded status transitions) Ã‚Â· **Products (create/edit/delete without
+touching seed files)** Ã‚Â· Returns Ã‚Â· Quotes (convert to order at an agreed price) Ã‚Â·
+Coupons (CRUD with expiry/usage caps) Ã‚Â· Messages Ã‚Â· Reviews/Questions (verify, answer,
+delete) Ã‚Â· Stock (update by slug).
 
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 78 tests: pricing/GST/EMI, catalog, webhooks,
+cd apps/backend && npm test        # 80 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
 cd apps/storefront && npm test     # 32 tests: catalog filters, cart self-healing + stock check +
                                    # reorder mapping, wishlist, store config,
-                                   # paiseâ†’rupee, error messages, video allowlist
+                                   # paiseÃ¢â€ â€™rupee, error messages, video allowlist
 cd apps/storefront && npm run build # must compile all 25 routes
 cd apps/storefront && npm start     # production server (same thing the image runs)
 ```
@@ -103,7 +103,7 @@ symlinks, which is a silent deploy trap. Verified by booting `next start` and fe
 every route (home, product, returns, admin, robots.txt, sitemap rewrite).
 
 Fresh-clone check before trusting a deploy: clone into an empty directory and run the
-suites there â€” that is how the missing-catalog-files bug was caught.
+suites there Ã¢â‚¬â€ that is how the missing-catalog-files bug was caught.
 
 Route smoke test (needs the site running):
 
@@ -126,4 +126,4 @@ VPS + domain, Razorpay live keys, SMS gateway for OTP login, your GSTIN/phone/em
 
 ## Repository
 
-https://github.com/BenitoJD/toolsvilla-clone â€” push helper: `scripts/push-to-github.ps1`.
+https://github.com/BenitoJD/toolsvilla-clone Ã¢â‚¬â€ push helper: `scripts/push-to-github.ps1`.

@@ -155,6 +155,7 @@ router.get('/orders/:id', async (req, res) => {
         discountPaise: Number(order.discount_paise) || 0,
         razorpayOrderId: order.razorpay_order_id || null,
         razorpayPaymentId: order.razorpay_payment_id || null,
+        payMode: order.pay_mode || (String(order.status) === 'cod_pending' ? 'cod' : 'online'),
         customer: order.customer || {},
         items,
       },

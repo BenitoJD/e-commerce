@@ -102,9 +102,9 @@ router.post('/create', async (req, res) => {
           }
         }
         const { rows } = await tx.query(
-          `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
-           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, receipt`,
-          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
+          `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise, pay_mode)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, receipt`,
+          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise, payMode === 'cod' ? 'cod' : 'online']
         );
         return rows[0];
       });

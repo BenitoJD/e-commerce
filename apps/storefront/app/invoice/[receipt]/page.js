@@ -39,9 +39,12 @@ export default function InvoicePage({ params }) {
 
   const items = Array.isArray(inv?.items) ? inv.items : [];
   const customer = inv?.customer || {};
+  const rawPayMode = String(inv?.payMode ?? inv?.pay_mode ?? '').toLowerCase();
   const payMode = inv?.mode || inv?.paymentMode
-    || (String(inv?.status || '').toLowerCase() === 'cod_pending' ? 'COD'
-      : (inv?.razorpayPaymentId || inv?.razorpay_payment_id) ? 'Online (Razorpay)' : '—');
+    || (rawPayMode === 'cod' ? 'Cash on Delivery'
+      : rawPayMode === 'online' ? 'Online (Razorpay)'
+        : (String(inv?.status || '').toLowerCase() === 'cod_pending' ? 'Cash on Delivery'
+          : (inv?.razorpayPaymentId || inv?.razorpay_payment_id) ? 'Online (Razorpay)' : '—'));
   const gstRate = inv?.gst?.rate ?? 18;
   const discountPaise = Number(inv?.discountPaise ?? inv?.discount_paise ?? 0) || 0;
   const couponCode = inv?.couponCode ?? inv?.coupon_code ?? null;

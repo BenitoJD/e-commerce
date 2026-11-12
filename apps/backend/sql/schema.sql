@@ -122,6 +122,10 @@ ALTER TABLE coupons ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 ALTER TABLE coupons ADD COLUMN IF NOT EXISTS max_uses INTEGER;
 ALTER TABLE coupons ADD COLUMN IF NOT EXISTS used_count INTEGER NOT NULL DEFAULT 0;
 
+-- Wave 79: record how an order is paid ('cod' | 'online') so timelines and invoices
+-- never imply a payment that was not taken.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS pay_mode TEXT;
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

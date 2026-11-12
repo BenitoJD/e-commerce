@@ -36,6 +36,7 @@ function digits(s) {
 function buildTimeline(order) {
   const at = order.created_at;
   const status = String(order.status || '');
+  const isCod = String(order.pay_mode || '') === 'cod';
   const placed = { status: 'placed', label: 'Order placed', at };
   if (status === 'cancelled') {
     return [placed, { status: 'cancelled', label: 'Cancelled', at }];
@@ -45,11 +46,12 @@ function buildTimeline(order) {
   }
   const timeline = [placed];
   if (status === 'pending' || status === 'cod_pending') return timeline;
-  timeline.push({ status: 'paid', label: 'Payment confirmed', at });
+  // COD orders are not "paid" before delivery — don't claim a payment we never took.
+  if (!isCod) timeline.push({ status: 'paid', label: 'Payment confirmed', at });
   if (status === 'paid') return timeline;
   timeline.push({ status: 'shipped', label: 'Shipped', at });
   if (status === 'shipped') return timeline;
-  timeline.push({ status: 'delivered', label: 'Delivered', at });
+  timeline.push({ status: 'delivered', label: isCod ? 'Delivered — cash collected' : 'Delivered', at });
   return timeline;
 }
 
@@ -61,7 +63,7 @@ router.get('/track', async (req, res) => {
     if (!receipt) return res.status(400).json({ error: 'receipt required' });
     if (!phone) return res.status(400).json({ error: 'phone required' });
     const { rows } = await db.query(
-      'SELECT receipt, status, amount_paise, items, customer, created_at FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -137,7 +139,7 @@ router.get('/orders', async (req, res) => {
     }
     const last10 = phone.slice(-10);
     const { rows } = await db.query(
-      `SELECT receipt, status, amount_paise, items, customer, created_at FROM orders
+      `SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders
        WHERE RIGHT(regexp_replace(COALESCE(customer->>'phone', ''), '\\D', '', 'g'), 10) = $1
        ORDER BY created_at DESC LIMIT 20`,
       [last10]

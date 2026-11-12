@@ -76,13 +76,14 @@ function makeFakeDb() {
       return { rows: [] };
     }
     if (t.startsWith('INSERT INTO orders')) {
-      const [receipt, status, items, amount, customer, coupon, discount] = params;
+      const [receipt, status, items, amount, customer, coupon, discount, payMode] = params;
       const row = {
         id: seq++, receipt, status,
         items: typeof items === 'string' ? JSON.parse(items) : items,
         amount_paise: amount,
         customer: typeof customer === 'string' ? JSON.parse(customer) : customer,
         coupon_code: coupon ?? null, discount_paise: discount ?? 0,
+        pay_mode: payMode ?? null,
         razorpay_order_id: null, razorpay_payment_id: null,
         created_at: new Date().toISOString(),
       };
@@ -108,7 +109,11 @@ function makeFakeDb() {
     }
     if (t.includes('FROM orders WHERE receipt = $1') && t.includes('coupon_code')) {
       const o = orders.find((x) => x.receipt === params[0]);
-      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0 }] : [] };
+      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null }] : [] };
+    }
+    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items, customer: o.customer, created_at: o.created_at, pay_mode: o.pay_mode || null }] : [] };
     }
     if (t.startsWith('SELECT id, receipt, status, amount_paise, items FROM orders WHERE razorpay_order_id')) {
       const o = orders.find((x) => x.razorpay_order_id === params[0]);
@@ -457,6 +462,46 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
     code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
     active: true, max_uses: null, used_count: 0, expires_at: null,
   });
+});
+
+test('COD orders never claim a payment in the tracking timeline', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'cod',
+  });
+  const receipt = created.json.receipt;
+  const order = fake.orders.find((o) => o.receipt === receipt);
+  assert.equal(order.pay_mode, 'cod');
+
+  // ship then deliver it
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'shipped' }, adminHeaders);
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'delivered' }, adminHeaders);
+
+  const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
+  assert.equal(tracked.status, 200);
+  const steps = tracked.json.timeline.map((t) => t.status);
+  assert.equal(steps.includes('paid'), false); // no phantom payment
+  assert.deepEqual(steps, ['placed', 'shipped', 'delivered']);
+  assert.match(tracked.json.timeline[2].label, /cash collected/i);
+
+  const invoice = await api('GET', `/store/invoice/${receipt}`);
+  assert.equal(invoice.json.payMode, 'cod');
+});
+
+test('online orders still show the payment step', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'UPI',
+  });
+  const receipt = created.json.receipt;
+  const cap = signedWebhook('payment.captured', { id: 'pay_codtest', order_id: created.json.razorpayOrderId, amount: created.json.amount_paise });
+  await fetch(`${base}/webhooks/razorpay`, { method: 'POST', headers: { 'x-razorpay-signature': cap.sig }, body: cap.payload });
+
+  const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
+  assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
 });
 
 test('stock endpoint returns live availability for cart slugs', async () => {

@@ -655,6 +655,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="sm:text-right text-gray-600">
+                      <div>Pay mode: <b className="text-gray-800">{orderDetail.payMode === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}</b></div>
                       <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
                       <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || '—'}</b></div>
                       <div className="mt-1">Total charged: <b>{inrFromPaise(orderDetail.amountPaise)}</b></div>

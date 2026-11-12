@@ -111,3 +111,94 @@ export async function updateStock(token, slug, stock) {
   });
   return handle(res);
 }
+
+// ---- Engage: reviews ----
+export async function getReviews(slug) {
+  const res = await fetch(`${BASE}/store/engage/reviews/${encodeURIComponent(slug)}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+export async function addReview(slug, { name, rating, title, body }) {
+  const res = await fetch(`${BASE}/store/engage/reviews/${encodeURIComponent(slug)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, rating: Number(rating), title, body }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+// ---- Engage: Q&A ----
+export async function getQuestions(slug) {
+  const res = await fetch(`${BASE}/store/engage/questions/${encodeURIComponent(slug)}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+export async function addQuestion(slug, payload) {
+  const body = typeof payload === 'string' ? { name: 'Guest', question: payload } : payload;
+  const res = await fetch(`${BASE}/store/engage/questions/${encodeURIComponent(slug)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+// ---- Engage: coupons ----
+export async function validateCoupon(code, amountPaise) {
+  const q = new URLSearchParams({ code: code || '', amount_paise: String(amountPaise || 0) });
+  const res = await fetch(`${BASE}/store/engage/coupons/validate?${q.toString()}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+// ---- Service: pincode ----
+export async function checkPincode(code) {
+  const res = await fetch(`${BASE}/store/service/pincode/${encodeURIComponent(code)}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+// ---- Service: order tracking ----
+export async function trackOrder(receipt, phone) {
+  const q = new URLSearchParams({ receipt: receipt || '', phone: phone || '' });
+  const res = await fetch(`${BASE}/store/service/track?${q.toString()}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+// ---- Service: newsletter ----
+export async function subscribe(email) {
+  const res = await fetch(`${BASE}/store/service/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+// ---- Search (contract endpoint) with fallback to /store/products ----
+export async function searchProducts({ q = '', brand = '', category = '', maxPrice = '', sort = '', limit = 20 } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (brand) params.set('brand', brand);
+  if (category) params.set('category', category);
+  if (maxPrice) params.set('maxPrice', String(maxPrice));
+  if (sort) params.set('sort', sort);
+  if (limit) params.set('limit', String(limit));
+  try {
+    const res = await fetch(`${BASE}/store/search?${params.toString()}`, { cache: 'no-store' });
+    const data = await handle(res);
+    const list = Array.isArray(data) ? data : data.products || data.items || [];
+    if (list.length) return list;
+  } catch {
+    // fall through to legacy endpoint
+  }
+  return fetchProducts({ category: category || undefined, limit, search: q, brand, sort });
+}
+
+export function asList(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.products)) return data.products;
+  if (data && Array.isArray(data.items)) return data.items;
+  return [];
+}

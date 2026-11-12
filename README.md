@@ -72,11 +72,13 @@ Put Cloudflare in front, point `yourdomain.com` → VPS, webhook URL:
 - Bulk quotes: mark contacted/quoted/won/lost. Stock: update by product slug.
 - API uses `x-admin-token` header; returns 503 if `ADMIN_TOKEN` is unset.
 
-## New endpoints this round
+## Parity wave 3 — exact-clone coverage
 
-- `GET /store/search?q=&brand=&category=&maxPrice=&sort=&limit=` (SQL search, no extra services needed)
-- `GET /store/checkout/verify?receipt=` (order-success page polls this for live Paid/COD/Pending/Failed status)
-- Seed expanded to 30 products incl. `agriculture` category.
+- Engagement: product reviews + ratings, Q&A with admin answers (`/store/engage/*`), wishlist (localStorage), recently-viewed strip.
+- Commerce: coupon codes (`/store/engage/coupons/validate`, cart input, checkout breakdown), pincode serviceability + ETA + COD check, live order tracking page (`/track-order` + `/store/service/track`), EMI plans on product pages, deals-of-the-day with countdown (`/deals`), brand directory + brand pages (`/brands`, `/brand/[name]`).
+- Trust: 9 policy/info pages (shipping, returns, warranty, privacy, terms, about, contact, EMI options, bulk orders), newsletter subscribe, expanded footer.
+- Tests: `cd apps/backend && npm test` (node --test: pricing math + catalog validity, 16 tests). Note: run with explicit file args or Node 20 — `node --test <dir>` directory scanning fails on the bundled Node 24 runtime.
+- APIs: `GET /store/search?...`, `GET /store/checkout/verify?receipt=`, `GET /store/service/*` (pincode/track/subscribe).
 
 ## GitHub
 

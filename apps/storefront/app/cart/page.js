@@ -2,13 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, updateQty, removeItem, cartTotal } from '../../../lib/cart';
+import { validateCoupon } from '../../../lib/api';
+
+function readCoupon() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+  } catch {
+    return null;
+  }
+}
 
 export default function CartPage() {
   const [items, setItems] = useState([]);
   const [pincode, setPincode] = useState('');
+  const [code, setCode] = useState('');
+  const [coupon, setCoupon] = useState(null);
+  const [couponMsg, setCouponMsg] = useState('');
+  const [couponBusy, setCouponBusy] = useState(false);
 
   useEffect(() => {
     setItems(getCart());
+    setCoupon(readCoupon());
     const sync = () => setItems(getCart());
     window.addEventListener('cart-updated', sync);
     window.addEventListener('storage', sync);
@@ -18,7 +33,41 @@ export default function CartPage() {
     };
   }, []);
 
-  const total = cartTotal(items);
+  const subtotal = cartTotal(items);
+  const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
+  const payable = Math.max(0, subtotal - discount);
+
+  const applyCoupon = async () => {
+    setCouponMsg('');
+    if (!code.trim()) { setCouponMsg('Enter a coupon code.'); return; }
+    setCouponBusy(true);
+    try {
+      const r = await validateCoupon(code.trim(), Math.round(subtotal * 100));
+      if (r && (r.valid === false || r.discount_paise == null)) {
+        const reason = r.reason || 'Invalid coupon for this order.';
+        setCouponMsg(reason);
+        setCoupon(null);
+        localStorage.removeItem('tw_coupon');
+      } else {
+        const pct = r.pct_off != null ? ` (${r.pct_off}% off)` : '';
+        const saved = { code: code.trim().toUpperCase(), discountPaise: Number(r.discount_paise || 0) };
+        setCoupon(saved);
+        localStorage.setItem('tw_coupon', JSON.stringify(saved));
+        setCouponMsg(`Coupon applied${pct}! You save ₹${(saved.discountPaise / 100).toLocaleString('en-IN')}.`);
+      }
+    } catch (e) {
+      setCouponMsg(e.message || 'Could not validate coupon.');
+    } finally {
+      setCouponBusy(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCode('');
+    setCouponMsg('');
+    try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -49,18 +98,34 @@ export default function CartPage() {
             ))}
           </div>
           <div className="card p-5 h-fit">
-            <label className="label">Delivery pincode</label>
-            <div className="flex gap-2">
-              <input value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="e.g. 110001" className="input" />
-            </div>
-            {pincode.length === 6 ? (
-              <p className="text-xs text-green-700 font-semibold mt-2">Delivery to {pincode} in 3–7 days.</p>
+            <label className="label">Coupon code</label>
+            {coupon ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
+                <span><b>{coupon.code}</b> <span className="text-green-700 font-semibold">−₹{discount.toLocaleString('en-IN')}</span></span>
+                <button onClick={removeCoupon} className="text-xs text-red-600 font-bold">Remove</button>
+              </div>
             ) : (
-              <p className="text-xs text-gray-500 mt-2">Enter 6-digit pincode to check delivery.</p>
+              <div className="flex gap-2">
+                <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="e.g. DIWALI10" className="input uppercase" />
+                <button onClick={applyCoupon} disabled={couponBusy} className="btn-outline !px-4 whitespace-nowrap disabled:opacity-60">Apply</button>
+              </div>
             )}
-            <div className="mt-4 flex justify-between font-bold">
-              <span>Subtotal</span>
-              <span>₹{total.toLocaleString('en-IN')}</span>
+            {couponMsg && <p className={`text-xs font-semibold mt-2 ${coupon ? 'text-green-700' : 'text-gray-600'}`}>{couponMsg}</p>}
+            <div className="border-t mt-4 pt-4">
+              <label className="label">Delivery pincode</label>
+              <div className="flex gap-2">
+                <input value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="e.g. 110001" className="input" />
+              </div>
+              {pincode.length === 6 ? (
+                <p className="text-xs text-green-700 font-semibold mt-2">Delivery to {pincode} in 3–7 days.</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-2">Enter 6-digit pincode to check delivery.</p>
+              )}
+            </div>
+            <div className="mt-4 space-y-1 font-bold">
+              <div className="flex justify-between text-sm text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+              {discount > 0 && <div className="flex justify-between text-sm text-green-700"><span>Coupon ({coupon.code})</span><span>−₹{discount.toLocaleString('en-IN')}</span></div>}
+              <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{payable.toLocaleString('en-IN')}</span></div>
             </div>
             <p className="text-xs text-gray-500 mt-1">Shipping + GST calculated at checkout.</p>
             <a href="/checkout" className="btn-primary block text-center mt-4">Proceed to Checkout</a>

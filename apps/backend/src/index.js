@@ -10,6 +10,8 @@ const webhooksRouter = require('./routes/webhooks');
 const quotesRouter = require('./routes/quotes');
 const adminRouter = require('./routes/admin');
 const searchRouter = require('./routes/search');
+const engagementRouter = require('./routes/engagement');
+const serviceRouter = require('./routes/service');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -33,6 +35,8 @@ app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);
 app.use('/store/search', searchRouter);
 app.use('/admin', adminRouter);
+app.use('/store/engage', engagementRouter);
+app.use('/store/service', serviceRouter);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

@@ -17,16 +17,36 @@ function loadRazorpay() {
   });
 }
 
+function readCoupon() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+  } catch {
+    return null;
+  }
+}
+
 export default function CheckoutPage() {
   const [items, setItems] = useState([]);
+  const [coupon, setCoupon] = useState(null);
   const [form, setForm] = useState({ name: '', phone: '', address: '', pincode: '', payMode: 'UPI' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  useEffect(() => { setItems(getCart()); }, []);
-  const total = cartTotal(items);
+  useEffect(() => {
+    setItems(getCart());
+    setCoupon(readCoupon());
+  }, []);
+
+  const subtotal = cartTotal(items);
+  const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
+  const total = Math.max(0, subtotal - discount);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const clearCoupon = () => {
+    try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
+  };
 
   async function placeOrder(e) {
     e.preventDefault();
@@ -45,7 +65,10 @@ export default function CheckoutPage() {
         customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode },
         items: items.map((i) => ({ slug: i.slug, qty: i.qty, price: i.price })),
         payMode: form.payMode,
-        amount: total
+        amount: total,
+        subtotal,
+        couponCode: coupon ? coupon.code : undefined,
+        discount: discount || 0
       };
       const res = await createCheckout(payload);
       const receipt = res.receipt || res.receiptId || res.orderId || Date.now().toString();
@@ -53,6 +76,7 @@ export default function CheckoutPage() {
 
       if (form.payMode === 'COD' || !razorpayOrderId) {
         clearCart();
+        clearCoupon();
         window.location.href = `/order-success?receipt=${encodeURIComponent(receipt)}&mode=COD`;
         return;
       }
@@ -70,6 +94,7 @@ export default function CheckoutPage() {
         notes: { receipt },
         handler: function () {
           clearCart();
+          clearCoupon();
           window.location.href = `/order-success?receipt=${encodeURIComponent(receipt)}&mode=${encodeURIComponent(form.payMode)}`;
         },
         modal: { ondismiss: function () { setBusy(false); } }
@@ -88,7 +113,13 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Checkout</h1>
-      <p className="text-sm text-gray-500 mt-1">{items.length} items • Total ₹{total.toLocaleString('en-IN')}</p>
+      <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${total.toLocaleString('en-IN')}` : ` • Total ₹${total.toLocaleString('en-IN')}`}</p>
+      {coupon && (
+        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm flex justify-between items-center">
+          <span><b>{coupon.code}</b> applied — you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>
+          <a href="/cart" className="text-xs font-bold text-[#F97316] underline">Change</a>
+        </div>
+      )}
       <form onSubmit={placeOrder} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className="label">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" /></div>
@@ -107,6 +138,13 @@ export default function CheckoutPage() {
           </div>
           <p className="text-xs text-gray-500 mt-2">UPI / Card / EMI go through Razorpay secure checkout. COD pays cash on delivery.</p>
         </div>
+        {discount > 0 && (
+          <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
+            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+            <div className="flex justify-between text-green-700 font-bold"><span>Coupon {coupon.code}</span><span>−₹{discount.toLocaleString('en-IN')}</span></div>
+            <div className="flex justify-between font-extrabold"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
+          </div>
+        )}
         {err && <p className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
           {busy ? 'Placing order...' : `Pay ₹${total.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}

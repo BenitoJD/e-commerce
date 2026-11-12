@@ -136,10 +136,35 @@ function makeFakeDb() {
     if (t.startsWith('SELECT slug, name FROM products WHERE slug = ANY')) {
       return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name })) };
     }
+    if (t.startsWith('SELECT id, receipt, status, amount_paise, coupon_code')) {
+      const limit = Number(params[params.length - 1]) || 50;
+      const conds = [];
+      const args = params.slice(0, -1);
+      // Mirror the server's filter builder closely enough to prove wiring: status, dates, text.
+      let idx = 0;
+      if (t.includes('status = $')) { conds.push((o) => o.status === args[idx++]); }
+      if (t.includes('created_at >= $')) { const from = args[idx++]; conds.push((o) => new Date(o.created_at) >= new Date(from)); }
+      if (t.includes('created_at <= $')) { const to = args[idx++]; conds.push((o) => new Date(o.created_at) <= new Date(to)); }
+      if (t.includes('receipt ILIKE $')) {
+        const term = String(args[idx++] || '').replace(/%/g, '').toLowerCase();
+        conds.push((o) => JSON.stringify(o).toLowerCase().includes(term));
+      }
+      const rows = orders
+        .filter((o) => conds.every((fn) => fn(o)))
+        .sort((a, b) => b.id - a.id)
+        .slice(0, limit);
+      return { rows };
+    }
     if (t.startsWith('SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise')) {
       const wantStatus = t.includes('WHERE status = $1') ? params[0] : null;
+      // Mirror date bounds too, so the export test proves filters reach the SQL.
+      let cursor = wantStatus ? 1 : 0;
+      const from = t.includes('created_at >= $') ? params[cursor++] : null;
+      const to = t.includes('created_at <= $') ? params[cursor++] : null;
       const rows = orders
         .filter((o) => !wantStatus || o.status === wantStatus)
+        .filter((o) => !from || new Date(o.created_at) >= new Date(from))
+        .filter((o) => !to || new Date(o.created_at) <= new Date(to))
         .sort((a, b) => b.id - a.id)
         .slice(0, 5000)
         .map((o) => ({
@@ -925,6 +950,40 @@ test('COD is refused above the configured cap, and allowed just below it', async
   assert.equal(online.status, 200);
 
   weapon.stock = originalStock;
+});
+
+test('admin orders can be filtered by status and date range (and flags bad dates)', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9812300001' },
+    payMode: 'cod',
+  });
+  assert.equal(created.status, 200);
+
+  const all = await api('GET', '/admin/orders', undefined, adminHeaders);
+  assert.equal(all.status, 200);
+  assert.ok(all.json.orders.some((o) => o.receipt === created.json.receipt));
+
+  const filtered = await api('GET', '/admin/orders?status=cod_pending', undefined, adminHeaders);
+  assert.equal(filtered.status, 200);
+  assert.ok(filtered.json.orders.every((o) => o.status === 'cod_pending'));
+
+  const today = new Date().toISOString().slice(0, 10);
+  const inRange = await api('GET', `/admin/orders?from=${today}&to=${today}`, undefined, adminHeaders);
+  assert.ok(inRange.json.orders.some((o) => o.receipt === created.json.receipt), 'order created today is in range');
+
+  const past = await api('GET', '/admin/orders?from=2000-01-01&to=2000-01-31', undefined, adminHeaders);
+  assert.deepEqual(past.json.orders, [], 'nothing existed in 2000');
+
+  const bad = await api('GET', '/admin/orders?from=not-a-date', undefined, adminHeaders);
+  assert.equal(bad.status, 200);
+  assert.equal(bad.json.ignored.from, true, 'invalid date is reported, not silently applied');
+
+  // export honours the same filters
+  const csv = await fetch(`${base}/admin/orders/export.csv?from=2000-01-01&to=2000-01-31`, { headers: adminHeaders });
+  const body = await csv.text();
+  assert.equal(body.split('\r\n').length, 1, 'header only: no rows in that range');
 });
 
 test('orders CSV export is token-guarded and escapes quotes/commas', async () => {

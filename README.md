@@ -100,7 +100,7 @@ per-page titles/descriptions/canonical/OG; Organization + WebSite/SearchAction +
 
 Overview (revenue incl. delivered, orders by status, low stock, new quotes) ·
 Orders (filter, search by receipt/name/phone, **open an order for items/address/payment**,
-refund status, guarded status transitions, **CSV export for accounting**) · **Products
+refund status, guarded status transitions, **date-range filters and CSV export for accounting**) · **Products
 (create/edit/delete without touching seed files)** · Returns · Quotes (convert to order at
 an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · Messages
 (+ **newsletter subscriber list and CSV export**, WhatsApp reply) · Reviews/Questions
@@ -115,7 +115,7 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 137 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 143 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

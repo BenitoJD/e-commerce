@@ -61,6 +61,8 @@ export default function AdminPage() {
   const [orderFilter, setOrderFilter] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [orderDetail, setOrderDetail] = useState(null);
+  const [orderFrom, setOrderFrom] = useState('');
+  const [orderTo, setOrderTo] = useState('');
   const [quotes, setQuotes] = useState([]);
   const [quoteFilter, setQuoteFilter] = useState('');
 
@@ -144,7 +146,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await getAdminOrders(token, orderFilter, orderSearch.trim());
+      const data = await getAdminOrders(token, orderFilter, orderSearch.trim(), { from: orderFrom, to: orderTo });
       setOrders(Array.isArray(data) ? data : data.orders || data.items || []);
     } catch (e) {
       setError(e.message);
@@ -433,7 +435,7 @@ export default function AdminPage() {
   async function downloadOrdersCsv() {
     setError('');
     try {
-      const csv = await getAdminOrdersCsv(token, orderFilter);
+      const csv = await getAdminOrdersCsv(token, orderFilter, { from: orderFrom, to: orderTo });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -651,6 +653,20 @@ export default function AdminPage() {
                   onKeyDown={(e) => { if (e.key === 'Enter') loadOrders(); }}
                   placeholder="Search receipt / name / phone"
                   className="input !w-auto flex-1 min-w-[200px]"
+                />
+                <input
+                  type="date"
+                  value={orderFrom}
+                  onChange={(e) => setOrderFrom(e.target.value)}
+                  className="input !w-auto"
+                  aria-label="Orders from date"
+                />
+                <input
+                  type="date"
+                  value={orderTo}
+                  onChange={(e) => setOrderTo(e.target.value)}
+                  className="input !w-auto"
+                  aria-label="Orders to date"
                 />
                 <button onClick={loadOrders} className="btn-outline !py-2">Search</button>
                 <button onClick={downloadOrdersCsv} className="btn-outline !py-2" title="Accounting export">

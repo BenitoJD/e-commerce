@@ -166,10 +166,12 @@ export async function getAdminStats(token) {
   return handle(res);
 }
 
-export async function getAdminOrders(token, status = '', search = '') {
+export async function getAdminOrders(token, status = '', search = '', { from = '', to = '' } = {}) {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
   if (search) params.set('q', search);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
   const qs = params.toString();
   const res = await fetch(`${BASE}/admin/orders${qs ? `?${qs}` : ''}`, {
     headers: adminHeaders(token),
@@ -180,8 +182,12 @@ export async function getAdminOrders(token, status = '', search = '') {
 
 // CSV downloads need the token, so the browser can't just link to the URL — fetch it
 // with headers and hand back the text for a Blob download.
-export async function getAdminOrdersCsv(token, status = '') {
-  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+export async function getAdminOrdersCsv(token, status = '', { from = '', to = '' } = {}) {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const q = params.toString() ? `?${params.toString()}` : '';
   const res = await fetch(`${BASE}/admin/orders/export.csv${q}`, {
     headers: adminHeaders(token),
     cache: 'no-store'

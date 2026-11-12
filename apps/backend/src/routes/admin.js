@@ -4,6 +4,7 @@ const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
+const { buildOrderFilter } = require('../lib/adminFilters');
 
 const router = express.Router();
 
@@ -53,32 +54,20 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// GET /admin/orders?status=&limit=50
+// GET /admin/orders?status=&from=&to=&q=&limit=50
 router.get('/orders', async (req, res) => {
   try {
     let limit = parseInt(req.query.limit, 10) || 50;
     limit = Math.min(Math.max(limit, 1), 200);
-    const { status, q } = req.query;
-    const conds = [];
-    const params = [];
-    if (status) {
-      params.push(status);
-      conds.push(`status = $${params.length}`);
-    }
-    if (q) {
-      params.push(`%${String(q).trim()}%`);
-      const n = params.length;
-      conds.push(`(receipt ILIKE $${n} OR customer->>'phone' ILIKE $${n} OR customer->>'name' ILIKE $${n})`);
-    }
-    params.push(limit);
-    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const filter = buildOrderFilter(req.query);
+    const params = [...filter.params, limit];
     const { rows } = await db.query(
       `SELECT id, receipt, status, amount_paise, coupon_code, COALESCE(discount_paise, 0) AS discount_paise,
               customer, razorpay_payment_id, pay_mode, refund_mode, refunded_at, created_at
-       FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
+       FROM orders ${filter.where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
       params
     );
-    res.json({ orders: rows });
+    res.json({ orders: rows, ignored: filter.ignored });
   } catch (err) {
     console.error('[admin] orders error:', err.message);
     res.status(500).json({ error: 'Failed to list orders' });
@@ -89,13 +78,9 @@ router.get('/orders', async (req, res) => {
 // Declared before /orders/:id or "export.csv" would be read as an order id.
 router.get('/orders/export.csv', async (req, res) => {
   try {
-    const status = String(req.query.status || '').trim();
-    const params = [];
-    let where = '';
-    if (status && ORDER_STATUSES.includes(status)) {
-      params.push(status);
-      where = 'WHERE status = $1';
-    }
+    const filter = buildOrderFilter(req.query);
+    const params = [...filter.params];
+    const where = filter.where;
     const { rows } = await db.query(
       `SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise,
               COALESCE(discount_paise, 0) AS discount_paise, COALESCE(shipping_paise, 0) AS shipping_paise,

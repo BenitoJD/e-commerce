@@ -428,6 +428,25 @@ export async function requestReturn(payload) {
   return handle(res);
 }
 
+export async function saveAdminProduct(token, payload) {
+  const res = await fetch(`${BASE}/admin/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function deleteAdminProduct(token, slug) {
+  const res = await fetch(`${BASE}/admin/products/${encodeURIComponent(slug)}`, {
+    method: 'DELETE',
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function getAdminReturns(token, status = '') {
   const q = status ? `?status=${encodeURIComponent(status)}` : '';
   const res = await fetch(`${BASE}/admin/returns${q}`, { headers: adminHeaders(token), cache: 'no-store' });

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 71 (28/28 route smoke test, reproducible script).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 72 (admin product CRUD, 70 backend tests).
 
 ## Storefront
 
@@ -13,6 +13,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12 |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
+| Admin catalogue CRUD (create/edit/delete products) | ? admin Products tab + `POST/DELETE /admin/products` |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order (agreed price, stock reserved) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`, admin list) |

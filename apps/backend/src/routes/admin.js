@@ -324,6 +324,64 @@ router.get('/stock-alerts', async (req, res) => {
   }
 });
 
+// POST /admin/products — create or update a product (admin catalogue management)
+router.post('/products', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const slug = String(b.slug || '').trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(slug)) {
+      return res.status(400).json({ error: 'slug must be lowercase letters, digits or dashes' });
+    }
+    const name = String(b.name || '').trim();
+    if (name.length < 3) return res.status(400).json({ error: 'name is required (min 3 chars)' });
+
+    const pricePaise = parseInt(b.price_paise, 10);
+    if (!Number.isInteger(pricePaise) || pricePaise < 100) {
+      return res.status(400).json({ error: 'price_paise must be an integer >= 100' });
+    }
+    const mrpPaise = parseInt(b.mrp_paise, 10) || pricePaise;
+    if (mrpPaise < pricePaise) return res.status(400).json({ error: 'mrp_paise cannot be below price_paise' });
+    const stock = parseInt(b.stock, 10);
+    if (!Number.isInteger(stock) || stock < 0) return res.status(400).json({ error: 'stock must be an integer >= 0' });
+    const specs = b.specs && typeof b.specs === 'object' ? b.specs : {};
+    const images = Array.isArray(b.images) ? b.images.filter((s) => typeof s === 'string').slice(0, 10) : [];
+    const videos = Array.isArray(b.videos) ? b.videos.filter((s) => typeof s === 'string').slice(0, 5) : [];
+
+    const { rows } = await db.query(
+      `INSERT INTO products (slug, name, brand, category, price_paise, mrp_paise, hsn, stock, specs, images, videos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       ON CONFLICT (slug) DO UPDATE SET
+         name = EXCLUDED.name, brand = EXCLUDED.brand, category = EXCLUDED.category,
+         price_paise = EXCLUDED.price_paise, mrp_paise = EXCLUDED.mrp_paise, hsn = EXCLUDED.hsn,
+         stock = EXCLUDED.stock, specs = EXCLUDED.specs, images = EXCLUDED.images, videos = EXCLUDED.videos
+       RETURNING slug, name, price_paise, stock`,
+      [slug, name, String(b.brand || ''), String(b.category || 'power-tools'), pricePaise, mrpPaise,
+        String(b.hsn || ''), stock, JSON.stringify(specs), images, videos]
+    );
+    console.log(`[admin] product upsert ${slug} ${pricePaise}`);
+    res.status(201).json({ product: rows[0] });
+  } catch (err) {
+    console.error('[admin] product save error:', err.message);
+    res.status(500).json({ error: 'Failed to save product' });
+  }
+});
+
+// DELETE /admin/products/:slug — remove a product from the catalogue
+router.delete('/products/:slug', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM products WHERE slug = $1 RETURNING slug',
+      [req.params.slug]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Product not found' });
+    console.log(`[admin] product deleted ${rows[0].slug}`);
+    res.json({ ok: true, slug: rows[0].slug });
+  } catch (err) {
+    console.error('[admin] product delete error:', err.message);
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
 // GET /admin/returns?status=
 router.get('/returns', async (req, res) => {
   try {

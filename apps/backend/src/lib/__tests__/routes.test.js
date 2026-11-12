@@ -157,6 +157,15 @@ function makeFakeDb() {
     if (t.includes('FROM products') && t.includes('GROUP BY category')) {
       return { rows: [{ category: 'power-tools', count: 1 }] };
     }
+    if (t.startsWith('INSERT INTO products') && t.includes('ON CONFLICT (slug) DO UPDATE')) {
+      const [slug, name, brand, category, price, mrp, hsn, stock, specs, images, videos] = params;
+      products.set(slug, { slug, name, brand, category, price_paise: price, mrp_paise: mrp, hsn, stock, specs: JSON.parse(specs || '{}'), images: images || [], videos: videos || [] });
+      return { rows: [{ slug, name, price_paise: price, stock }] };
+    }
+    if (t.startsWith('DELETE FROM products WHERE slug')) {
+      const had = products.delete(params[0]);
+      return { rows: had ? [{ slug: params[0] }] : [] };
+    }
     if (t.startsWith('INSERT INTO stock_alerts')) {
       const [slug, email] = params;
       if (!alerts.some((a) => a.product_slug === slug && a.email === email)) {
@@ -438,6 +447,43 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
     code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
     active: true, max_uses: null, used_count: 0, expires_at: null,
   });
+});
+
+test('admin product CRUD: create, update, validation, delete', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const payload = {
+    slug: 'new-hammer-500g', name: 'Steel Hammer 500g', brand: 'Stanley', category: 'hand-tools',
+    price_paise: 34900, mrp_paise: 45000, hsn: '82052000', stock: 12, specs: { weight: '500g' }, images: ['/images/hammer.jpg'],
+  };
+  const created = await api('POST', '/admin/products', payload, adminHeaders);
+  assert.equal(created.status, 201);
+  assert.equal(created.json.product.slug, 'new-hammer-500g');
+  assert.equal(fake.products.has('new-hammer-500g'), true);
+
+  // update the same slug (price change), not a duplicate
+  const updated = await api('POST', '/admin/products', { ...payload, price_paise: 29900 }, adminHeaders);
+  assert.equal(updated.status, 201);
+  assert.equal(fake.products.get('new-hammer-500g').price_paise, 29900);
+  assert.equal(fake.products.size, 3); // drill-a, motor-b, new-hammer-500g
+
+  // validation
+  const badSlug = await api('POST', '/admin/products', { ...payload, slug: 'Bad Slug!' }, adminHeaders);
+  assert.equal(badSlug.status, 400);
+  const badPrice = await api('POST', '/admin/products', { ...payload, price_paise: 50 }, adminHeaders);
+  assert.equal(badPrice.status, 400);
+  const mrpBelow = await api('POST', '/admin/products', { ...payload, price_paise: 50000, mrp_paise: 40000 }, adminHeaders);
+  assert.equal(mrpBelow.status, 400);
+
+  const del = await api('DELETE', '/admin/products/new-hammer-500g', undefined, adminHeaders);
+  assert.equal(del.status, 200);
+  assert.equal(fake.products.has('new-hammer-500g'), false);
+  const delAgain = await api('DELETE', '/admin/products/new-hammer-500g', undefined, adminHeaders);
+  assert.equal(delAgain.status, 404);
+});
+
+test('admin product routes require the token', async () => {
+  const noToken = await api('POST', '/admin/products', { slug: 'x-y', name: 'X Y', price_paise: 1000 });
+  assert.equal(noToken.status, 401);
 });
 
 test('returns: delivered order files a request; admin can progress it', async () => {

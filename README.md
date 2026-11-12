@@ -78,13 +78,14 @@ Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter.
 
 Overview (revenue incl. delivered, orders by status, low stock, new quotes) ·
 Orders (filter, search by receipt/name/phone, coupon + payment ID, guarded status
-transitions) · Returns · Quotes (convert to order at an agreed price) · Coupons (CRUD) ·
+transitions) · **Products (create/edit/delete without touching seed files)** · Returns ·
+Quotes (convert to order at an agreed price) · Coupons (CRUD with expiry/usage caps) ·
 Messages · Reviews/Questions (verify, answer, delete) · Stock (update by slug).
 
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 68 tests: pricing/GST/EMI, catalog, webhooks,
+cd apps/backend && npm test        # 70 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
 cd apps/storefront && npm test     # 28 tests: catalog filters, cart self-healing, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist

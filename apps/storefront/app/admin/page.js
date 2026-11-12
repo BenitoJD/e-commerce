@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  fetchProducts,
   getAdminStats,
   getAdminOrders,
   updateOrderStatus,
@@ -15,6 +16,8 @@ import {
   updateMessageStatus,
   getAdminReturns,
   updateReturnStatus,
+  saveAdminProduct,
+  deleteAdminProduct,
   getAdminReviews,
   setReviewVerified,
   deleteReview,
@@ -72,6 +75,9 @@ export default function AdminPage() {
   const [modAnswered, setModAnswered] = useState('false');
   const [returns, setReturns] = useState([]);
   const [returnFilter, setReturnFilter] = useState('');
+  const [catalog, setCatalog] = useState([]);
+  const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+  const [prodMsg, setProdMsg] = useState('');
 
   useEffect(() => {
     try {
@@ -149,6 +155,7 @@ export default function AdminPage() {
     if (tab === 'coupons') loadCoupons();
     if (tab === 'messages') loadMessages();
     if (tab === 'returns') loadReturns();
+    if (tab === 'products') loadCatalog();
     if (tab === 'reviews') loadModReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
@@ -205,6 +212,58 @@ export default function AdminPage() {
     try {
       await toggleCoupon(token, code, !active);
       await loadCoupons();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function loadCatalog() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await fetchProducts({ limit: 100 });
+      const list = Array.isArray(data) ? data : data.products || data.items || [];
+      setCatalog(list);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onProductSave(e) {
+    e.preventDefault();
+    setError('');
+    setProdMsg('');
+    try {
+      const pricePaise = Math.round(Number(prodForm.priceRs) * 100);
+      const payload = {
+        slug: prodForm.slug.trim().toLowerCase(),
+        name: prodForm.name.trim(),
+        brand: prodForm.brand.trim(),
+        category: prodForm.category.trim() || 'power-tools',
+        price_paise: pricePaise,
+        mrp_paise: prodForm.mrpRs ? Math.round(Number(prodForm.mrpRs) * 100) : pricePaise,
+        hsn: prodForm.hsn.trim(),
+        stock: Number(prodForm.stock) || 0,
+        images: prodForm.images.split(',').map((s) => s.trim()).filter(Boolean),
+      };
+      const r = await saveAdminProduct(token, payload);
+      setProdMsg(`Saved ${r.product?.slug || payload.slug}.`);
+      setProdForm({ slug: '', name: '', brand: '', category: 'power-tools', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+      await loadCatalog();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function onProductDelete(slug) {
+    setError('');
+    try {
+      if (typeof window !== 'undefined' && !window.confirm(`Delete product ${slug}? Orders keep their history.`)) return;
+      await deleteAdminProduct(token, slug);
+      await loadCatalog();
     } catch (e) {
       setError(e.message);
     }
@@ -406,6 +465,7 @@ export default function AdminPage() {
   const tabs = [
     ['overview', 'Overview'],
     ['orders', 'Orders'],
+    ['products', 'Products'],
     ['returns', 'Returns'],
     ['quotes', 'Quotes'],
     ['coupons', 'Coupons'],
@@ -447,7 +507,7 @@ export default function AdminPage() {
                 {label}
               </button>
             ))}
-            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); if (tab === 'returns') loadReturns(); }} className="btn-outline !py-2 ml-auto">
+            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); if (tab === 'returns') loadReturns(); if (tab === 'products') loadCatalog(); }} className="btn-outline !py-2 ml-auto">
               Refresh
             </button>
           </div>
@@ -657,6 +717,63 @@ export default function AdminPage() {
                       </tr>
                     ))}
                     {coupons.length === 0 ? <tr><td colSpan={8} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'products' && (
+            <div className="mt-4">
+              <div className="card p-4 max-w-3xl">
+                <div className="font-bold mb-2">Add or update a product (same slug = update)</div>
+                <form onSubmit={onProductSave} className="grid sm:grid-cols-2 gap-2">
+                  <input value={prodForm.slug} onChange={(e) => setProdForm({ ...prodForm, slug: e.target.value })} placeholder="slug e.g. bosch-gsb-13-re-drill" className="input" />
+                  <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} placeholder="Product name" className="input" />
+                  <input value={prodForm.brand} onChange={(e) => setProdForm({ ...prodForm, brand: e.target.value })} placeholder="Brand" className="input" />
+                  <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} placeholder="Category (power-tools)" className="input" />
+                  <input value={prodForm.priceRs} onChange={(e) => setProdForm({ ...prodForm, priceRs: e.target.value })} placeholder="Price ₹" type="number" min="1" className="input" />
+                  <input value={prodForm.mrpRs} onChange={(e) => setProdForm({ ...prodForm, mrpRs: e.target.value })} placeholder="MRP ₹ (optional)" type="number" min="0" className="input" />
+                  <input value={prodForm.hsn} onChange={(e) => setProdForm({ ...prodForm, hsn: e.target.value })} placeholder="HSN code" className="input" />
+                  <input value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} placeholder="Stock qty" type="number" min="0" className="input" />
+                  <input value={prodForm.images} onChange={(e) => setProdForm({ ...prodForm, images: e.target.value })} placeholder="Image paths, comma separated" className="input sm:col-span-2" />
+                </form>
+                <button onClick={onProductSave} className="btn-primary mt-3">Save product</button>
+                {prodMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{prodMsg}</p> : null}
+              </div>
+
+              <div className="overflow-x-auto card mt-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">Slug</th>
+                      <th className="p-2">Name</th>
+                      <th className="p-2">Price</th>
+                      <th className="p-2">Stock</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {catalog.map((p, i) => (
+                      <tr key={p.slug || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono text-xs">{p.slug}</td>
+                        <td className="p-2 text-xs">{p.name}</td>
+                        <td className="p-2">₹{Number(p.price || 0).toLocaleString('en-IN')}</td>
+                        <td className="p-2">{p.stock ?? '—'}</td>
+                        <td className="p-2">
+                          <button
+                            onClick={() => setProdForm({
+                              slug: p.slug, name: p.name, brand: p.brand || '', category: p.category || 'power-tools',
+                              priceRs: String(p.price ?? ''), mrpRs: String(p.mrp ?? ''),
+                              hsn: p.hsn || '', stock: String(p.stock ?? ''), images: (p.images || []).join(', '),
+                            })}
+                            className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1"
+                          >Edit</button>
+                          <button onClick={() => onProductDelete(p.slug)} className="btn-outline !py-1 !px-2 text-xs !text-red-600">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {catalog.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No products loaded.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

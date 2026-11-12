@@ -83,10 +83,13 @@ export default function CheckoutPage() {
 
       await loadRazorpay();
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      // Server is authoritative on the chargeable amount (applies coupon server-side)
+      const serverPaise = Number(res.amount_paise) || 0;
+      const chargePaise = serverPaise > 0 ? serverPaise : Math.round(total * 100);
       const rzp = new window.Razorpay({
         key,
         order_id: razorpayOrderId,
-        amount: res.amount || total * 100,
+        amount: chargePaise,
         currency: res.currency || 'INR',
         name: process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart',
         description: `Order ${receipt}`,

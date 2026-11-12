@@ -79,3 +79,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
 
 CREATE INDEX IF NOT EXISTS idx_reviews_slug ON reviews(product_slug);
 CREATE INDEX IF NOT EXISTS idx_questions_slug ON questions(product_slug);
+
+-- Wave 5: coupon audit columns (idempotent for existing DBs)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_paise INTEGER NOT NULL DEFAULT 0;

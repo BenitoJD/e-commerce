@@ -1,6 +1,7 @@
 const express = require('express');
 const Razorpay = require('razorpay');
 const db = require('../db');
+const { applyCoupon } = require('../lib/pricing');
 
 const router = express.Router();
 
@@ -44,21 +45,42 @@ router.post('/create', async (req, res) => {
     }
     if (amount < 100) return res.status(400).json({ error: 'Order amount too small' });
 
+    // Server-side coupon application (never trust client-computed discount)
+    let couponCode = null;
+    let discountPaise = 0;
+    const rawCode = String((req.body || {}).couponCode || '').trim();
+    if (rawCode) {
+      const { rows: found } = await db.query('SELECT * FROM coupons WHERE code = $1', [rawCode]);
+      const applied = applyCoupon(amount, found[0] || null);
+      if (!found.length) {
+        return res.status(400).json({ error: 'Invalid coupon code' });
+      }
+      if (applied.reason) {
+        return res.status(400).json({ error: applied.reason });
+      }
+      couponCode = rawCode;
+      discountPaise = applied.discountPaise;
+      amount = applied.finalPaise;
+      if (amount < 100) return res.status(400).json({ error: 'Order amount too small after coupon' });
+    }
+
     const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
 
     // COD path: skip Razorpay
     if (payMode === 'cod') {
       const { rows } = await db.query(
-        `INSERT INTO orders (receipt, status, items, amount_paise, customer)
-         VALUES ($1, 'cod_pending', $2, $3, $4) RETURNING id, receipt`,
-        [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer)]
+        `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
+         VALUES ($1, 'cod_pending', $2, $3, $4, $5, $6) RETURNING id, receipt`,
+        [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
       );
-      console.log(`[checkout] COD order ${rows[0].receipt} amount=${amount}`);
+      console.log(`[checkout] COD order ${rows[0].receipt} amount=${amount} coupon=${couponCode || '-'}`);
       return res.json({
         orderId: rows[0].id,
         receipt: rows[0].receipt,
         amount_paise: amount,
+        couponCode,
+        discount_paise: discountPaise,
         razorpayOrderId: null,
         keyId,
         payMode: 'cod',
@@ -67,9 +89,9 @@ router.post('/create', async (req, res) => {
 
     // Create pending order row first
     const { rows } = await db.query(
-      `INSERT INTO orders (receipt, status, items, amount_paise, customer)
-       VALUES ($1, 'pending', $2, $3, $4) RETURNING id, receipt`,
-      [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer)]
+      `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
+       VALUES ($1, 'pending', $2, $3, $4, $5, $6) RETURNING id, receipt`,
+      [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
     );
     const orderId = rows[0].id;
 
@@ -89,8 +111,8 @@ router.post('/create', async (req, res) => {
     }
 
     await db.query('UPDATE orders SET razorpay_order_id = $1 WHERE id = $2', [razorpayOrderId, orderId]);
-    console.log(`[checkout] order ${receipt} amount=${amount} rzp=${razorpayOrderId}`);
-    res.json({ orderId, receipt, amount_paise: amount, razorpayOrderId, keyId });
+    console.log(`[checkout] order ${receipt} amount=${amount} coupon=${couponCode || '-'} rzp=${razorpayOrderId}`);
+    res.json({ orderId, receipt, amount_paise: amount, couponCode, discount_paise: discountPaise, razorpayOrderId, keyId });
   } catch (err) {
     console.error('[checkout] error:', err.message);
     res.status(500).json({ error: 'Checkout failed' });

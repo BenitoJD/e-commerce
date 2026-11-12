@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 68 (product pages server-rendered, verified in HTML).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 69 (product, category and brand pages all server-rendered).
 
 ## Storefront
 
@@ -9,7 +9,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` + deals/brand/recently-viewed strips |
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
-| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
+| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12 |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
@@ -19,7 +19,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Wishlist | ✅ localStorage + `/wishlist` |
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
-| Brand pages | ✅ `/brands`, `/brand/[name]` |
+| Brand pages | ✅ `/brands`, `/brand/[name]` — **server-rendered** first page |
 | Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown; expiry dates + usage caps enforced atomically; admin Coupons tab; seeded WELCOME10/TOOLS15 |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |

@@ -5,6 +5,7 @@ import { STORE, waLink } from '../lib/store';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  icons: { icon: '/favicon.svg' },
   title: {
     default: 'ToolsKart — India\'s Machinery & Power Tools Store',
     template: '%s'

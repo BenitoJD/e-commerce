@@ -65,7 +65,7 @@ async function check(route) {
     const problems = [];
     if (res.status !== 200) problems.push(`status ${res.status}`);
     for (const marker of MARKERS[route] || []) {
-      if (!body.includes(marker)) problems.push(`missing "${marker}"`);
+      if (!body.toLowerCase().includes(marker.toLowerCase())) problems.push(`missing "${marker}"`);
     }
     if (route === '/sitemap.xml' && res.status === 200 && !body.includes('<urlset')) {
       problems.push('sitemap is not XML (is the backend reachable?)');

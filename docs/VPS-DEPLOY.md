@@ -53,7 +53,9 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 - Enable VPS snapshots + nightly `pg_dump` to S3/R2. Keep Meili key + webhook secret in Coolify secrets, never in git.
 
 ## Monitoring
-- Liveness: `GET /health` — process is up (always 200 while Node runs).- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
+- Liveness: `GET /health` — process is up (always 200 while Node runs).
+- `robots.txt` is generated from `NEXT_PUBLIC_SITE_URL` at build time, so set that before
+  building — otherwise the sitemap link points at localhost.- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
   Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.
 - Both containers ship a Docker `HEALTHCHECK` (backend hits `/ready`, storefront hits `/`)
   and run as the unprivileged `node` user.

@@ -64,6 +64,17 @@ router.post('/create', async (req, res) => {
       if (amount < 100) return res.status(400).json({ error: 'Order amount too small after coupon' });
     }
 
+    // COD policy: capped at COD_MAX_PAISE (default ₹20,000). High-value machinery has to
+    // be prepaid — otherwise refused deliveries cost us freight both ways.
+    const codMaxPaise = Number(process.env.COD_MAX_PAISE) || 2000000;
+    if (payMode === 'cod' && amount > codMaxPaise) {
+      return res.status(400).json({
+        error: `Cash on Delivery is available up to ₹${(codMaxPaise / 100).toLocaleString('en-IN')}. Please pay online for this order.`,
+        code: 'COD_LIMIT',
+        codMaxPaise,
+      });
+    }
+
     const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
     const orderStatus = payMode === 'cod' ? 'cod_pending' : 'pending';

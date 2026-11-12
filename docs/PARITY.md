@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 76 (reorder from order history, 30 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 77 (COD cap enforced server + client, 77 backend tests).
 
 ## Storefront
 
@@ -22,7 +22,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` — **server-rendered** first page |
 | Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown; expiry dates + usage caps enforced atomically; admin Coupons tab; seeded WELCOME10/TOOLS15 |
-| Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
+| Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; COD capped at `COD_MAX_PAISE` (₹20k default) server-side, UI disables it above the cap |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
@@ -47,7 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 76 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 77 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

@@ -88,7 +88,7 @@ delete) · Stock (update by slug).
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 70 tests: pricing/GST/EMI, catalog, webhooks,
+cd apps/backend && npm test        # 77 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
 cd apps/storefront && npm test     # 30 tests: catalog filters, cart self-healing +
                                    # reorder mapping, wishlist, store config,

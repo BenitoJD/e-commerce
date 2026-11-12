@@ -456,6 +456,41 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
   });
 });
 
+test('COD is refused above the configured cap, and allowed just below it', async () => {
+  // motor-b is ₹5,000 per unit; 4 units = ₹20,000 which is within the default cap,
+  // 5 units = ₹25,000 which must be refused. Stock was raised above for this test.
+  const weapon = fake.products.get('motor-b');
+  const originalStock = weapon.stock;
+  weapon.stock = 10;
+
+  const under = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'motor-b', qty: 4 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'cod',
+  });
+  assert.equal(under.status, 200);
+  assert.equal(under.json.amount_paise, 2000000);
+
+  const over = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'motor-b', qty: 5 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'cod',
+  });
+  assert.equal(over.status, 400);
+  assert.equal(over.json.code, 'COD_LIMIT');
+  assert.match(over.json.error, /Cash on Delivery/i);
+
+  // the same order paid online is fine
+  const online = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'motor-b', qty: 5 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'UPI',
+  });
+  assert.equal(online.status, 200);
+
+  weapon.stock = originalStock;
+});
+
 test('admin order detail: items enriched with names, customer and payment ids', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const created = await api('POST', '/store/checkout/create', {

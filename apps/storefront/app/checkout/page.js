@@ -67,6 +67,15 @@ export default function CheckoutPage() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // If the basket grows past the COD cap (quantity change, coupon removed), don't leave
+  // the buyer on an option the server will reject.
+  useEffect(() => {
+    if (shown > 20000 && form.payMode === 'COD') {
+      setForm((f) => ({ ...f, payMode: 'UPI' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown]);
+
   const clearCoupon = () => {
     try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
   };
@@ -164,15 +173,32 @@ export default function CheckoutPage() {
         <div>
           <label className="label">Payment mode</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {['UPI', 'Card', 'EMI', 'COD'].map((m) => (
-              <label key={m} className={`border rounded-lg px-3 py-2.5 text-sm font-bold cursor-pointer text-center ${form.payMode === m ? 'border-[#F97316] bg-orange-50 text-[#EA580C]' : 'text-gray-600'}`}>
-                <input type="radio" name="payMode" className="hidden" checked={form.payMode === m} onChange={() => set('payMode', m)} />{m}
-              </label>
-            ))}
+            {['UPI', 'Card', 'EMI', 'COD'].map((m) => {
+              // COD is capped server-side; disable it here so nobody picks an option
+              // that will be rejected at the payment step.
+              const disabled = m === 'COD' && shown > 20000 && form.payMode !== 'COD';
+              const blocked = m === 'COD' && shown > 20000;
+              return (
+                <label
+                  key={m}
+                  className={`border rounded-lg px-3 py-2.5 text-sm font-bold text-center ${blocked ? 'cursor-not-allowed opacity-50 text-gray-400' : 'cursor-pointer'} ${form.payMode === m ? 'border-[#F97316] bg-orange-50 text-[#EA580C]' : blocked ? '' : 'text-gray-600'}`}
+                >
+                  <input
+                    type="radio"
+                    name="payMode"
+                    className="hidden"
+                    checked={form.payMode === m}
+                    disabled={disabled}
+                    onChange={() => set('payMode', m)}
+                  />
+                  {m}
+                </label>
+              );
+            })}
           </div>
           <p className="text-xs text-gray-500 mt-2">UPI / Card / EMI go through Razorpay secure checkout. COD pays cash on delivery.</p>
-          {form.payMode === 'COD' && shown > 20000 ? (
-            <p className="text-xs text-amber-700 font-semibold mt-1">Orders above ₹20,000 on COD may need a confirmation call or partial advance.</p>
+          {shown > 20000 ? (
+            <p className="text-xs text-amber-700 font-semibold mt-1">COD is available up to ₹20,000 — this order needs online payment.</p>
           ) : null}
         </div>
         {discount > 0 && (

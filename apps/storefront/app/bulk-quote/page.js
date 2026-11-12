@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { createQuote } from '../../lib/api';
+import { createQuote, getMyQuotes } from '../../lib/api';
+
+const QUOTE_STATUS_LABEL = {
+  new: 'Received',
+  contacted: 'We contacted you',
+  quoted: 'Quote sent',
+  won: 'Converted to order',
+  lost: 'Closed',
+};
 
 function QuoteInner() {
   const sp = useSearchParams();
@@ -11,7 +19,21 @@ function QuoteInner() {
   const preName = sp.get('pname') || '';
   const [form, setForm] = useState({ name: '', phone: '', product: preSlug, productName: preName, qty: '10', message: '' });
   const [status, setStatus] = useState({ busy: false, ok: '', err: '' });
+  const [lookupPhone, setLookupPhone] = useState('');
+  const [lookup, setLookup] = useState({ busy: false, rows: null, err: '' });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function findQuotes(e) {
+    if (e) e.preventDefault();
+    setLookup({ busy: true, rows: null, err: '' });
+    try {
+      const r = await getMyQuotes(lookupPhone);
+      const rows = Array.isArray(r) ? r : r.quotes || [];
+      setLookup({ busy: false, rows, err: rows.length ? '' : 'No quote requests found for that number.' });
+    } catch (err2) {
+      setLookup({ busy: false, rows: null, err: err2.message || 'Could not load your quotes.' });
+    }
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -41,6 +63,30 @@ function QuoteInner() {
         {status.err && <p className="text-sm text-red-600 font-semibold">{status.err}</p>}
         <button disabled={status.busy} className="btn-primary w-full disabled:opacity-60">{status.busy ? 'Sending...' : 'Send Quote Request'}</button>
       </form>
+
+      <div className="card p-5 mt-5">
+        <h2 className="font-extrabold">Already asked for a quote?</h2>
+        <p className="text-xs text-gray-500 mt-1">Enter the phone number you used and we&apos;ll show its status.</p>
+        <form onSubmit={findQuotes} className="mt-3 flex gap-2">
+          <input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" className="input" />
+          <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
+            {lookup.busy ? 'Checking...' : 'Check status'}
+          </button>
+        </form>
+        {lookup.err ? <p className="text-xs text-gray-600 font-semibold mt-2">{lookup.err}</p> : null}
+        {Array.isArray(lookup.rows) && lookup.rows.length > 0 ? (
+          <ul className="mt-3 divide-y text-sm">
+            {lookup.rows.map((q) => (
+              <li key={q.id} className="py-2 flex flex-wrap items-center gap-2">
+                <span className="font-semibold">{q.product_name || q.product_slug || 'Custom item'}</span>
+                <span className="text-gray-500">× {q.qty}</span>
+                <span className="badge bg-gray-100">{QUOTE_STATUS_LABEL[String(q.status)] || q.status}</span>
+                {q.order_receipt ? <span className="text-xs text-green-700">order {q.order_receipt}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
     </div>
   );
 }

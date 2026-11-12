@@ -118,6 +118,12 @@ export async function createQuote(payload) {
   return handle(res);
 }
 
+export async function getMyQuotes(phone) {
+  const q = new URLSearchParams({ phone: String(phone || '').trim() });
+  const res = await fetch(`${BASE}/store/quotes?${q.toString()}`, { cache: 'no-store' });
+  return handle(res);
+}
+
 export async function verifyOrder(receipt) {
   const res = await fetch(`${BASE}/store/checkout/verify?receipt=${encodeURIComponent(receipt)}`, { cache: 'no-store' });
   return handle(res);

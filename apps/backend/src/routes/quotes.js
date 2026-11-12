@@ -34,10 +34,24 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /store/quotes (admin list)
+// GET /store/quotes?phone= — a buyer's own quote requests (B2B status lookup).
+// This route used to return every quote in the database, which leaked other
+// customers' names and phone numbers. It is now scoped to the caller's phone.
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM bulk_quotes ORDER BY created_at DESC LIMIT 200');
+    const phone = String(req.query.phone || '').replace(/\D/g, '');
+    if (phone.length < 10) {
+      return res.status(400).json({ error: 'phone required (at least 10 digits)' });
+    }
+    const last10 = phone.slice(-10);
+    const { rows } = await db.query(
+      `SELECT id, name, product_slug, product_name, qty, message, status, order_receipt, created_at
+         FROM bulk_quotes
+        WHERE RIGHT(regexp_replace(phone, '\\D', '', 'g'), 10) = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT 20`,
+      [last10]
+    );
     res.json({ quotes: rows });
   } catch (err) {
     console.error('[quotes] list error:', err.message);

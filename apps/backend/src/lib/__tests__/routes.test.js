@@ -151,6 +151,21 @@ function makeFakeDb() {
       const p = products.get(params[0]);
       return { rows: p ? [{ slug: p.slug, price_paise: p.price_paise }] : [] };
     }
+    if (t.startsWith('INSERT INTO bulk_quotes')) {
+      const [name, phone, slug, productName, qty, message] = params;
+      if (!quotes.length) quoteSeq = 1;
+      const row = { id: quoteSeq++, name, phone, product_slug: slug || '', product_name: productName || '', qty, message, status: 'new', order_receipt: null, created_at: new Date().toISOString() };
+      quotes.push(row);
+      return { rows: [row] };
+    }
+    if (t.startsWith('SELECT id, name, product_slug, product_name, qty, message, status')) {
+      const phone = String(params[0] || '').replace(/\D/g, '').slice(-10);
+      const rows = quotes
+        .filter((q) => String(q.phone || '').replace(/\D/g, '').slice(-10) === phone)
+        .sort((a, b) => b.id - a.id)
+        .slice(0, 20);
+      return { rows };
+    }
     if (t.startsWith('SELECT * FROM bulk_quotes WHERE id =')) {
       const q = quotes.find((x) => x.id === Number(params[0]));
       return { rows: q ? [{ ...q }] : [] };
@@ -261,6 +276,7 @@ app.use('/webhooks', express.raw({ type: '*/*' }), require('../../routes/webhook
 app.use(express.json({ limit: '1mb' }));
 app.use('/store/products', require('../../routes/products'));
 app.use('/store/checkout', require('../../routes/checkout'));
+app.use('/store/quotes', require('../../routes/quotes'));
 app.use('/store/search', require('../../routes/search'));
 app.use('/store/engage', require('../../routes/engagement'));
 app.use('/store/service', require('../../routes/service'));
@@ -392,6 +408,29 @@ test('webhooks: bad signature rejected, unknown order acked', async () => {
   const good = signedWebhook('payment.captured', { id: 'pay_x', order_id: 'order_unknown', amount: 100 });
   const r2 = await fetch(`${base}/webhooks/razorpay`, { method: 'POST', headers: { 'x-razorpay-signature': good.sig }, body: good.payload });
   assert.equal(r2.status, 200);
+});
+
+test('bulk quote lookup is scoped to the caller phone (no PII leak)', async () => {
+  const created = await api('POST', '/store/quotes', {
+    name: 'Factory Buyer', phone: '9876500011', qty: 25, message: 'Need 25 units', product_slug: 'drill-a',
+  });
+  assert.equal(created.status, 201);
+
+  const mine = await api('GET', '/store/quotes?phone=9876500011');
+  assert.equal(mine.status, 200);
+  assert.equal(mine.json.quotes.length, 1);
+  assert.equal(mine.json.quotes[0].product_slug, 'drill-a');
+  assert.equal(mine.json.quotes[0].status, 'new');
+
+  // formatting differences still match the same person
+  const formatted = await api('GET', '/store/quotes?phone=%2B91%2098765%2000011');
+  assert.equal(formatted.json.quotes.length, 1);
+
+  // someone else sees nothing, and no phone at all is rejected
+  const other = await api('GET', '/store/quotes?phone=9000000000');
+  assert.deepEqual(other.json.quotes, []);
+  const missing = await api('GET', '/store/quotes');
+  assert.equal(missing.status, 400);
 });
 
 test('quote converts to a pending order and reserves stock', async () => {

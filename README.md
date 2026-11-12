@@ -108,7 +108,13 @@ an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · 
 
 ## Tests
 
+Everything that runs without Docker/Postgres, in one command:
+
 ```bash
+node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
+```
+
+Individually:
 cd apps/backend && npm test        # 115 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,

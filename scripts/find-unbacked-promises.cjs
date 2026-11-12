@@ -15,12 +15,15 @@ const hits = [];
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
-    if (/node_modules|\.next|\.git/.test(p)) continue;
+    if (/node_modules|\.next|\.git|__tests__/.test(p)) continue;
     if (entry.isDirectory()) walk(p);
     else if (/\.(js|mjs|cjs)$/.test(entry.name)) {
       const lines = fs.readFileSync(p, 'utf8').split(/\r?\n/);
       lines.forEach((line, i) => {
-        if (PATTERNS.some((re) => re.test(line))) hits.push(`${p}:${i + 1}: ${line.trim()}`);
+        const trimmed = line.trim();
+        // Only shipped copy matters: skip comments and the audit's own patterns.
+        if (/^(\/\/|\*|\/\*)/.test(trimmed)) return;
+        if (PATTERNS.some((re) => re.test(trimmed))) hits.push(`${p}:${i + 1}: ${trimmed}`);
       });
     }
   }

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 99 (container boot + build-arg bugs fixed, deploy-asset tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 100 (single-command verification: 6/6 checks + 28/28 live routes).
 
 ## Storefront
 
@@ -63,6 +63,17 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
 
 ## Tests
+
+## Tests
+
+One command runs everything that works without Docker/Postgres:
+
+```
+node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
+                               # structure, production build, mojibake audit,
+                               # unbacked-promise audit  (exit code gates deploys)
+node scripts/smoke.mjs         # live routes, needs running servers (28/28)
+```
 
 Backend: `cd apps/backend && npm test` — 115 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 5 (server-side coupons).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 6 (stock reservation + idempotent webhooks).
 
 ## Storefront
 

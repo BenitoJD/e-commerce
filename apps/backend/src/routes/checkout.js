@@ -2,6 +2,7 @@ const express = require('express');
 const Razorpay = require('razorpay');
 const db = require('../db');
 const { applyCoupon } = require('../lib/pricing');
+const { withTransaction, reserveItems } = require('../lib/stock');
 
 const router = express.Router();
 
@@ -66,18 +67,33 @@ router.post('/create', async (req, res) => {
 
     const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
+    const orderStatus = payMode === 'cod' ? 'cod_pending' : 'pending';
 
-    // COD path: skip Razorpay
+    // Reserve stock + create order atomically (prevents overselling on concurrent checkouts)
+    let created;
+    try {
+      created = await withTransaction(async (tx) => {
+        await reserveItems(tx, lineItems);
+        const { rows } = await tx.query(
+          `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, receipt`,
+          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
+        );
+        return rows[0];
+      });
+    } catch (err) {
+      if (err.code === 'INSUFFICIENT_STOCK') {
+        return res.status(409).json({ error: `Insufficient stock for ${err.slug}` });
+      }
+      throw err;
+    }
+    const orderId = created.id;
+
     if (payMode === 'cod') {
-      const { rows } = await db.query(
-        `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
-         VALUES ($1, 'cod_pending', $2, $3, $4, $5, $6) RETURNING id, receipt`,
-        [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
-      );
-      console.log(`[checkout] COD order ${rows[0].receipt} amount=${amount} coupon=${couponCode || '-'}`);
+      console.log(`[checkout] COD order ${created.receipt} amount=${amount} coupon=${couponCode || '-'}`);
       return res.json({
-        orderId: rows[0].id,
-        receipt: rows[0].receipt,
+        orderId,
+        receipt: created.receipt,
         amount_paise: amount,
         couponCode,
         discount_paise: discountPaise,
@@ -86,14 +102,6 @@ router.post('/create', async (req, res) => {
         payMode: 'cod',
       });
     }
-
-    // Create pending order row first
-    const { rows } = await db.query(
-      `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
-       VALUES ($1, 'pending', $2, $3, $4, $5, $6) RETURNING id, receipt`,
-      [receipt, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise]
-    );
-    const orderId = rows[0].id;
 
     // Razorpay order (or mock fallback)
     let razorpayOrderId;

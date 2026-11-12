@@ -1,5 +1,7 @@
 const express = require('express');
 const db = require('../db');
+const { releaseItems } = require('../lib/stock');
+const { shouldReleaseOnCancel } = require('../lib/orderTransitions');
 
 const router = express.Router();
 
@@ -81,12 +83,18 @@ router.patch('/orders/:id', async (req, res) => {
     if (!ORDER_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
     }
+    const { rows: current } = await db.query('SELECT status, items FROM orders WHERE id = $1', [req.params.id]);
+    if (!current.length) return res.status(404).json({ error: 'Order not found' });
     const { rows } = await db.query(
       'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
       [status, req.params.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
-    console.log(`[admin] order ${rows[0].receipt} -> ${status}`);
+    // Release reserved stock when an admin cancels/refunds a stock-holding order.
+    if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {
+      await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
+      console.log(`[admin] stock released for ${rows[0].receipt}`);
+    }
+    console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status}`);
     res.json({ order: rows[0] });
   } catch (err) {
     console.error('[admin] order update error:', err.message);

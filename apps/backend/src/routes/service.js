@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { releaseItems } = require('../lib/stock');
 
 const router = express.Router();
 
@@ -142,7 +143,7 @@ router.post('/cancel', async (req, res) => {
       return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
     }
     const { rows } = await db.query(
-      'SELECT receipt, status, customer FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, items, customer FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -164,6 +165,8 @@ router.post('/cancel', async (req, res) => {
       "UPDATE orders SET status = 'cancelled' WHERE receipt = $1 RETURNING receipt, status",
       [receipt]
     );
+    // Reservation was taken at checkout for pending/paid/cod_pending — put it back.
+    await releaseItems(db, Array.isArray(order.items) ? order.items : []);
     res.json({ ok: true, receipt: updated[0].receipt, status: updated[0].status });
   } catch (err) {
     console.error('[service] cancel error:', err.message);

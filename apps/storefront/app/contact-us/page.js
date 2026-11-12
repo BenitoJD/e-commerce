@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { sendContactMessage } from '../../lib/api';
+import { STORE, waLink } from '../../lib/store';
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
@@ -33,8 +34,8 @@ export default function ContactUs() {
       <div className="grid sm:grid-cols-2 gap-4 mt-5">
         <div className="card p-5 text-sm">
           <b>Helpline</b>
-          <p className="mt-2">Phone / WhatsApp: <a className="text-[#F97316] font-bold" href="https://wa.me/919999999999">+91 99999 99999</a></p>
-          <p className="mt-1">Email: care@toolskart.in</p>
+          <p className="mt-2">Phone / WhatsApp: <a className="text-[#F97316] font-bold" href={waLink()}>{STORE.phoneDisplay}</a></p>
+          <p className="mt-1">Email: {STORE.email}</p>
           <p className="mt-1 text-gray-500">Mon–Sat, 9am–7pm IST</p>
         </div>
         <div className="card p-5 text-sm">

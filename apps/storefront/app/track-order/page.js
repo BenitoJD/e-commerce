@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cancelOrder, trackOrder } from '../../lib/api';
+import { STORE } from '../../lib/store';
 
 const STEPS = ['placed', 'paid', 'shipped', 'delivered'];
 // Must stay in sync with backend cancellable statuses (pending, paid, cod_pending).
@@ -75,7 +76,7 @@ function TrackInner() {
       setNotice(`Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`);
       await lookup(data?.receipt || receipt, phone);
     } catch (e2) {
-      setErr(e2.message || 'Could not cancel this order. Contact care@toolskart.in.');
+      setErr(e2.message || `Could not cancel this order. Contact ${STORE.email}.`);
     } finally {
       setCancelling(false);
     }
@@ -106,7 +107,7 @@ function TrackInner() {
 
           {terminal ? (
             <p className="text-sm mt-4 text-red-700 font-semibold">
-              This order is {status}. {status === 'refunded' ? 'Refund (if paid) reaches source in 3–5 working days.' : 'Contact care@toolskart.in for help.'}
+              This order is {status}. {status === 'refunded' ? 'Refund (if paid) reaches source in 3–5 working days.' : `Contact ${STORE.email} for help.`}
             </p>
           ) : (
             <div className="mt-5">

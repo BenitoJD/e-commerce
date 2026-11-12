@@ -1,5 +1,6 @@
 import './globals.css';
 import NewsletterForm from '../components/NewsletterForm';
+import { STORE, waLink } from '../lib/store';
 
 export const metadata = {
   title: 'ToolsKart — India\'s Machinery & Power Tools Store',
@@ -95,8 +96,8 @@ export default function RootLayout({ children }) {
             </div>
             <div>
               <div className="text-white font-bold mb-2">Contact</div>
-              <p>Phone / WhatsApp: <a className="text-white" href="https://wa.me/919999999999">+91 99999 99999</a></p>
-              <p className="mt-1">Email: care@toolskart.in</p>
+              <p>Phone / WhatsApp: <a className="text-white" href={waLink()}>{STORE.phoneDisplay}</a></p>
+              <p className="mt-1">Email: {STORE.email}</p>
               <p className="mt-1">Mon–Sat, 9am–7pm IST</p>
               <a href="/bulk-quote" className="inline-block mt-3 btn-primary !py-2 text-sm">Request Bulk Quote</a>
               <div className="mt-4">

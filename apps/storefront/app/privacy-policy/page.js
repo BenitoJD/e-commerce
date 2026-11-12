@@ -1,3 +1,5 @@
+import { STORE } from '../../lib/store';
+
 export default function PrivacyPolicy() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -7,7 +9,7 @@ export default function PrivacyPolicy() {
         <p><b>Use:</b> Delivery, GST invoicing, warranty support, fraud prevention and (only if you opt in) offers via email/SMS.</p>
         <p><b>Sharing:</b> With delivery partners, Razorpay and tax authorities as legally required. We never sell your data.</p>
         <p><b>Cookies/local storage:</b> Cart, wishlist and recently-viewed items stay in your browser (keys toolskart_cart, tw_wishlist, tw_recent, tw_coupon).</p>
-        <p><b>Your rights:</b> Ask for export or deletion anytime at care@toolskart.in. Marketing opt-out is one click in any email.</p>
+        <p><b>Your rights:</b> Ask for export or deletion anytime at {STORE.email}. Marketing opt-out is one click in any email.</p>
       </div>
     </div>
   );

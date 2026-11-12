@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { verifyOrder } from '../../lib/api';
+import { waLink } from '../../lib/store';
 
 function normStatus(status) {
   const s = String(status || '').toLowerCase();
@@ -102,7 +103,7 @@ function SuccessInner() {
         {receipt && receipt !== '—' ? (
           <a href={`/invoice/${encodeURIComponent(receipt)}`} className="btn-outline">GST Invoice</a>
         ) : null}
-        <a href="https://wa.me/919999999999?text=Hi%20ToolsKart%2C%20need%20help%20with%20my%20order" target="_blank" rel="noreferrer" className="btn-primary">WhatsApp Support</a>
+        <a href={waLink('Hi ToolsKart, need help with my order')} target="_blank" rel="noreferrer" className="btn-primary">WhatsApp Support</a>
       </div>
     </div>
   );

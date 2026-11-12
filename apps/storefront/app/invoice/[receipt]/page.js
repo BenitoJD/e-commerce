@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getInvoice } from '../../../lib/api';
+import { STORE } from '../../../lib/store';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(paise || 0) / 100);
@@ -63,9 +64,9 @@ export default function InvoicePage({ params }) {
           <div className="flex flex-wrap justify-between gap-4 border-b pb-4">
             <div>
               <div className="font-extrabold text-lg">ToolsKart</div>
-              <div className="text-gray-600">GSTIN: 00AAAAA0000A1Z5</div>
+              <div className="text-gray-600">GSTIN: {STORE.gstin}</div>
               <div className="text-gray-600">Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026</div>
-              <div className="text-gray-600">care@toolskart.in • +91 99999 99999</div>
+              <div className="text-gray-600">{STORE.email} • {STORE.phoneDisplay}</div>
             </div>
             <div className="text-right">
               <div><span className="text-gray-500">Receipt no:</span> <b>{inv.receipt || receipt}</b></div>
@@ -128,7 +129,7 @@ export default function InvoicePage({ params }) {
             <div className="flex justify-between text-base border-t pt-2"><span>Grand total</span><b>{inr(inv.grandPaise ?? inv.grand_paise ?? (Number(base) + Number(gstAmt)))}</b></div>
           </div>
 
-          <p className="text-xs text-gray-500 mt-6">18% GST invoice — eligible for input tax credit on business purchases. For help contact care@toolskart.in with your receipt number.</p>
+          <p className="text-xs text-gray-500 mt-6">18% GST invoice — eligible for input tax credit on business purchases. For help contact {STORE.email} with your receipt number.</p>
         </div>
       )}
     </div>

@@ -123,13 +123,18 @@ export default function ProductPage({ params }) {
   const images = p.images && p.images.length ? p.images : [p.image || FALLBACK.image];
   const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
   const emi = (m) => Math.round(Number(p.price) / m);
+  const stockNum = p.stock == null ? null : Math.max(0, Number(p.stock) || 0);
+  const outOfStock = stockNum !== null && stockNum <= 0;
+  const lowStock = stockNum !== null && stockNum > 0 && stockNum <= 5;
 
   const doAdd = () => {
+    if (outOfStock) return;
     addToCart(p, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
   const buyNow = () => {
+    if (outOfStock) return;
     addToCart(p, qty);
     window.location.href = '/checkout';
   };
@@ -227,19 +232,22 @@ export default function ProductPage({ params }) {
             {off > 0 && <span className="badge bg-green-600 text-white">{off}% OFF</span>}
           </div>
           <p className="text-xs text-gray-500 mt-1">Inclusive of all taxes • GST invoice available for ITC</p>
+          <p className={`text-sm font-bold mt-2 ${outOfStock ? 'text-red-600' : lowStock ? 'text-amber-600' : 'text-green-700'}`}>
+            {outOfStock ? 'Out of stock' : lowStock ? `Only ${stockNum} left — order soon` : stockNum !== null ? 'In stock' : 'In stock'}
+          </p>
 
           <div className="mt-4 flex items-center gap-3">
             <span className="label !mb-0">Qty</span>
             <div className="flex items-center border rounded-lg">
               <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2 font-bold">−</button>
               <span className="px-4 font-bold">{qty}</span>
-              <button onClick={() => setQty(Math.min(99, qty + 1))} className="px-3 py-2 font-bold">+</button>
+              <button onClick={() => setQty(Math.min(stockNum !== null ? Math.max(stockNum, 1) : 99, qty + 1))} className="px-3 py-2 font-bold">+</button>
             </div>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <button onClick={doAdd} className="btn-outline">{added ? 'Added ✓' : 'Add to Cart'}</button>
-            <button onClick={buyNow} className="btn-primary">Buy Now</button>
+            <button onClick={doAdd} disabled={outOfStock} className="btn-outline disabled:opacity-50">{added ? 'Added ✓' : outOfStock ? 'Out of Stock' : 'Add to Cart'}</button>
+            <button onClick={buyNow} disabled={outOfStock} className="btn-primary disabled:opacity-50">Buy Now</button>
             <button onClick={toggleWish} aria-label="Toggle wishlist" className={`border rounded-lg px-4 py-2.5 font-bold transition ${wished ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-400'}`}>
               {wished ? '❤ Wishlisted' : '♡ Wishlist'}
             </button>

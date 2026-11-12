@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 8 (paise/rupee normalization, LIKE escaping, catalog pagination).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 9 (stock badges, revenue incl. COD delivered).
 
 ## Storefront
 

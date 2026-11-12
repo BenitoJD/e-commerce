@@ -30,7 +30,7 @@ router.get('/stats', async (req, res) => {
     for (const r of statusRows) ordersByStatus[r.status] = r.count;
 
     const { rows: revRows } = await db.query(
-      `SELECT COALESCE(SUM(amount_paise), 0)::int AS total FROM orders WHERE status = 'paid'`
+      `SELECT COALESCE(SUM(amount_paise), 0)::int AS total FROM orders WHERE status IN ('paid', 'delivered')`
     );
     const revenuePaise = revRows[0] ? revRows[0].total : 0;
 

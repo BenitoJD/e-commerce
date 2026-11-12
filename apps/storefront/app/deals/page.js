@@ -1,21 +1,22 @@
 import DealsView from '../../components/DealsView';
-import { getProductsForMeta, paiseToRupees, absoluteUrl } from '../../lib/serverApi';
+import { getDealsForMeta, paiseToRupees, absoluteUrl } from '../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../lib/jsonld';
 import { pickDeals } from '../../lib/deals';
 import { STORE } from '../../lib/store';
 
-// Deals is an indexed landing page, so the 20%+ list is rendered on the server; the
-// countdown stays client-side (it depends on the visitor's clock).
-function toDealItems(products) {
-  return pickDeals(products.map((p) => ({
+// Deals come from SQL (discount computed and ordered server-side), so nothing beyond the
+// first product page can be missed. The countdown stays client-side.
+function toDealItems(rows) {
+  const mapped = rows.map((p) => ({
     ...p,
     price: paiseToRupees(p.price_paise),
     mrp: paiseToRupees(p.mrp_paise),
-  })));
+  }));
+  return pickDeals(mapped);
 }
 
 export async function generateMetadata() {
-  const deals = toDealItems(await getProductsForMeta('', 40));
+  const deals = toDealItems(await getDealsForMeta(20, 40));
   const maxOff = deals.length ? deals[0].discountPct : 0;
   const title = maxOff
     ? `Deals of the Day — up to ${maxOff}% off tools | ${STORE.name}`
@@ -30,7 +31,7 @@ export async function generateMetadata() {
 }
 
 export default async function DealsPage() {
-  const items = toDealItems(await getProductsForMeta('', 100));
+  const items = toDealItems(await getDealsForMeta(20, 60));
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',

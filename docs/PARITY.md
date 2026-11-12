@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 129 (brands aggregated in SQL, no truncation).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 130 (deals computed in SQL, verified in HTML).
 
 ## Storefront
 
@@ -22,7 +22,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
 | Wishlist | ✅ localStorage + `/wishlist` with **live stock refresh** (stale saved stock corrected on load), move-one / move-all (skips sold-out), sold-out button disabled, clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
-| Deals of the day + countdown | ✅ `/deals` — **server-rendered** 20%+ list (`lib/deals.js`), ItemList + breadcrumb JSON-LD, dynamic title, client countdown only |
+| Deals of the day + countdown | ✅ `/deals` — **`GET /store/deals`** computes the discount and ordering in SQL (no first-page truncation), server-rendered with ItemList + breadcrumb schema and a client-only countdown |
 | Brand pages | ✅ `GET /store/brands` (SQL aggregation — no 100-product truncation) drives a **server-rendered directory**, and `/brand/[name]` renders via the brand filter with breadcrumbs |
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; **order summary with per-line qty/price and "Edit cart"** before payment; COD capped by **one shared policy** (`COD_MAX_PAISE`, mirrored to the UI via `NEXT_PUBLIC_COD_MAX_PAISE`), enforced server-side and reflected in pincode answers |
@@ -83,7 +83,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 149 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 150 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

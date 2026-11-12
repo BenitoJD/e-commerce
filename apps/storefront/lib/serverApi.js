@@ -53,6 +53,14 @@ export async function getBrandsForMeta() {
   return Array.isArray(data.brands) ? data.brands : [];
 }
 
+// Discounted products straight from SQL (never truncated to the first product page).
+export async function getDealsForMeta(minOff = 20, limit = 60) {
+  const q = new URLSearchParams({ minOff: String(minOff), limit: String(limit) });
+  const data = await cachedJson(`${BASE}/store/deals?${q.toString()}`);
+  if (!data) return [];
+  return Array.isArray(data.deals) ? data.deals : [];
+}
+
 // Products for one brand via the search endpoint's brand filter (up to 50 per call).
 export async function getBrandProducts(name, limit = 48) {
   const q = new URLSearchParams({ brand: String(name || ''), limit: String(limit) });

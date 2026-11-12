@@ -41,6 +41,20 @@ function makeFakeDb() {
       const brands = [...new Set([...products.values()].map((p) => p.brand).filter(Boolean))].sort();
       return { rows: brands.map((brand) => ({ brand })) };
     }
+    if (t.includes('AS discount_pct')) {
+      const minOff = Number(params[0]) || 20;
+      const limit = Number(params[1]) || 60;
+      const rows = [...products.values()]
+        .filter((p) => p.mrp_paise > p.price_paise)
+        .map((p) => ({
+          ...p,
+          discount_pct: Math.round(((p.mrp_paise - p.price_paise) / p.mrp_paise) * 100),
+        }))
+        .filter((p) => p.discount_pct >= minOff)
+        .sort((a, b) => b.discount_pct - a.discount_pct || a.price_paise - b.price_paise)
+        .slice(0, limit);
+      return { rows };
+    }
     if (t.includes('GROUP BY brand')) {
       const counts = new Map();
       for (const p of products.values()) {
@@ -364,6 +378,7 @@ app.use('/webhooks', express.raw({ type: '*/*' }), require('../../routes/webhook
 app.use(express.json({ limit: '1mb' }));
 app.use('/store/products', require('../../routes/products'));
 app.use('/store/brands', require('../../routes/brands'));
+app.use('/store/deals', require('../../routes/deals'));
 app.use('/store/checkout', require('../../routes/checkout'));
 app.use('/store/quotes', require('../../routes/quotes'));
 app.use('/store/search', require('../../routes/search'));
@@ -827,6 +842,23 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('deals endpoint filters and sorts by discount in SQL, not the first page', async () => {
+  const res = await api('GET', '/store/deals?minOff=15');
+  assert.equal(res.status, 200);
+  assert.ok(Array.isArray(res.json.deals));
+  for (const d of res.json.deals) {
+    assert.ok(d.discount_pct >= 15, `deal below threshold leaked in: ${d.slug} ${d.discount_pct}%`);
+    assert.ok(d.mrp_paise > d.price_paise);
+  }
+  // sorted by discount desc
+  const pcts = res.json.deals.map((d) => d.discount_pct);
+  assert.deepEqual(pcts, [...pcts].sort((a, b) => b - a));
+
+  // a threshold above every discount yields nothing
+  const none = await api('GET', '/store/deals?minOff=90');
+  assert.deepEqual(none.json.deals, []);
 });
 
 test('brands endpoint aggregates the whole catalogue, not the first page', async () => {

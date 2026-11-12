@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 93 (unguessable receipt IDs + lookup limits, 105 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 94 (inclusive GST surfaced at checkout, formula pinned by tests).
 
 ## Storefront
 
@@ -22,7 +22,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` — **server-rendered** first page |
-| Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab |
+| Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; COD capped at `COD_MAX_PAISE` (₹20k default) server-side, UI disables it above the cap |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
@@ -61,16 +61,16 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 105 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 106 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 35 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, WhatsApp link normalisation, API
-base + server base resolution, misconfiguration guard, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 36 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, GST-inclusive split, WhatsApp link
+normalisation, API base + server base resolution, misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

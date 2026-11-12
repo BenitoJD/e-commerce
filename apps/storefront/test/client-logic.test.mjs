@@ -228,6 +228,30 @@ test('store: waLink builds a valid wa.me URL with optional text', () => {
   assert.ok(withText.includes('%26')); // ampersand encoded
 });
 
+test('pricing: GST split is inclusive and matches the invoice formula', async () => {
+  const { gstInclusiveSplit } = await import('../lib/pricing.js');
+  // ₹1180 at 18% => ₹1000 base + ₹180 tax
+  const a = gstInclusiveSplit(1180);
+  assert.equal(a.totalPaise, 118000);
+  assert.equal(a.basePaise, 100000);
+  assert.equal(a.gstPaise, 18000);
+  // rounding boundary: ₹500 => 50000/1.18 = 42372.88 => 42373 base, remainder tax
+  const b = gstInclusiveSplit(500);
+  assert.equal(b.basePaise, 42373);
+  assert.equal(b.gstPaise, 7627);
+  // no GST is added on top: base + tax always equals the total exactly
+  for (const v of [1, 99.5, 5495, 100000]) {
+    const s = gstInclusiveSplit(v);
+    assert.equal(s.basePaise + s.gstPaise, s.totalPaise, `mismatch at ${v}`);
+  }
+  // junk input is safe
+  assert.deepEqual(gstInclusiveSplit(0), { totalPaise: 0, basePaise: 0, gstPaise: 0, rate: 18 });
+  assert.equal(gstInclusiveSplit(null).gstPaise, 0);
+  assert.equal(gstInclusiveSplit('abc').gstPaise, 0);
+  // a different rate is honoured
+  assert.equal(gstInclusiveSplit(112, 12).gstPaise, 1200);
+});
+
 test('store: waLinkTo normalises Indian numbers for customer chats', () => {
   assert.equal(storeLib.waLinkTo('9876543210'), 'https://wa.me/919876543210');
   assert.equal(storeLib.waLinkTo('+91 98765 43210'), 'https://wa.me/919876543210');

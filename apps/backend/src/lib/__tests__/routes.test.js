@@ -523,6 +523,22 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
   assert.equal(inv.json.grandPaise, created.json.amount_paise);
 });
 
+test('invoice GST split never adds tax on top of the charged amount', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi Kumar', phone: '9876543210' },
+  });
+  const inv = await api('GET', `/store/invoice/${created.json.receipt}`);
+  assert.equal(inv.status, 200);
+  const { rate, base } = inv.json.gst;
+  const gst = inv.json.gst.gst;
+  assert.equal(rate, 18);
+  // base + tax must equal the amount actually charged (prices are GST-inclusive)
+  assert.equal(base + gst, created.json.amount_paise);
+  // and the base is the amount/1.18, rounded
+  assert.equal(base, Math.round((created.json.amount_paise * 100) / 118));
+});
+
 test('buyer GSTIN is captured, validated and printed on the invoice', async () => {
   const good = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],

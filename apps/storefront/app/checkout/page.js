@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
+import { gstInclusiveSplit } from '../../lib/pricing';
 import { createCheckout, validateCoupon } from '../../lib/api';
 
 function loadRazorpay() {
@@ -214,6 +215,16 @@ export default function CheckoutPage() {
             <div className="flex justify-between font-extrabold"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
           </div>
         )}
+        {(() => {
+          const gst = gstInclusiveSplit(shown);
+          if (!gst.gstPaise) return null;
+          return (
+            <div className="text-xs text-gray-500 flex justify-between">
+              <span>Inclusive of GST ({gst.rate}%)</span>
+              <span>₹{(gst.gstPaise / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            </div>
+          );
+        })()}
         {err && <p className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
           {busy ? 'Placing order...' : `Pay ₹${shown.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}

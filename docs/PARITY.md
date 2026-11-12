@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 67 (per-product SEO + JSON-LD, verified in production HTML).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 68 (product pages server-rendered, verified in HTML).
 
 ## Storefront
 
@@ -10,7 +10,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
-| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` (gallery + EMI 3/6/9/12) |
+| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12 |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order (agreed price, stock reserved) |

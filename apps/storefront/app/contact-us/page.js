@@ -1,15 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { sendContactMessage } from '../../lib/api';
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const send = (e) => {
+  const send = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.message.trim()) return;
-    setSent(true);
+    setErr('');
+    if (!form.name.trim() || !form.message.trim()) {
+      setErr('Please fill your name and message.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await sendContactMessage({ name: form.name.trim(), phone: form.phone.trim(), message: form.message.trim() });
+      setSent(true);
+    } catch (e2) {
+      setErr(e2.message || 'Could not send. Call us on the helpline instead.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -39,7 +54,8 @@ export default function ContactUs() {
               <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="98765 43210" inputMode="numeric" /></div>
             </div>
             <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="How can we help?" /></div>
-            <button className="btn-primary">Send Message</button>
+            {err ? <p className="text-xs text-red-600 font-semibold">{err}</p> : null}
+            <button className="btn-primary disabled:opacity-60" disabled={busy}>{busy ? 'Sending...' : 'Send Message'}</button>
           </>
         )}
       </form>

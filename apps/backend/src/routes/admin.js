@@ -210,7 +210,96 @@ router.post('/quotes/:id/convert', async (req, res) => {
   }
 });
 
-// GET /admin/coupons — list all coupon codes
+// GET /admin/contact?status= — list enquiries
+router.get('/contact', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const conds = [];
+    const params = [];
+    if (status) {
+      params.push(status);
+      conds.push(`status = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM contact_messages ${where} ORDER BY created_at DESC, id DESC LIMIT 200`,
+      params
+    );
+    res.json({ messages: rows });
+  } catch (err) {
+    console.error('[admin] contact list error:', err.message);
+    res.status(500).json({ error: 'Failed to list messages' });
+  }
+});
+
+// PATCH /admin/contact/:id {status: new|contacted|closed}
+router.patch('/contact/:id', async (req, res) => {
+  try {
+    if (!['new', 'contacted', 'closed'].includes(req.body && req.body.status)) {
+      return res.status(400).json({ error: 'status must be one of: new, contacted, closed' });
+    }
+    const { rows } = await db.query(
+      'UPDATE contact_messages SET status = $1 WHERE id = $2 RETURNING *',
+      [req.body.status, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Message not found' });
+    res.json({ message: rows[0] });
+  } catch (err) {
+    console.error('[admin] contact update error:', err.message);
+    res.status(500).json({ error: 'Failed to update message' });
+  }
+});
+
+// GET /admin/reviews?verified=&limit= — moderation queue (latest first)
+router.get('/reviews', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+    const conds = [];
+    const params = [];
+    if (req.query.verified === 'true' || req.query.verified === 'false') {
+      params.push(req.query.verified === 'true');
+      conds.push(`verified = $${params.length}`);
+    }
+    params.push(limit);
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM reviews ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
+      params
+    );
+    res.json({ reviews: rows });
+  } catch (err) {
+    console.error('[admin] reviews list error:', err.message);
+    res.status(500).json({ error: 'Failed to list reviews' });
+  }
+});
+
+// PATCH /admin/reviews/:id {verified: bool} — approve/unapprove
+router.patch('/reviews/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'UPDATE reviews SET verified = $1 WHERE id = $2 RETURNING *',
+      [!!(req.body && req.body.verified), req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Review not found' });
+    res.json({ review: rows[0] });
+  } catch (err) {
+    console.error('[admin] review update error:', err.message);
+    res.status(500).json({ error: 'Failed to update review' });
+  }
+});
+
+// DELETE /admin/reviews/:id — remove spam/abuse
+router.delete('/reviews/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Review not found' });
+    console.log(`[admin] review #${req.params.id} deleted`);
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    console.error('[admin] review delete error:', err.message);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+});
 router.get('/coupons', async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM coupons ORDER BY created_at DESC');

@@ -227,6 +227,59 @@ export async function trackOrder(receipt, phone) {
 }
 
 // ---- Service: newsletter ----
+export async function sendContactMessage(payload) {
+  const res = await fetch(`${BASE}/store/service/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getAdminMessages(token, status = '') {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/contact${q}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function updateMessageStatus(token, id, status) {
+  const res = await fetch(`${BASE}/admin/contact/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ status }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getAdminReviews(token, verified = '', limit = 50) {
+  const q = new URLSearchParams();
+  if (verified) q.set('verified', verified);
+  if (limit) q.set('limit', String(limit));
+  const res = await fetch(`${BASE}/admin/reviews?${q.toString()}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function setReviewVerified(token, id, verified) {
+  const res = await fetch(`${BASE}/admin/reviews/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ verified }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function deleteReview(token, id) {
+  const res = await fetch(`${BASE}/admin/reviews/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function subscribe(email) {
   const res = await fetch(`${BASE}/store/service/subscribe`, {
     method: 'POST',

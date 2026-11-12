@@ -174,4 +174,27 @@ router.post('/cancel', async (req, res) => {
   }
 });
 
+// POST /store/contact { name, phone?, message } — persisted for admin triage
+router.post('/contact', async (req, res) => {
+  try {
+    const name = String((req.body && req.body.name) || '').trim();
+    const phone = digits(req.body && req.body.phone);
+    const message = String((req.body && req.body.message) || '').trim();
+    if (!name) return res.status(400).json({ error: 'name required' });
+    if (!message) return res.status(400).json({ error: 'message required' });
+    if (phone && phone.length < 10) {
+      return res.status(400).json({ error: 'valid phone required (at least 10 digits)' });
+    }
+    const { rows } = await db.query(
+      `INSERT INTO contact_messages (name, phone, message) VALUES ($1, $2, $3) RETURNING id, created_at`,
+      [name, phone, message]
+    );
+    console.log(`[service] contact message #${rows[0].id} from ${name}`);
+    res.status(201).json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    console.error('[service] contact error:', err.message);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
 module.exports = router;

@@ -11,6 +11,11 @@ import {
   listCoupons,
   saveCoupon,
   toggleCoupon,
+  getAdminMessages,
+  updateMessageStatus,
+  getAdminReviews,
+  setReviewVerified,
+  deleteReview,
   updateStock
 } from '../../lib/api';
 
@@ -52,6 +57,11 @@ export default function AdminPage() {
   const [coupons, setCoupons] = useState([]);
   const [couponForm, setCouponForm] = useState({ code: '', pct: '', maxRs: '', minRs: '' });
   const [couponMsg, setCouponMsg] = useState('');
+
+  const [messages, setMessages] = useState([]);
+  const [msgFilter, setMsgFilter] = useState('');
+  const [modReviews, setModReviews] = useState([]);
+  const [modVerified, setModVerified] = useState('false');
 
   useEffect(() => {
     try {
@@ -127,6 +137,8 @@ export default function AdminPage() {
     if (tab === 'orders') loadOrders();
     if (tab === 'quotes') loadQuotes();
     if (tab === 'coupons') loadCoupons();
+    if (tab === 'messages') loadMessages();
+    if (tab === 'reviews') loadModReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
 
@@ -180,6 +192,65 @@ export default function AdminPage() {
     try {
       await toggleCoupon(token, code, !active);
       await loadCoupons();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function loadMessages() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getAdminMessages(token, msgFilter);
+      setMessages(Array.isArray(data) ? data : data.messages || data.items || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadModReviews() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getAdminReviews(token, modVerified, 100);
+      setModReviews(Array.isArray(data) ? data : data.reviews || data.items || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onMessageStatus(id, status) {
+    setError('');
+    try {
+      await updateMessageStatus(token, id, status);
+      await loadMessages();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function onReviewVerify(id, verified) {
+    setError('');
+    try {
+      await setReviewVerified(token, id, verified);
+      await loadModReviews();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function onReviewDelete(id) {
+    setError('');
+    try {
+      if (typeof window !== 'undefined' && !window.confirm('Delete this review permanently?')) return;
+      await deleteReview(token, id);
+      await loadModReviews();
     } catch (e) {
       setError(e.message);
     }
@@ -272,6 +343,8 @@ export default function AdminPage() {
     ['orders', 'Orders'],
     ['quotes', 'Quotes'],
     ['coupons', 'Coupons'],
+    ['messages', 'Messages'],
+    ['reviews', 'Reviews'],
     ['stock', 'Stock']
   ];
 
@@ -308,7 +381,7 @@ export default function AdminPage() {
                 {label}
               </button>
             ))}
-            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); }} className="btn-outline !py-2 ml-auto">
+            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); }} className="btn-outline !py-2 ml-auto">
               Refresh
             </button>
           </div>
@@ -503,6 +576,90 @@ export default function AdminPage() {
                       </tr>
                     ))}
                     {coupons.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'messages' && (
+            <div className="mt-4">
+              <div className="flex gap-2 items-center mb-3 flex-wrap">
+                <label className="text-sm font-semibold">Status:</label>
+                <select value={msgFilter} onChange={(e) => setMsgFilter(e.target.value)} className="input !w-auto">
+                  <option value="">All</option>
+                  {['new', 'contacted', 'closed'].map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <span className="text-xs text-gray-500">{messages.length} message(s)</span>
+              </div>
+              <div className="overflow-x-auto card">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">ID</th>
+                      <th className="p-2">Name / Phone</th>
+                      <th className="p-2">Message</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {messages.map((m, i) => (
+                      <tr key={m.id || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono text-xs">{m.id || '—'}</td>
+                        <td className="p-2 text-xs">{m.name || '—'}<br />{m.phone || ''}</td>
+                        <td className="p-2 text-xs">{m.message || '—'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{m.status || '—'}</span></td>
+                        <td className="p-2">
+                          {['contacted', 'closed'].map((s) => (
+                            <button key={s} onClick={() => onMessageStatus(m.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
+                    {messages.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No messages.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'reviews' && (
+            <div className="mt-4">
+              <div className="flex gap-2 items-center mb-3 flex-wrap">
+                <label className="text-sm font-semibold">Show:</label>
+                <select value={modVerified} onChange={(e) => setModVerified(e.target.value)} className="input !w-auto">
+                  <option value="">All</option>
+                  <option value="false">Unverified (queue)</option>
+                  <option value="true">Verified</option>
+                </select>
+                <span className="text-xs text-gray-500">{modReviews.length} review(s)</span>
+              </div>
+              <div className="overflow-x-auto card">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">ID</th>
+                      <th className="p-2">Product / By</th>
+                      <th className="p-2">Rating + Review</th>
+                      <th className="p-2">Verified</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modReviews.map((r, i) => (
+                      <tr key={r.id || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono text-xs">{r.id || '—'}</td>
+                        <td className="p-2 text-xs">{r.product_slug || ''}<br />{r.name || '—'}</td>
+                        <td className="p-2 text-xs">★{r.rating} <b>{r.title || ''}</b><br />{r.body || ''}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{r.verified ? 'yes' : 'no'}</span></td>
+                        <td className="p-2">
+                          <button onClick={() => onReviewVerify(r.id, !r.verified)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{r.verified ? 'Unverify' : 'Verify'}</button>
+                          <button onClick={() => onReviewDelete(r.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1 !text-red-600">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {modReviews.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">Queue clear.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

@@ -44,7 +44,19 @@ router.get('/', async (req, res) => {
       `SELECT * FROM products ${where} ORDER BY ${orderBy} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    res.json({ products: rows, limit, offset });
+
+    // Total matches so callers can show "N products" and know when to page.
+    let total = null;
+    try {
+      const { rows: countRows } = await db.query(
+        `SELECT COUNT(*)::int AS total FROM products ${where}`,
+        params.slice(0, -2)
+      );
+      total = countRows[0] ? countRows[0].total : null;
+    } catch (e) {
+      console.error('[search] count error:', e.message);
+    }
+    res.json({ products: rows, limit, offset, total });
   } catch (err) {
     console.error('[search] error:', err.message);
     res.status(500).json({ error: 'Search failed' });

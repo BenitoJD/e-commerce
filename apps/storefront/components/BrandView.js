@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { searchProducts, asList } from '../lib/api';
 
-export default function BrandView({ name, initialItems = [] }) {
+export default function BrandView({ name, initialItems = [], initialTotal = null }) {
+  const PAGE = 40;
   const [items, setItems] = useState(Array.isArray(initialItems) ? initialItems : []);
   const [loading, setLoading] = useState(!(Array.isArray(initialItems) && initialItems.length));
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState((initialItems || []).length === 40);
-  const PAGE = 40;
+  // Server sends exactly PAGE items when more may exist, so this comparison is meaningful.
+  const [hasMore, setHasMore] = useState((initialItems || []).length === PAGE);
+  const [total, setTotal] = useState(Number.isFinite(Number(initialTotal)) ? Number(initialTotal) : null);
 
   useEffect(() => {
     // Server rendered the first page already; only paginate from here.
@@ -63,7 +65,9 @@ export default function BrandView({ name, initialItems = [] }) {
       </nav>
       <a href="/brands" className="text-sm text-[#F97316] font-bold">← All brands</a>
       <h1 className="text-3xl font-extrabold mt-1">{name}</h1>
-      <p className="text-sm text-gray-500 mt-1">{items.length} products • GST invoice • EMI available</p>
+      <p className="text-sm text-gray-500 mt-1">
+        {(total != null ? total : items.length)} product{(total != null ? total : items.length) === 1 ? '' : 's'} • GST invoice • EMI available
+      </p>
       {loading ? (
         <p className="mt-8 text-gray-500">Loading products...</p>
       ) : items.length === 0 ? (

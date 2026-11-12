@@ -896,6 +896,19 @@ test('online orders still show the payment step', async () => {
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
 });
 
+test('search endpoint reports a total for brand pages and paging', async () => {
+  const res = await api('GET', '/store/search?brand=DrillCo&limit=1');
+  assert.equal(res.status, 200);
+  assert.ok(Array.isArray(res.json.products));
+  assert.ok(Number.isInteger(res.json.total), `expected numeric total, got ${res.json.total}`);
+  assert.ok(res.json.total >= 1);
+  assert.equal(res.json.limit, 1);
+
+  const none = await api('GET', '/store/search?brand=NoSuchBrand');
+  assert.equal(none.json.total, 0);
+  assert.deepEqual(none.json.products, []);
+});
+
 test('product list reports the true total, independent of page size', async () => {
   const all = await api('GET', '/store/products?limit=100');
   const total = all.json.total;

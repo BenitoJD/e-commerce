@@ -69,12 +69,19 @@ export async function getDealsForMeta(minOff = 20, limit = 60) {
   return Array.isArray(data.deals) ? data.deals : [];
 }
 
-// Products for one brand via the search endpoint's brand filter (up to 50 per call).
-export async function getBrandProducts(name, limit = 48) {
+// Products for one brand via the search endpoint's brand filter, plus the true total so
+// the page can show an accurate count and know whether more pages exist.
+export async function getBrandPage(name, limit = 40) {
   const q = new URLSearchParams({ brand: String(name || ''), limit: String(limit) });
   const data = await cachedJson(`${BASE}/store/search?${q.toString()}`);
-  if (!data) return [];
-  return Array.isArray(data) ? data : data.products || [];
+  if (!data) return { items: [], total: null };
+  const items = Array.isArray(data) ? data : data.products || [];
+  const total = !Array.isArray(data) && Number.isFinite(Number(data.total)) ? Number(data.total) : null;
+  return { items, total };
+}
+
+export async function getBrandProducts(name, limit = 48) {
+  return (await getBrandPage(name, limit)).items;
 }
 
 export function paiseToRupees(paise) {

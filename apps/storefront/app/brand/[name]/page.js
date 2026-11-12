@@ -1,5 +1,5 @@
 import BrandView from '../../../components/BrandView';
-import { getBrandProducts, absoluteUrl } from '../../../lib/serverApi';
+import { getBrandPage, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
@@ -20,7 +20,8 @@ export async function generateMetadata({ params }) {
 export default async function BrandPage({ params }) {
   const name = decodeURIComponent(params.name || '');
   // Brand filter server-side: filtering a 100-product page would silently truncate large brands.
-  const items = await getBrandProducts(name);
+  // The first page size matches the client's PAGE constant so "Load more" lines up.
+  const { items, total } = await getBrandPage(name, 40);
   return (
     <>
       <script
@@ -33,7 +34,7 @@ export default async function BrandPage({ params }) {
           ]),
         }}
       />
-      <BrandView name={name} initialItems={items} />
+      <BrandView name={name} initialItems={items} initialTotal={total} />
     </>
   );
 }

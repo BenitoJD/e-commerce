@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 122 (rating summary beside the product title).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 123 (recently-viewed logic extracted and tested; invoice print verified already present).
 
 ## Storefront
 
@@ -20,7 +20,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`); admin Stock tab lists pending restock requests (filter by slug) |
 | Wishlist | ✅ localStorage + `/wishlist`, move-one / **move-all to cart** (skips out-of-stock), clear all |
-| Recently viewed | ✅ `tw_recent` strip on homepage |
+| Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
 | Deals of the day + countdown | ✅ `/deals` — **server-rendered** 20%+ list (`lib/deals.js`), ItemList + breadcrumb JSON-LD, dynamic title, client countdown only |
 | Brand pages | ✅ `/brands` **server-rendered directory** (every brand link in initial HTML, counts per brand) and `/brand/[name]` server-rendered with breadcrumbs |
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
@@ -88,11 +88,11 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 56 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 60 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, GST-inclusive split, COD cap + shipping
-mirrors, deals threshold/sorting, brand directory counts, canonical-URL guard, WhatsApp
-links (customer + share), TTL cache eviction/expiry, JSON-LD builders,
-API base + server base resolution, misconfiguration guard, NaN-proof
+mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
+canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,
+JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

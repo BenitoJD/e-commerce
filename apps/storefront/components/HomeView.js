@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchProducts, asList } from '../lib/api';
+import { parseRecent } from '../lib/recent';
 
 const FALLBACK = [
   { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80' },
@@ -64,7 +65,7 @@ export default function HomeView({ initialProducts = null }) {
     }
     load();
     try {
-      setRecent(JSON.parse(localStorage.getItem('tw_recent') || '[]'));
+      setRecent(parseRecent(localStorage.getItem('tw_recent')));
     } catch { /* ignore */ }
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

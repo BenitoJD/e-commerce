@@ -5,6 +5,7 @@ import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestio
 import { addToCart } from '../lib/cart';
 import { addToWishlist, removeFromWishlist, isWishlisted } from '../lib/wishlist';
 import { waShareLink } from '../lib/store';
+import { pushRecent, parseRecent } from '../lib/recent';
 
 const FALLBACK = {
   slug: 'bosch-gsb-13-re-drill',
@@ -85,10 +86,15 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
     if (!p || typeof window === 'undefined') return;
     try {
       const key = 'tw_recent';
-      const list = JSON.parse(localStorage.getItem(key) || '[]');
-      const entry = { slug: p.slug || slug, name: p.name, price: p.price, brand: p.brand || '', image: p.image || (p.images && p.images[0]) || '' };
-      const next = [entry, ...list.filter((i) => i.slug !== entry.slug)].slice(0, 8);
-      localStorage.setItem(key, JSON.stringify(next));
+      const list = parseRecent(localStorage.getItem(key));
+      const entry = {
+        slug: p.slug || slug,
+        name: p.name,
+        price: p.price,
+        brand: p.brand || '',
+        image: p.image || (p.images && p.images[0]) || '',
+      };
+      localStorage.setItem(key, JSON.stringify(pushRecent(list, entry)));
     } catch { /* ignore */ }
     let alive = true;
     async function loadRelated() {

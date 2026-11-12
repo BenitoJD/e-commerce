@@ -18,6 +18,7 @@ const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
 const { createRateLimiter } = require('./lib/rateLimit');
 const { parseOrigins, securityHeaders } = require('./lib/security');
+const { requestId } = require('./lib/requestId');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -27,6 +28,7 @@ app.set('trust proxy', true); // behind nginx: needed for req.secure / req.ip
 
 const allowedOrigins = parseOrigins(process.env.FRONTEND_URL);
 app.use(securityHeaders);
+app.use(requestId);
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : '*' }));
 
 // Webhooks need the RAW body for signature verification -> mount before express.json
@@ -82,16 +84,17 @@ app.use('/store/invoice', invoiceRouter);
 
 app.get('/sitemap.xml', sitemapHandler);
 
-app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+app.use((req, res) => res.status(404).json({ error: 'Not found', requestId: req.id || null }));
 
 // JSON error responses (body-parser failures default to HTML otherwise).
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  const rid = req && req.id ? req.id : 'no-id';
   if (err && (err.type === 'entity.parse.failed' || err.status === 400)) {
-    return res.status(400).json({ error: 'Invalid JSON body' });
+    return res.status(400).json({ error: 'Invalid JSON body', requestId: rid });
   }
-  console.error('[backend] unhandled error:', err && err.message);
-  res.status(err && err.status === 404 ? 404 : 500).json({ error: 'Internal error' });
+  console.error(`[backend] unhandled error [${rid}]:`, err && err.message);
+  res.status(err && err.status === 404 ? 404 : 500).json({ error: 'Internal error', requestId: rid });
 });
 
 process.on('unhandledRejection', (err) => {

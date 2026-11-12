@@ -90,7 +90,7 @@ Hardening: security headers (nosniff, frame-deny, referrer, permissions, HSTS ov
 HTTPS), `x-powered-by` off, CORS allowlist via `FRONTEND_URL`, per-IP limits on public
 writes (`RATE_LIMIT_*`), separate admin throttle (`ADMIN_RATE_LIMIT_*`), constant-time
 admin token compare, parameterised SQL everywhere, short-TTL SSR cache
-(`SSR_CACHE_TTL_MS`) so traffic bursts don't hammer Postgres.
+(`SSR_CACHE_TTL_MS`) so traffic bursts don't hammer Postgres, and `X-Request-Id` on every response for support traces.
 
 SEO: server-rendered homepage, product, category and brand pages; Product JSON-LD;
 per-page titles/descriptions/canonical/OG; generated `robots.txt` from
@@ -115,7 +115,7 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 130 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 132 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 108 (back-in-stock requests visible in admin).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 109 (request IDs end to end, 132 backend tests).
 
 ## Storefront
 
@@ -49,6 +49,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Admin access | ✅ token via `x-admin-token` on every admin route, compared in constant time |
 | SQL | ✅ parameterised everywhere; sort/filter values allowlisted |
 | Input validation | ✅ public writes clamp/validate: quote qty (1–100k), phone format, name/message/review lengths; **checkout customer block normalised** (phone → 10 digits, pincode 6, address ≤500) so orders stay trackable; admin statuses allowlisted; stock/prices bounded |
+| Observability | ✅ every response carries `X-Request-Id` (honours a sane upstream id); 4xx/5xx JSON includes `requestId`, and 5xx logs are prefixed with it so a customer quote can be traced |
 | SSR caching | ✅ short-TTL cache (`SSR_CACHE_TTL_MS`, default 10s) on server-rendered product/category/home fetches — measured 6 page views → 1 backend call, still revalidating after TTL |
 
 ## Needs your inputs (code slots ready)
@@ -77,7 +78,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (28/28)
 ```
 
-Backend: `cd apps/backend && npm test` — 130 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 132 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

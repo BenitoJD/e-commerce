@@ -3,9 +3,6 @@ const db = require('../db');
 const STATIC_PAGES = [
   '/deals',
   '/brands',
-  '/my-orders',
-  '/track-order',
-  '/wishlist',
   '/bulk-quote',
   '/bulk-orders',
   '/emi-options',

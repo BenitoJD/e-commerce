@@ -30,6 +30,26 @@ test('sitemap escapes XML and tolerates empty input', () => {
   assert.ok(xml.trim().endsWith('</urlset>'));
 });
 
+test('sitemap never advertises pages that robots.txt blocks', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const robotsPath = path.join(__dirname, '..', '..', '..', '..', 'storefront', 'app', 'robots.js');
+  const robots = fs.readFileSync(robotsPath, 'utf8');
+  // The disallow list is a literal array in that file; read it without executing ESM.
+  const disallowBlock = robots.slice(robots.indexOf('disallow:'), robots.indexOf(']', robots.indexOf('disallow:')));
+  const disallowed = [...disallowBlock.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+  assert.ok(disallowed.length >= 5, 'expected a robots disallow list');
+  const overlap = STATIC_PAGES.filter((page) => disallowed.includes(page));
+  assert.deepEqual(overlap, [], `sitemap lists robots-blocked pages: ${overlap.join(', ')}`);
+});
+
+test('sitemap omits private and transactional pages', () => {
+  for (const priv of ['/my-orders', '/track-order', '/wishlist', '/cart', '/checkout', '/admin']) {
+    assert.equal(STATIC_PAGES.includes(priv), false, `${priv} must not be in the sitemap`);
+  }
+});
+
 test('escapeXml neutralises XML metacharacters', () => {
   assert.equal(escapeXml('a&b<c>"d"\'e\''), 'a&amp;b&lt;c&gt;&quot;d&quot;&apos;e&apos;');
 });

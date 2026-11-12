@@ -49,6 +49,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [orderFilter, setOrderFilter] = useState('');
+  const [orderSearch, setOrderSearch] = useState('');
   const [quotes, setQuotes] = useState([]);
   const [quoteFilter, setQuoteFilter] = useState('');
 
@@ -113,7 +114,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await getAdminOrders(token, orderFilter);
+      const data = await getAdminOrders(token, orderFilter, orderSearch.trim());
       setOrders(Array.isArray(data) ? data : data.orders || data.items || []);
     } catch (e) {
       setError(e.message);
@@ -487,6 +488,14 @@ export default function AdminPage() {
                   <option value="">All</option>
                   {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+                <input
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') loadOrders(); }}
+                  placeholder="Search receipt / name / phone"
+                  className="input !w-auto flex-1 min-w-[200px]"
+                />
+                <button onClick={loadOrders} className="btn-outline !py-2">Search</button>
                 <span className="text-xs text-gray-500">{orders.length} order(s)</span>
               </div>
               <div className="overflow-x-auto card">

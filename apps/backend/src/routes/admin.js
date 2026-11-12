@@ -56,12 +56,17 @@ router.get('/orders', async (req, res) => {
   try {
     let limit = parseInt(req.query.limit, 10) || 50;
     limit = Math.min(Math.max(limit, 1), 200);
-    const { status } = req.query;
+    const { status, q } = req.query;
     const conds = [];
     const params = [];
     if (status) {
       params.push(status);
       conds.push(`status = $${params.length}`);
+    }
+    if (q) {
+      params.push(`%${String(q).trim()}%`);
+      const n = params.length;
+      conds.push(`(receipt ILIKE $${n} OR customer->>'phone' ILIKE $${n} OR customer->>'name' ILIKE $${n})`);
     }
     params.push(limit);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';

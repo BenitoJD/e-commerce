@@ -93,9 +93,12 @@ export async function getAdminStats(token) {
   return handle(res);
 }
 
-export async function getAdminOrders(token, status = '') {
-  const q = status ? `?status=${encodeURIComponent(status)}` : '';
-  const res = await fetch(`${BASE}/admin/orders${q}`, {
+export async function getAdminOrders(token, status = '', search = '') {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (search) params.set('q', search);
+  const qs = params.toString();
+  const res = await fetch(`${BASE}/admin/orders${qs ? `?${qs}` : ''}`, {
     headers: adminHeaders(token),
     cache: 'no-store'
   });

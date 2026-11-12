@@ -22,6 +22,15 @@ ufw allow 22,80,443/tcp && ufw enable
 node scripts/validate-compose.cjs      # duplicate/misplaced compose keys
 BASE_URL=https://yourdomain.com PRODUCT_SLUG=<a real slug> BRAND=<a real brand> \
   node scripts/smoke.mjs
+
+## Container image notes
+- `next.config.js` must stay self-contained: `next start` loads it at boot, and the runner
+  stage only ships `.next`, `public`, `package.json`, `next.config.js`, `node_modules`.
+  Tests fail if it requires app code or if the Dockerfile stops declaring the build args
+  (`BACKEND_INTERNAL_URL` is needed at build time for the `/sitemap.xml` rewrite).
+- After `docker compose up`, check `docker compose exec storefront \
+  node -e "console.log(require('./.next/routes-manifest.json').rewrites)"` — the sitemap
+  destination should be `http://backend:9000/sitemap.xml`, not `localhost`.
 ```
 Compose includes an `nginx` service (port 80) that serves the storefront at `/` and the
 API at `/api/*` (see `infra/nginx.conf`). Razorpay webhook →

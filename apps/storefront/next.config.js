@@ -1,11 +1,20 @@
 /** @type {import('next').NextConfig} */
-const { serverApiBase } = require('./lib/serverApiBase.cjs');
 
-// Browser calls and server calls need different bases in a container deploy:
+// Resolve the server-side API base inline: `next start` loads this file at boot, and the
+// production image only ships .next/public/package.json — so a require() of app code
+// (lib/serverApiBase.cjs) would crash the container with MODULE_NOT_FOUND.
+// Browser and server need different bases in a container deploy:
 //   NEXT_PUBLIC_BACKEND_URL -> what the browser uses (often "/api")
 //   BACKEND_INTERNAL_URL    -> what the server uses for rewrites (e.g. http://backend:9000)
-// The rewrite below runs on the server, so it must use the internal base.
-const BACKEND = serverApiBase();
+function resolveBackendBase(env = process.env) {
+  const absolute = (v) => {
+    const s = String(v || '').trim();
+    return /^https?:\/\//i.test(s) ? s.replace(/\/+$/, '') : null;
+  };
+  return absolute(env.BACKEND_INTERNAL_URL) || absolute(env.NEXT_PUBLIC_BACKEND_URL) || 'http://localhost:9000';
+}
+
+const BACKEND = resolveBackendBase();
 
 const nextConfig = {
   images: {

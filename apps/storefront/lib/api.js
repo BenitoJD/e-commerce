@@ -102,6 +102,16 @@ export async function updateQuoteStatus(token, id, status) {
   return handle(res);
 }
 
+export async function convertQuote(token, id, unitPricePaise) {
+  const res = await fetch(`${BASE}/admin/quotes/${encodeURIComponent(id)}/convert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify(unitPricePaise ? { unit_price_paise: Number(unitPricePaise) } : {}),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function updateStock(token, slug, stock) {
   const res = await fetch(`${BASE}/admin/products/${encodeURIComponent(slug)}/stock`, {
     method: 'PATCH',

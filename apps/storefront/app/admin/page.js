@@ -7,6 +7,7 @@ import {
   updateOrderStatus,
   getAdminQuotes,
   updateQuoteStatus,
+  convertQuote,
   updateStock
 } from '../../lib/api';
 
@@ -43,6 +44,7 @@ export default function AdminPage() {
   const [slug, setSlug] = useState('');
   const [stock, setStock] = useState('');
   const [stockResult, setStockResult] = useState(null);
+  const [convertMsg, setConvertMsg] = useState('');
 
   useEffect(() => {
     try {
@@ -143,8 +145,29 @@ export default function AdminPage() {
 
   async function onQuoteAction(id, status) {
     setError('');
+    setConvertMsg('');
     try {
       await updateQuoteStatus(token, id, status);
+      await loadQuotes();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function onQuoteConvert(id, productSlug) {
+    setError('');
+    setConvertMsg('');
+    try {
+      const raw = typeof window !== 'undefined'
+        ? window.prompt(`Agreed unit price in ₹ for ${productSlug || 'this item'} (leave blank for catalog price):`, '')
+        : '';
+      const paise = raw && raw.trim() ? Math.round(Number(raw.replace(/,/g, '')) * 100) : undefined;
+      if (raw && raw.trim() && (!Number.isFinite(paise) || paise <= 0)) {
+        setError('Enter a valid agreed price in ₹.');
+        return;
+      }
+      const r = await convertQuote(token, id, paise);
+      setConvertMsg(`Quote converted → order ${r.receipt}${r.reused ? ' (already existed)' : ''} — collect advance via Razorpay Payment Link, then mark shipped.`);
       await loadQuotes();
     } catch (e) {
       setError(e.message);
@@ -343,6 +366,9 @@ export default function AdminPage() {
                 </select>
                 <span className="text-xs text-gray-500">{quotes.length} quote(s)</span>
               </div>
+              {convertMsg ? (
+                <div className="mb-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm text-green-800">{convertMsg}</div>
+              ) : null}
               <div className="overflow-x-auto card">
                 <table className="w-full text-sm">
                   <thead>
@@ -359,12 +385,21 @@ export default function AdminPage() {
                       <tr key={q.id || q._id || i} className="border-b last:border-0">
                         <td className="p-2 font-mono text-xs">{q.id || q._id || '—'}</td>
                         <td className="p-2 text-xs">{q.name || q.customer || '—'}<br />{q.phone || q.email || ''}</td>
-                        <td className="p-2 text-xs">{q.message || q.details || q.product || '—'}</td>
+                        <td className="p-2 text-xs">
+                          {(q.product_slug || q.product) ? <div className="font-mono">{q.product_slug || q.product}{q.qty ? ` × ${q.qty}` : ''}</div> : null}
+                          <div>{q.message || q.details || '—'}</div>
+                        </td>
                         <td className="p-2"><span className="badge bg-gray-100">{q.status || '—'}</span></td>
                         <td className="p-2">
                           {['contacted', 'quoted', 'won', 'lost'].map((s) => (
                             <button key={s} onClick={() => onQuoteAction(q.id || q._id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
                           ))}
+                          {!q.order_receipt && (q.product_slug || q.product) ? (
+                            <button onClick={() => onQuoteConvert(q.id || q._id, q.product_slug || q.product)} className="btn-primary !py-1 !px-2 text-xs mr-1 mb-1">Convert to order</button>
+                          ) : null}
+                          {q.order_receipt ? (
+                            <span className="text-xs text-green-700">Order {q.order_receipt}</span>
+                          ) : null}
                         </td>
                       </tr>
                     ))}

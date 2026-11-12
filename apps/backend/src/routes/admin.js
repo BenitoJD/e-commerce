@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { releaseItems } = require('../lib/stock');
+const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel } = require('../lib/orderTransitions');
 
 const router = express.Router();
@@ -158,6 +158,55 @@ router.patch('/products/:slug/stock', async (req, res) => {
   } catch (err) {
     console.error('[admin] stock update error:', err.message);
     res.status(500).json({ error: 'Failed to update stock' });
+  }
+});
+
+// POST /admin/quotes/:id/convert { unit_price_paise? } — agreed deal becomes a pending order
+router.post('/quotes/:id/convert', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM bulk_quotes WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Quote not found' });
+    const quote = rows[0];
+    if (quote.order_receipt) {
+      return res.json({ ok: true, receipt: quote.order_receipt, reused: true });
+    }
+    if (!quote.product_slug) {
+      return res.status(400).json({ error: 'Quote has no product linked' });
+    }
+    const { rows: prows } = await db.query(
+      'SELECT slug, price_paise FROM products WHERE slug = $1',
+      [quote.product_slug]
+    );
+    if (!prows.length) return res.status(400).json({ error: `Product not found: ${quote.product_slug}` });
+    const qty = Math.max(1, parseInt(quote.qty, 10) || 1);
+    const override = parseInt(req.body && req.body.unit_price_paise, 10) || 0;
+    const unitPaise = override > 0 ? override : prows[0].price_paise;
+    if (unitPaise < 100) return res.status(400).json({ error: 'Agreed unit price too small' });
+    const amountPaise = unitPaise * qty;
+    const lineItems = [{ slug: quote.product_slug, qty, unit_price_paise: unitPaise }];
+    const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+
+    const created = await withTransaction(async (tx) => {
+      await reserveItems(tx, lineItems);
+      const ins = await tx.query(
+        `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
+         VALUES ($1, 'pending', $2, $3, $4, NULL, 0) RETURNING receipt`,
+        [receipt, JSON.stringify(lineItems), amountPaise, JSON.stringify({ name: quote.name || '', phone: quote.phone || '', address: '', pincode: '' })]
+      );
+      await tx.query(`UPDATE bulk_quotes SET status = 'won', order_receipt = $1 WHERE id = $2`, [receipt, quote.id]);
+      return ins.rows[0];
+    }).catch((err) => {
+      if (err.code === 'INSUFFICIENT_STOCK') {
+        return res.status(409).json({ error: `Insufficient stock for ${err.slug}` });
+      }
+      throw err;
+    });
+    if (!created) return; // response already sent
+    console.log(`[admin] quote #${quote.id} converted -> order ${created.receipt} amount=${amountPaise}`);
+    res.json({ ok: true, receipt: created.receipt, amount_paise: amountPaise });
+  } catch (err) {
+    console.error('[admin] quote convert error:', err.message);
+    res.status(500).json({ error: 'Failed to convert quote' });
   }
 });
 

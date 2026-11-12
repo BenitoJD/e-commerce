@@ -64,6 +64,20 @@ Put Cloudflare in front, point `yourdomain.com` → VPS, webhook URL:
 - COD for <₹20k hand tools; prepaid only for >50kg machinery.
 - GST invoice: print Razorpay payment ID + HSN on invoice.
 
+## Admin console
+
+- Open `/admin` on the storefront, log in with `ADMIN_TOKEN` (backend env, also in `.env.example`).
+- Overview: revenue (paid orders), orders by status, low stock (<5), new quotes.
+- Orders: filter by status, mark shipped/delivered/cancelled/refunded.
+- Bulk quotes: mark contacted/quoted/won/lost. Stock: update by product slug.
+- API uses `x-admin-token` header; returns 503 if `ADMIN_TOKEN` is unset.
+
+## New endpoints this round
+
+- `GET /store/search?q=&brand=&category=&maxPrice=&sort=&limit=` (SQL search, no extra services needed)
+- `GET /store/checkout/verify?receipt=` (order-success page polls this for live Paid/COD/Pending/Failed status)
+- Seed expanded to 30 products incl. `agriculture` category.
+
 ## GitHub
 
 Owner: https://github.com/BenitoJD — repo name suggested `toolsvilla-clone`.

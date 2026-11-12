@@ -46,3 +46,68 @@ export async function createQuote(payload) {
   });
   return handle(res);
 }
+
+export async function verifyOrder(receipt) {
+  const res = await fetch(`${BASE}/store/checkout/verify?receipt=${encodeURIComponent(receipt)}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+export function adminHeaders(token) {
+  return { 'x-admin-token': token || '' };
+}
+
+export async function getAdminStats(token) {
+  const res = await fetch(`${BASE}/admin/stats`, {
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getAdminOrders(token, status = '') {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/orders${q}`, {
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function updateOrderStatus(token, id, status) {
+  const res = await fetch(`${BASE}/admin/orders/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ status }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getAdminQuotes(token, status = '') {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/quotes${q}`, {
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function updateQuoteStatus(token, id, status) {
+  const res = await fetch(`${BASE}/admin/quotes/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ status }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function updateStock(token, slug, stock) {
+  const res = await fetch(`${BASE}/admin/products/${encodeURIComponent(slug)}/stock`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ stock: Number(stock) }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}

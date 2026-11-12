@@ -97,4 +97,21 @@ router.post('/create', async (req, res) => {
   }
 });
 
+// GET /store/checkout/verify?receipt=
+router.get('/verify', async (req, res) => {
+  try {
+    const { receipt } = req.query;
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    const { rows } = await db.query(
+      'SELECT receipt, status, amount_paise, razorpay_payment_id FROM orders WHERE receipt = $1',
+      [receipt]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('[checkout] verify error:', err.message);
+    res.status(500).json({ error: 'Verify failed' });
+  }
+});
+
 module.exports = router;

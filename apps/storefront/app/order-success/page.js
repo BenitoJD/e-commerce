@@ -1,12 +1,69 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { verifyOrder } from '../../lib/api';
+
+function statusBadge(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'paid') return 'bg-green-100 text-green-800 border-green-200';
+  if (s === 'cod') return 'bg-blue-100 text-blue-800 border-blue-200';
+  if (s === 'failed') return 'bg-red-100 text-red-800 border-red-200';
+  return 'bg-yellow-50 text-yellow-800 border-yellow-200';
+}
+
+function statusLabel(status, fallbackMode) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'paid') return 'Paid';
+  if (s === 'cod') return 'COD';
+  if (s === 'failed') return 'Failed';
+  if (s === 'pending') return 'Pending';
+  return fallbackMode || 'Pending';
+}
 
 function SuccessInner() {
   const sp = useSearchParams();
   const receipt = sp.get('receipt') || '—';
   const mode = sp.get('mode') || 'Paid';
+  const [verify, setVerify] = useState(null);
+  const [attempts, setAttempts] = useState(0);
+
+  useEffect(() => {
+    if (!receipt || receipt === '—') return;
+    let cancelled = false;
+    let count = 0;
+    let timer = null;
+    async function poll() {
+      try {
+        const data = await verifyOrder(receipt);
+        if (cancelled) return;
+        setVerify(data);
+        const st = String(data?.status || '').toLowerCase();
+        // stop early on terminal states
+        if (st === 'paid' || st === 'cod' || st === 'failed') return;
+      } catch {
+        // ignore transient errors, keep polling
+      }
+      count += 1;
+      setAttempts(count);
+      if (count < 10 && !cancelled) {
+        timer = setTimeout(poll, 3000);
+      }
+    }
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [receipt]);
+
+  const liveStatus = verify?.status || null;
+  const amountPaise = verify?.amount_paise ?? verify?.amountPaise ?? null;
+  const amountText =
+    amountPaise != null
+      ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(amountPaise) / 100)
+      : null;
+
   return (
     <div className="max-w-xl mx-auto px-4 py-14 text-center">
       <div className="w-16 h-16 mx-auto rounded-full bg-green-100 grid place-items-center text-3xl">✓</div>
@@ -15,6 +72,13 @@ function SuccessInner() {
       <div className="card p-5 mt-6 text-left text-sm space-y-2">
         <div className="flex justify-between"><span className="text-gray-500">Receipt / Order ID</span><b>{receipt}</b></div>
         <div className="flex justify-between"><span className="text-gray-500">Payment mode</span><b>{mode}</b></div>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-500">Live status</span>
+          <span className={`badge border ${statusBadge(liveStatus)}`}>{statusLabel(liveStatus, mode)}{attempts > 0 && !liveStatus ? ` (retry ${attempts}/10)` : ''}</span>
+        </div>
+        {amountText ? (
+          <div className="flex justify-between"><span className="text-gray-500">Amount</span><b>{amountText}</b></div>
+        ) : null}
         <div className="flex justify-between"><span className="text-gray-500">Delivery</span><b>3–7 working days</b></div>
       </div>
       <div className="mt-6 flex flex-wrap justify-center gap-3">

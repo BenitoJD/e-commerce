@@ -76,7 +76,7 @@ export default function RootLayout({ children }) {
               <a href="/bulk-quote" className="inline-block mt-3 btn-primary !py-2 text-sm">Request Bulk Quote</a>
             </div>
           </div>
-          <div className="border-t border-white/10 text-center text-xs py-4">© {new Date().getFullYear()} {storeName}. All rights reserved. Prices incl. GST where noted.</div>
+          <div className="border-t border-white/10 text-center text-xs py-4">© {new Date().getFullYear()} {storeName}. All rights reserved. Prices incl. GST where noted. <a href="/admin" className="text-gray-500 hover:text-gray-300 ml-2">Admin</a></div>
         </footer>
       </body>
     </html>

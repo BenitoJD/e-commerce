@@ -8,6 +8,8 @@ const productsRouter = require('./routes/products');
 const checkoutRouter = require('./routes/checkout');
 const webhooksRouter = require('./routes/webhooks');
 const quotesRouter = require('./routes/quotes');
+const adminRouter = require('./routes/admin');
+const searchRouter = require('./routes/search');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -29,10 +31,13 @@ app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOStri
 app.use('/store/products', productsRouter);
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);
+app.use('/store/search', searchRouter);
+app.use('/admin', adminRouter);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
+  console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
 });

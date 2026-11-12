@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 138 (accessible names on all inputs, 156 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 139 (skip link + labelled landmarks, 158 backend tests).
 
 ## Storefront
 
@@ -68,6 +68,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | Email / SMS notifications | No mailer or SMS gateway is wired up, and no copy promises one (a test enforces this). Supply SMTP or MSG91 credentials to add order-confirmation emails/OTP login. |
 | Accessibility of forms | ✅ every storefront `<input>` has an accessible name (`aria-label`), not just placeholder text — **51 inputs labelled**, enforced by a test that fails on any new unlabelled input |
+| Keyboard navigation | ✅ **"Skip to main content"** link (visible on focus), focusable `<main id="main-content">` target, labelled navigation landmark, `lang="en"` — enforced by a layout test |
 | Trust / branding | ✅ store name, phone, email and GSTIN come from `lib/store.js` (`NEXT_PUBLIC_STORE_*`) and propagate to every page, the invoice letterhead and WhatsApp templates — a test fails on any hardcoded brand name (verified by building with a different name) |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
@@ -85,7 +86,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 156 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 158 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

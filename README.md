@@ -115,7 +115,7 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 156 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 158 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

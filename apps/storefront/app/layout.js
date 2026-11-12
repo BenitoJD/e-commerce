@@ -18,6 +18,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        {/* Keyboard users shouldn't have to tab through the whole header on every page. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:font-bold focus:text-[#F97316] focus:shadow-lg focus:ring-2 focus:ring-[#F97316]"
+        >
+          Skip to main content
+        </a>
         <header className="bg-white border-b sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
             <a href="/" className="flex items-center gap-2 shrink-0">
@@ -27,7 +34,7 @@ export default function RootLayout({ children }) {
             <form action="/category/all" method="get" className="hidden md:flex flex-1 max-w-xl">
               <SearchBox />
             </form>
-            <nav className="ml-auto flex items-center gap-3 text-sm font-semibold">
+            <nav aria-label="Account and cart" className="ml-auto flex items-center gap-3 text-sm font-semibold">
               <a href="/track-order" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">Track Order</a>
               <a href="/wishlist" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">❤ Wishlist</a>
               <a href="/bulk-quote" className="hidden sm:inline-block btn-outline !py-2">Bulk Quote</a>
@@ -54,7 +61,7 @@ export default function RootLayout({ children }) {
           </div>
         </header>
 
-        <main className="min-h-[70vh]">{children}</main>
+        <main id="main-content" tabIndex={-1} className="min-h-[70vh]">{children}</main>
 
         <footer className="bg-gray-900 text-gray-300 mt-12">
           <div className="max-w-7xl mx-auto px-4 py-10 grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">

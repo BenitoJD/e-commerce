@@ -45,6 +45,20 @@ app.get('/sitemap.xml', sitemapHandler);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
+// JSON error responses (body-parser failures default to HTML otherwise).
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (err && (err.type === 'entity.parse.failed' || err.status === 400)) {
+    return res.status(400).json({ error: 'Invalid JSON body' });
+  }
+  console.error('[backend] unhandled error:', err && err.message);
+  res.status(err && err.status === 404 ? 404 : 500).json({ error: 'Internal error' });
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('[backend] unhandledRejection:', err && err.message);
+});
+
 app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);

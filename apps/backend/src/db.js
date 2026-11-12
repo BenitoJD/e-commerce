@@ -6,6 +6,11 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/toolsvilla',
 });
 
+// Idle-client errors (e.g. Postgres restart) throw if unhandled and crash the process.
+pool.on('error', (err) => {
+  console.error('[db] idle pool client error:', err.message);
+});
+
 let migrated = false;
 
 async function migrate() {

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 12 (order-success status mapping + track/invoice links).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 13 (server-authoritative checkout totals + COD notice).
 
 ## Storefront
 

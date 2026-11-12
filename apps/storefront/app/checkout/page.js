@@ -32,6 +32,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({ name: '', phone: '', address: '', pincode: '', payMode: 'UPI' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [serverTotal, setServerTotal] = useState(null); // authoritative total returned by backend
 
   useEffect(() => {
     setItems(getCart());
@@ -41,6 +42,8 @@ export default function CheckoutPage() {
   const subtotal = cartTotal(items);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const total = Math.max(0, subtotal - discount);
+  // Server is authoritative: if backend repriced (stale cart prices), show its total.
+  const shown = serverTotal != null ? serverTotal : total;
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -51,6 +54,7 @@ export default function CheckoutPage() {
   async function placeOrder(e) {
     e.preventDefault();
     setErr('');
+    setServerTotal(null);
     if (!items.length) { setErr('Cart is empty.'); return; }
     if (!form.name.trim() || !form.phone.trim() || !form.address.trim() || !form.pincode.trim()) {
       setErr('Please fill name, phone, address and pincode.');
@@ -86,6 +90,9 @@ export default function CheckoutPage() {
       // Server is authoritative on the chargeable amount (applies coupon server-side)
       const serverPaise = Number(res.amount_paise) || 0;
       const chargePaise = serverPaise > 0 ? serverPaise : Math.round(total * 100);
+      if (serverPaise > 0 && Math.abs(serverPaise / 100 - total) > 0.5) {
+        setServerTotal(serverPaise / 100);
+      }
       const rzp = new window.Razorpay({
         key,
         order_id: razorpayOrderId,
@@ -116,7 +123,7 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Checkout</h1>
-      <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${total.toLocaleString('en-IN')}` : ` • Total ₹${total.toLocaleString('en-IN')}`}</p>
+      <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${shown.toLocaleString('en-IN')}` : ` • Total ₹${shown.toLocaleString('en-IN')}`}{serverTotal != null ? ' (updated live)' : ''}</p>
       {coupon && (
         <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm flex justify-between items-center">
           <span><b>{coupon.code}</b> applied — you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>
@@ -140,6 +147,9 @@ export default function CheckoutPage() {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">UPI / Card / EMI go through Razorpay secure checkout. COD pays cash on delivery.</p>
+          {form.payMode === 'COD' && shown > 20000 ? (
+            <p className="text-xs text-amber-700 font-semibold mt-1">Orders above ₹20,000 on COD may need a confirmation call or partial advance.</p>
+          ) : null}
         </div>
         {discount > 0 && (
           <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
@@ -150,7 +160,7 @@ export default function CheckoutPage() {
         )}
         {err && <p className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
-          {busy ? 'Placing order...' : `Pay ₹${total.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}
+          {busy ? 'Placing order...' : `Pay ₹${shown.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}
         </button>
       </form>
     </div>

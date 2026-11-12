@@ -36,6 +36,10 @@ export default function CartPage() {
     };
   }, []);
 
+  // Totals are needed by the pincode effect below, so compute them before it runs
+  // (referencing `subtotal` in that effect's dependency array before declaration is a TDZ crash).
+  const subtotal = cartTotal(items);
+
   useEffect(() => {
     let alive = true;
     if (!/^\d{6}$/.test(pincode)) {
@@ -43,7 +47,8 @@ export default function CartPage() {
       return undefined;
     }
     setPinMsg('Checking delivery...');
-    checkPincode(pincode)
+    // Send the cart total so COD availability reflects the real cap.
+    checkPincode(pincode, Math.round(subtotal * 100))
       .then((r) => {
         if (!alive) return;
         if (r && r.serviceable === false) setPinMsg('Sorry, delivery is not available to this pincode yet.');
@@ -52,9 +57,8 @@ export default function CartPage() {
       })
       .catch(() => { if (alive) setPinMsg(`Delivery to ${pincode} in 3–7 days.`); });
     return () => { alive = false; };
-  }, [pincode]);
+  }, [pincode, subtotal]);
 
-  const subtotal = cartTotal(items);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const payable = Math.max(0, subtotal - discount);
 

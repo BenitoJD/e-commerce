@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 123 (recently-viewed logic extracted and tested; invoice print verified already present).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 124 (amount-aware COD in pincode checks, TDZ crash avoided).
 
 ## Storefront
 
@@ -17,7 +17,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Accounting export | ✅ `GET /admin/orders/export.csv` with **status + date-range (from/to)** filters, RFC-style quoting, shipping column; Orders tab has from/to date pickers for both the list and the export |
 | Dashboard metrics | ✅ Overview shows **orders today, revenue today, 7-day revenue**, unpaid/COD-pending count and **manual refunds needing action** (computed by a tested summariser) |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
-| Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
+| Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`); admin Stock tab lists pending restock requests (filter by slug) |
 | Wishlist | ✅ localStorage + `/wishlist`, move-one / **move-all to cart** (skips out-of-stock), clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |

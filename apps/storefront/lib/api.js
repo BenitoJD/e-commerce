@@ -322,8 +322,12 @@ export async function validateCoupon(code, amountPaise) {
 }
 
 // ---- Service: pincode ----
-export async function checkPincode(code) {
-  const res = await fetch(`${BASE}/store/service/pincode/${encodeURIComponent(code)}`, { cache: 'no-store' });
+export async function checkPincode(code, amountPaise = null) {
+  const params = new URLSearchParams();
+  const amount = Number(amountPaise);
+  if (Number.isFinite(amount) && amount > 0) params.set('amount_paise', String(Math.round(amount)));
+  const qs = params.toString();
+  const res = await fetch(`${BASE}/store/service/pincode/${encodeURIComponent(code)}${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
   return handle(res);
 }
 

@@ -196,7 +196,9 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
     }
     setPinState({ loading: true, msg: 'Checking...', ok: false });
     try {
-      const r = await checkPincode(pin);
+      // Pass the basket amount so COD availability reflects the real cap, not a guess.
+      const basketPaise = Math.round(Number(p.price || 0) * 100) * Math.max(1, Number(qty) || 1);
+      const r = await checkPincode(pin, basketPaise);
       if (r && r.serviceable === false) {
         setPinState({ loading: false, msg: `Sorry, ${pin} is not serviceable yet. Try a nearby pincode.`, ok: false });
       } else {

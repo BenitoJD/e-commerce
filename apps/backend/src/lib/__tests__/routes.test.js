@@ -25,6 +25,8 @@ function makeFakeDb() {
   ]);
   const orders = [];
   let seq = 1;
+  const quotes = [];
+  let quoteSeq = 1;
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
@@ -112,6 +114,22 @@ function makeFakeDb() {
       if (o) o.status = 'cancelled';
       return { rows: o ? [{ receipt: o.receipt, status: o.status }] : [] };
     }
+    if (t.startsWith('SELECT slug, price_paise FROM products WHERE slug =')) {
+      const p = products.get(params[0]);
+      return { rows: p ? [{ slug: p.slug, price_paise: p.price_paise }] : [] };
+    }
+    if (t.startsWith('SELECT * FROM bulk_quotes WHERE id =')) {
+      const q = quotes.find((x) => x.id === Number(params[0]));
+      return { rows: q ? [{ ...q }] : [] };
+    }
+    if (t.startsWith("UPDATE bulk_quotes SET status = 'won', order_receipt =")) {
+      const q = quotes.find((x) => x.id === Number(params[1]));
+      if (q) {
+        q.status = 'won';
+        q.order_receipt = params[0];
+      }
+      return { rows: [] };
+    }
     if (t.startsWith('SELECT status, items FROM orders WHERE id')) {
       const o = orders.find((x) => x.id === Number(params[0]));
       return { rows: o ? [{ status: o.status, items: o.items }] : [] };
@@ -135,7 +153,7 @@ function makeFakeDb() {
 
   const client = { query, release() {} };
   const pool = { connect: async () => client, query };
-  return { query, pool, products, orders };
+  return { query, pool, products, orders, coupons, quotes, nextQuoteId: () => quoteSeq++ };
 }
 
 const fake = makeFakeDb();
@@ -276,6 +294,35 @@ test('webhooks: bad signature rejected, unknown order acked', async () => {
   assert.equal(r2.status, 200);
 });
 
+test('quote converts to a pending order and reserves stock', async () => {
+  const qid = fake.nextQuoteId();
+  fake.quotes.push({ id: qid, name: 'Factory', phone: '9999999999', product_slug: 'motor-b', product_name: '', qty: 1, message: '', status: 'contacted', order_receipt: null });
+  const before = fake.products.get('motor-b').stock;
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const r = await api('POST', `/admin/quotes/${qid}/convert`, {}, adminHeaders);
+  assert.equal(r.status, 200);
+  assert.match(r.json.receipt, /^rcpt_/);
+  assert.equal(fake.products.get('motor-b').stock, before - 1);
+  const q = fake.quotes.find((x) => x.id === qid);
+  assert.equal(q.status, 'won');
+  assert.equal(q.order_receipt, r.json.receipt);
+});
+
+test('admin cancel of a paid order restocks and flags manual refund (no live keys)', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+  });
+  const stockAfterBuy = fake.products.get('drill-a').stock;
+  const cap = signedWebhook('payment.captured', { id: 'pay_9', order_id: created.json.razorpayOrderId, amount: created.json.amount_paise });
+  await fetch(`${base}/webhooks/razorpay`, { method: 'POST', headers: { 'x-razorpay-signature': cap.sig }, body: cap.payload });
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const order = fake.orders.find((x) => x.receipt === created.json.receipt);
+  const r = await api('PATCH', `/admin/orders/${order.id}`, { status: 'cancelled' }, adminHeaders);
+  assert.equal(r.status, 200);
+  assert.equal(r.json.refund, 'manual'); // placeholder keys: no gateway call, needs human follow-up
+  assert.equal(fake.products.get('drill-a').stock, stockAfterBuy + 1);
+});
 test('admin: transition guard blocks nonsense moves, allows real ones', async () => {
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],

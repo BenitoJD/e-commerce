@@ -17,6 +17,14 @@ const cart = await import('../lib/cart.js');
 const wishlist = await import('../lib/wishlist.js');
 const storeLib = await import('../lib/store.js');
 const api = await import('../lib/api.js');
+const catalog = await import('../lib/catalog.js');
+
+const SAMPLE = [
+  { slug: 'a', name: 'Bosch Impact Drill', brand: 'Bosch', price: 5495, mrp: 6995 },
+  { slug: 'b', name: 'Makita Angle Grinder', brand: 'Makita', price: 6899, mrp: 8250 },
+  { slug: 'c', name: 'Bosch Tile Cutter', brand: 'Bosch', price: 7895, mrp: 9200 },
+  { slug: 'd', name: 'Cheap Spanner', brand: 'Generic', price: 299, mrp: 299 },
+];
 
 function reset() {
   store.clear();
@@ -80,7 +88,44 @@ test('cart: addToCart without a slug is a no-op', () => {
   assert.equal(cart.getCart().length, 0);
 });
 
-// ---------------- wishlist ----------------
+// ---------------- catalog filtering ----------------
+
+test('catalog: brand filter, "All" passthrough, missing input tolerated', () => {
+  assert.equal(catalog.filterProducts(SAMPLE, { brand: 'Bosch' }).length, 2);
+  assert.equal(catalog.filterProducts(SAMPLE, { brand: 'All' }).length, 4);
+  assert.deepEqual(catalog.filterProducts(null), []);
+  assert.deepEqual(catalog.filterProducts(undefined, null), []);
+});
+
+test('catalog: text search is case-insensitive on name', () => {
+  const r = catalog.filterProducts(SAMPLE, { q: 'bosch' });
+  assert.equal(r.length, 2);
+  assert.ok(r.every((p) => p.brand === 'Bosch'));
+  assert.equal(catalog.filterProducts(SAMPLE, { q: '  grinder ' }).length, 1);
+});
+
+test('catalog: price band respects both bounds and ignores blanks', () => {
+  assert.equal(catalog.filterProducts(SAMPLE, { priceMin: '5000' }).length, 3);
+  assert.equal(catalog.filterProducts(SAMPLE, { priceMax: '5500' }).length, 2); // 5495, 299
+  assert.equal(catalog.filterProducts(SAMPLE, { priceMin: '1000', priceMax: '7000' }).length, 2); // 5495, 6899
+  // blanks must not filter anything out
+  assert.equal(catalog.filterProducts(SAMPLE, { priceMin: '', priceMax: '' }).length, 4);
+  // non-numeric input is ignored rather than hiding everything
+  assert.equal(catalog.filterProducts(SAMPLE, { priceMin: 'abc' }).length, 4);
+});
+
+test('catalog: sorts by price and by discount', () => {
+  assert.deepEqual(catalog.filterProducts(SAMPLE, { sort: 'low' }).map((p) => p.slug), ['d', 'a', 'b', 'c']);
+  assert.deepEqual(catalog.filterProducts(SAMPLE, { sort: 'high' }).map((p) => p.slug), ['c', 'b', 'a', 'd']);
+  // no-discount item sinks to the bottom of the discount sort
+  assert.equal(catalog.filterProducts(SAMPLE, { sort: 'off' }).slice(-1)[0].slug, 'd');
+});
+
+test('catalog: filtering does not mutate the source array order', () => {
+  const before = SAMPLE.map((p) => p.slug).join(',');
+  catalog.filterProducts(SAMPLE, { sort: 'low' });
+  assert.equal(SAMPLE.map((p) => p.slug).join(','), before);
+});
 
 test('wishlist: add, dedupe, remove, clear', () => {
   reset();

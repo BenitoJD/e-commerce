@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 65 (search typeahead, 68/68).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 66 (price filters + tested catalog logic, 68 backend / 28 frontend).
 
 ## Storefront
 
@@ -9,7 +9,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` + deals/brand/recently-viewed strips |
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
-| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` |
+| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` (gallery + EMI 3/6/9/12) |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
@@ -53,7 +53,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 23 tests (cart add/merge/clamp, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 28 tests (catalog filter/sort logic, cart add/merge/clamp, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

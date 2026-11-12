@@ -86,7 +86,7 @@ Messages · Reviews/Questions (verify, answer, delete) · Stock (update by slug)
 ```bash
 cd apps/backend && npm test        # 68 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
-cd apps/storefront && npm test     # 23 tests: cart self-healing, wishlist, store config,
+cd apps/storefront && npm test     # 28 tests: catalog filters, cart self-healing, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist
 cd apps/storefront && npm run build # must compile all 24 routes
 cd apps/storefront && npm start     # production server (same thing the image runs)

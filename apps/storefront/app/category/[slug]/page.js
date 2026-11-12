@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { fetchProducts } from '../../../lib/api';
+import { filterProducts } from '../../../lib/catalog';
 
 const FALLBACK = [
   { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70' },
@@ -27,8 +28,10 @@ export default function CategoryPage({ params }) {
   const [brand, setBrand] = useState('All');
   const [sort, setSort] = useState('pop');
   const [q, setQ] = useState(initialQ);
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
 
-  const filtersActive = brand !== 'All' || q.trim() !== '' || sort !== 'pop';
+  const filtersActive = brand !== 'All' || q.trim() !== '' || sort !== 'pop' || priceMin !== '' || priceMax !== '';
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +61,10 @@ export default function CategoryPage({ params }) {
     }
     load();
     return () => { alive = false; };
-  }, [slug, initialQ]);
+    // Turning filters on/off changes how much we need to fetch (wide set vs paged),
+    // so refetch rather than filtering a single page of 40.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, initialQ, filtersActive]);
 
   async function loadMore() {
     if (loadingMore || !hasMore) return;
@@ -77,15 +83,18 @@ export default function CategoryPage({ params }) {
 
   const brands = useMemo(() => ['All', ...new Set(items.map((p) => p.brand).filter(Boolean))], [items]);
 
-  const filtered = useMemo(() => {
-    let list = [...items];
-    if (brand !== 'All') list = list.filter((p) => p.brand === brand);
-    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
-    if (sort === 'low') list.sort((a, b) => a.price - b.price);
-    if (sort === 'high') list.sort((a, b) => b.price - a.price);
-    if (sort === 'off') list.sort((a, b) => (((b.mrp - b.price) / (b.mrp || 1)) - ((a.mrp - a.price) / (a.mrp || 1))));
-    return list;
-  }, [items, brand, sort, q]);
+  const filtered = useMemo(
+    () => filterProducts(items, { brand, q, priceMin, priceMax, sort }),
+    [items, brand, q, priceMin, priceMax, sort]
+  );
+
+  const clearFilters = () => {
+    setBrand('All');
+    setSort('pop');
+    setQ('');
+    setPriceMin('');
+    setPriceMax('');
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -103,6 +112,14 @@ export default function CategoryPage({ params }) {
           <option value="high">Price: High to Low</option>
           <option value="off">Discount</option>
         </select>
+        <div className="flex items-center gap-1">
+          <input value={priceMin} onChange={(e) => setPriceMin(e.target.value.replace(/[^\d]/g, ''))} placeholder="Min ₹" inputMode="numeric" className="input max-w-[100px]" />
+          <span className="text-gray-400">–</span>
+          <input value={priceMax} onChange={(e) => setPriceMax(e.target.value.replace(/[^\d]/g, ''))} placeholder="Max ₹" inputMode="numeric" className="input max-w-[100px]" />
+        </div>
+        {(brand !== 'All' || sort !== 'pop' || q.trim() !== '' || priceMin !== '' || priceMax !== '') && (
+          <button onClick={clearFilters} className="text-xs font-bold text-[#F97316] underline">Clear filters</button>
+        )}
       </div>
 
       {loading ? (

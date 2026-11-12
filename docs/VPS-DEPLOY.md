@@ -28,3 +28,10 @@ Nginx: use `infra/nginx.conf` or Cloudflare Tunnel. Webhook must be public HTTPS
 
 ## Backups
 - Enable VPS snapshots + nightly `pg_dump` to S3/R2. Keep Meili key + webhook secret in Coolify secrets, never in git.
+
+## Monitoring
+- Liveness: `GET /health` — process is up (always 200 while Node runs).
+- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
+  Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.
+- Verified behaviour with the database unreachable: process stays up, API returns clean
+  JSON 500s, `/sitemap.xml` still serves valid XML.

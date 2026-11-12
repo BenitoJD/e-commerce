@@ -80,8 +80,8 @@ Messages · Reviews/Questions (verify, answer, delete) · Stock (update by slug)
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 62 tests: pricing/GST/EMI, catalog, webhooks,
-                                   # transitions, refunds, API contract, integration
+cd apps/backend && npm test        # 64 tests: pricing/GST/EMI, catalog, webhooks,
+                                   # transitions, refunds, API contract, health, integration
 cd apps/storefront && npm test     # 23 tests: cart self-healing, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist
 cd apps/storefront && npm run build # must compile all 24 routes

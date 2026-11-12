@@ -14,6 +14,8 @@ const engagementRouter = require('./routes/engagement');
 const serviceRouter = require('./routes/service');
 const invoiceRouter = require('./routes/invoice');
 const sitemapHandler = require('./routes/sitemap');
+const db = require('./db');
+const { makeReadyHandler } = require('./lib/health');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -31,6 +33,7 @@ fs.mkdirSync(imagesDir, { recursive: true });
 app.use('/images', express.static(imagesDir));
 
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get('/ready', makeReadyHandler(db));
 
 app.use('/store/products', productsRouter);
 app.use('/store/checkout', checkoutRouter);

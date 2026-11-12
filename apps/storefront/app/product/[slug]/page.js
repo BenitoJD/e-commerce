@@ -101,9 +101,7 @@ export default function ProductPage({ params }) {
       try {
         const r = await getReviews(slug);
         if (alive && r) {
-          setReviews(r.reviews || asList(r) || []);
-          setAvg(Number(r.avg || r.average || 0));
-          setCount(Number(r.count || (r.reviews || []).length || 0));
+          applyReviews(r.reviews || asList(r) || []);
         }
       } catch { /* no reviews yet */ }
       try {
@@ -148,6 +146,15 @@ export default function ProductPage({ params }) {
     }
   };
 
+  // Ratings aggregate counts verified reviews only; pending ones show with a tag.
+  const applyReviews = (list) => {
+    const arr = Array.isArray(list) ? list : [];
+    setReviews(arr);
+    const vis = arr.filter((r) => r.verified);
+    setCount(vis.length);
+    setAvg(vis.length ? Math.round((vis.reduce((s, r) => s + (Number(r.rating) || 0), 0) / vis.length) * 10) / 10 : 0);
+  };
+
   const checkPin = async () => {
     if (!/^\d{6}$/.test(pin)) {
       setPinState({ loading: false, msg: 'Enter a valid 6-digit pincode.', ok: false });
@@ -176,13 +183,11 @@ export default function ProductPage({ params }) {
     setRBusy(true);
     try {
       await addReview(slug, rForm);
-      setRMsg('Thanks! Your review was submitted.');
+      setRMsg('Thanks! Your review will appear after approval.');
       setRForm({ name: '', rating: 5, title: '', body: '' });
       const r = await getReviews(slug).catch(() => null);
       if (r) {
-        setReviews(r.reviews || []);
-        setAvg(Number(r.avg || 0));
-        setCount(Number(r.count || 0));
+        applyReviews(r.reviews || []);
       }
     } catch (err) {
       setRMsg(err.message || 'Could not submit review.');
@@ -326,9 +331,14 @@ export default function ProductPage({ params }) {
             <div className="card p-6 text-sm text-gray-500">No reviews yet. Be the first to review this product!</div>
           ) : reviews.map((r, i) => (
             <div key={r.id || r._id || i} className="card p-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Stars value={r.rating} size="text-sm" />
-                <b className="text-sm">{r.title || 'Verified review'}</b>
+                <b className="text-sm">{r.title || (r.verified ? 'Verified review' : 'Customer review')}</b>
+                {r.verified ? (
+                  <span className="badge bg-green-100 text-green-800 text-[11px]">Verified purchase</span>
+                ) : (
+                  <span className="badge bg-yellow-50 text-yellow-800 border-yellow-200 text-[11px]">Pending approval</span>
+                )}
               </div>
               <p className="text-sm text-gray-700 mt-1">{r.body || r.text || ''}</p>
               <p className="text-xs text-gray-500 mt-2">— {r.name || r.author || 'Verified buyer'}{r.createdAt ? ` • ${new Date(r.createdAt).toLocaleDateString('en-IN')}` : ''}</p>

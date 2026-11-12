@@ -17,11 +17,17 @@ const sitemapHandler = require('./routes/sitemap');
 const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
 const { createRateLimiter } = require('./lib/rateLimit');
+const { parseOrigins, securityHeaders } = require('./lib/security');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
 
-app.use(cors({ origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : '*' }));
+app.disable('x-powered-by');
+app.set('trust proxy', true); // behind nginx: needed for req.secure / req.ip
+
+const allowedOrigins = parseOrigins(process.env.FRONTEND_URL);
+app.use(securityHeaders);
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : '*' }));
 
 // Webhooks need the RAW body for signature verification -> mount before express.json
 app.use('/webhooks', express.raw({ type: '*/*' }), webhooksRouter);
@@ -47,6 +53,14 @@ app.use('/store/engage', (req, res, next) => {
   if (req.method === 'GET') return next();
   return writeLimit(req, res, next);
 });
+
+// Admin endpoints take a token: throttle them so it can't be brute-forced.
+const adminLimit = createRateLimiter({
+  windowMs: Number(process.env.ADMIN_RATE_LIMIT_WINDOW_MS) || 60000,
+  max: Number(process.env.ADMIN_RATE_LIMIT_MAX) || 120,
+  message: 'Too many admin requests, slow down.',
+});
+app.use('/admin', adminLimit);
 
 app.use('/store/products', productsRouter);
 app.use('/store/checkout', checkoutRouter);

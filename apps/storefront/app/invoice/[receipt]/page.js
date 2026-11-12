@@ -39,7 +39,11 @@ export default function InvoicePage({ params }) {
   const items = Array.isArray(inv?.items) ? inv.items : [];
   const customer = inv?.customer || {};
   const gstRate = inv?.gst?.rate ?? 18;
-  const base = inv?.gst?.base ?? inv?.subtotalPaise ?? 0;
+  const discountPaise = Number(inv?.discountPaise ?? inv?.discount_paise ?? 0) || 0;
+  const couponCode = inv?.couponCode ?? inv?.coupon_code ?? null;
+  const itemsTotalFallback = items.reduce((s, it) => s + (Number(it.linePaise ?? it.line_paise) || Number(it.qty || 0) * Number(it.unitPaise ?? it.unit_paise ?? 0)), 0);
+  const itemsTotal = Number(inv?.itemsTotalPaise ?? inv?.items_total_paise ?? itemsTotalFallback) || 0;
+  const base = inv?.gst?.base ?? Math.round(((inv?.grandPaise ?? inv?.grand_paise ?? 0) * 100) / (100 + Number(gstRate)));
   const gstAmt = inv?.gst?.gst ?? Math.round(Number(base) * (Number(gstRate) / 100));
 
   return (
@@ -113,6 +117,12 @@ export default function InvoicePage({ params }) {
           </table>
 
           <div className="mt-4 ml-auto max-w-xs w-full space-y-1.5">
+            {discountPaise > 0 ? (
+              <>
+                <div className="flex justify-between"><span className="text-gray-500">Items total</span><b>{inr(itemsTotal)}</b></div>
+                <div className="flex justify-between text-green-700"><span>Coupon {couponCode || ''}</span><b>−{inr(discountPaise)}</b></div>
+              </>
+            ) : null}
             <div className="flex justify-between"><span className="text-gray-500">Subtotal (taxable base)</span><b>{inr(inv.subtotalPaise ?? inv.subtotal_paise ?? base)}</b></div>
             <div className="flex justify-between"><span className="text-gray-500">GST @ {gstRate}%</span><b>{inr(gstAmt)}</b></div>
             <div className="flex justify-between text-base border-t pt-2"><span>Grand total</span><b>{inr(inv.grandPaise ?? inv.grand_paise ?? (Number(base) + Number(gstAmt)))}</b></div>

@@ -9,7 +9,8 @@ router.get('/:receipt', async (req, res) => {
     const receipt = String(req.params.receipt || '').trim();
     if (!receipt) return res.status(400).json({ error: 'receipt required' });
     const { rows } = await db.query(
-      `SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer, created_at
+      `SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer, created_at,
+              coupon_code, COALESCE(discount_paise, 0) AS discount_paise
        FROM orders WHERE receipt = $1`,
       [receipt]
     );
@@ -45,11 +46,16 @@ router.get('/:receipt', async (req, res) => {
     const base = Math.round((grandPaise * 100) / 118);
     const gst = grandPaise - base;
     const customer = order.customer || {};
+    const itemsTotalPaise = items.reduce((s, it) => s + (it.linePaise || 0), 0);
+    const discountPaise = Number(order.discount_paise) || 0;
 
     res.json({
       receipt: order.receipt,
       createdAt: order.created_at,
       status: order.status,
+      couponCode: order.coupon_code || null,
+      discountPaise,
+      itemsTotalPaise,
       customer: {
         name: customer.name || '',
         phone: customer.phone || '',

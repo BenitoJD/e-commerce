@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 15 (NaN-proof cart, self-healing storage).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 16 (invoice balances on discounted orders).
 
 ## Storefront
 

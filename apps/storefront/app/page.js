@@ -33,6 +33,7 @@ function Card({ p }) {
       <div className="relative">
         <img src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
         {off(p) && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off(p)}% OFF</span>}
+        {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
       </div>
       <div className="p-3">
         <div className="text-xs text-gray-500 font-semibold">{p.brand || ''}</div>

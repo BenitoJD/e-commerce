@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 48 (convert + refund-path tests, 51/51).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 49 (out-of-stock badges everywhere).
 
 ## Storefront
 

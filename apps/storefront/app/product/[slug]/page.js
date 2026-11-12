@@ -292,7 +292,7 @@ export default function ProductPage({ params }) {
           {p.description && <p className="mt-4 text-sm text-gray-700">{p.description}</p>}
 
           <div className="mt-5 flex flex-wrap gap-3 text-sm">
-            <a href={`/bulk-quote?product=${encodeURIComponent(p.name)}`} className="text-[#F97316] font-bold underline">Request Bulk Quote (5+ units)</a>
+            <a href={`/bulk-quote?product=${encodeURIComponent(p.slug || slug)}&pname=${encodeURIComponent(p.name || '')}`} className="text-[#F97316] font-bold underline">Request Bulk Quote (5+ units)</a>
           </div>
           <p className="mt-2 text-xs text-gray-500">GST invoice note: business buyers receive a GST invoice by email for input tax credit.</p>
         </div>

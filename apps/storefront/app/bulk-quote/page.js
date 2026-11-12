@@ -7,8 +7,9 @@ import { createQuote } from '../../../lib/api';
 
 function QuoteInner() {
   const sp = useSearchParams();
-  const prefill = sp.get('product') || '';
-  const [form, setForm] = useState({ name: '', phone: '', product: prefill, qty: '10', message: '' });
+  const preSlug = sp.get('product') || '';
+  const preName = sp.get('pname') || '';
+  const [form, setForm] = useState({ name: '', phone: '', product: preSlug, productName: preName, qty: '10', message: '' });
   const [status, setStatus] = useState({ busy: false, ok: '', err: '' });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -16,9 +17,9 @@ function QuoteInner() {
     e.preventDefault();
     setStatus({ busy: true, ok: '', err: '' });
     try {
-      await createQuote({ ...form, qty: Number(form.qty) || 1 });
+      await createQuote({ ...form, product_slug: form.product, qty: Number(form.qty) || 1 });
       setStatus({ busy: false, ok: 'Quote request sent! Our B2B team will call you within 24 hours.', err: '' });
-      setForm({ name: '', phone: '', product: '', qty: '10', message: '' });
+      setForm({ name: '', phone: '', product: '', productName: '', qty: '10', message: '' });
     } catch (err2) {
       setStatus({ busy: false, ok: '', err: err2.message || 'Failed to send. Try WhatsApp instead.' });
     }
@@ -33,7 +34,7 @@ function QuoteInner() {
           <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required /></div>
           <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required /></div>
         </div>
-        <div><label className="label">Product</label><input className="input" value={form.product} onChange={(e) => set('product', e.target.value)} placeholder="e.g. Bosch GSB 13 RE Drill" required /></div>
+        <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required /></div>
         <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required /></div>
         <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Delivery city, GST number, timeline..." /></div>
         {status.ok && <p className="text-sm text-green-700 font-semibold">{status.ok}</p>}

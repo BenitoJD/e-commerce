@@ -514,6 +514,7 @@ export default function AdminPage() {
                         <td className="p-2 text-xs">{q.name || q.customer || '—'}<br />{q.phone || q.email || ''}</td>
                         <td className="p-2 text-xs">
                           {(q.product_slug || q.product) ? <div className="font-mono">{q.product_slug || q.product}{q.qty ? ` × ${q.qty}` : ''}</div> : null}
+                          {q.product_name ? <div className="italic">“{q.product_name}”</div> : null}
                           <div>{q.message || q.details || '—'}</div>
                         </td>
                         <td className="p-2"><span className="badge bg-gray-100">{q.status || '—'}</span></td>

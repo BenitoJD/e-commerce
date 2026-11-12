@@ -64,10 +64,13 @@ export async function createCheckout(payload) {
 }
 
 export async function createQuote(payload) {
+  const body = { ...(payload || {}) };
+  // Backend resolves product_slug; also forward free-text product/product_name.
+  if (body.product && !body.product_slug) body.product_slug = body.product;
   const res = await fetch(`${BASE}/store/quotes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
     cache: 'no-store'
   });
   return handle(res);

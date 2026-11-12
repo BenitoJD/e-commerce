@@ -87,6 +87,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_paise INTEGER NOT NULL DEFA
 -- Wave 7: quote-to-order conversion link (idempotent)
 ALTER TABLE bulk_quotes ADD COLUMN IF NOT EXISTS order_receipt TEXT;
 
+-- Wave 14: keep the buyer's free-text product description alongside the resolved slug
+ALTER TABLE bulk_quotes ADD COLUMN IF NOT EXISTS product_name TEXT NOT NULL DEFAULT '';
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

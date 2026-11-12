@@ -45,6 +45,14 @@ function makeFakeDb() {
       const p = products.get(params[0]);
       return { rows: p ? [{ ...p, specs: {}, images: [] }] : [] };
     }
+    if (t.startsWith('UPDATE coupons') && t.includes('used_count = used_count + 1')) {
+      const c = coupons.get(String(params[0]).toUpperCase());
+      if (!c) return { rows: [] };
+      const max = Number(c.max_uses) || 0;
+      if (max > 0 && Number(c.used_count || 0) >= max) return { rows: [] };
+      c.used_count = Number(c.used_count || 0) + 1;
+      return { rows: [{ code: c.code }] };
+    }
     if (t.includes('FROM coupons WHERE UPPER(code)')) {
       const c = coupons.get(String(params[0]).toUpperCase());
       return { rows: c ? [{ ...c }] : [] };
@@ -382,6 +390,44 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
 test('invoice 404s unknown receipts', async () => {
   const r = await api('GET', '/store/invoice/rcpt_nope_123');
   assert.equal(r.status, 404);
+});
+
+test('coupons: usage cap blocks the next redemption; expiry blocks too', async () => {
+  // exhaust SAVE10 (max_uses 1, already used once)
+  fake.coupons.set('SAVE10', {
+    code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
+    active: true, max_uses: 1, used_count: 1,
+  });
+  const exhausted = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    couponCode: 'SAVE10',
+  });
+  assert.equal(exhausted.status, 400);
+  assert.match(exhausted.json.error, /usage limit/i);
+
+  const validateExhausted = await api('GET', '/store/engage/coupons/validate?code=SAVE10&amount_paise=100000');
+  assert.equal(validateExhausted.json.valid, false);
+  assert.match(validateExhausted.json.reason, /usage limit/i);
+
+  // expired coupon
+  fake.coupons.set('SAVE10', {
+    code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
+    active: true, max_uses: null, used_count: 0, expires_at: new Date(Date.now() - 86400000).toISOString(),
+  });
+  const expired = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    couponCode: 'SAVE10',
+  });
+  assert.equal(expired.status, 400);
+  assert.match(expired.json.error, /expired/i);
+
+  // restore a clean coupon for any later test
+  fake.coupons.set('SAVE10', {
+    code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
+    active: true, max_uses: null, used_count: 0, expires_at: null,
+  });
 });
 
 test('returns: delivered order files a request; admin can progress it', async () => {

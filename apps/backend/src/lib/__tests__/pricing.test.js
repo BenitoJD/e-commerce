@@ -47,6 +47,26 @@ describe('applyCoupon', () => {
     assert.ok(r.discountPaise <= 500);
     assert.strictEqual(r.finalPaise, 500 - r.discountPaise);
   });
+
+  it('rejects an expired coupon and allows a future one', () => {
+    const base = { pct_off: 10, max_discount_paise: 0, min_order_paise: 0, active: true };
+    const now = Date.parse('2026-06-01T00:00:00Z');
+    const expired = applyCoupon(100000, { ...base, expires_at: '2026-05-31T23:59:59Z' }, now);
+    assert.strictEqual(expired.discountPaise, 0);
+    assert.match(expired.reason, /expired/i);
+    const future = applyCoupon(100000, { ...base, expires_at: '2026-12-31T00:00:00Z' }, now);
+    assert.strictEqual(future.discountPaise, 10000);
+    assert.strictEqual(future.reason, '');
+  });
+
+  it('enforces max_uses and treats null as unlimited', () => {
+    const base = { pct_off: 10, max_discount_paise: 0, min_order_paise: 0, active: true, max_uses: 2 };
+    assert.strictEqual(applyCoupon(100000, { ...base, used_count: 1 }).discountPaise, 10000);
+    const exhausted = applyCoupon(100000, { ...base, used_count: 2 });
+    assert.strictEqual(exhausted.discountPaise, 0);
+    assert.match(exhausted.reason, /usage limit/i);
+    assert.strictEqual(applyCoupon(100000, { ...base, max_uses: null, used_count: 999 }).discountPaise, 10000);
+  });
 });
 
 describe('gstSplit', () => {

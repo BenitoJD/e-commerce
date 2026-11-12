@@ -61,7 +61,7 @@ export default function AdminPage() {
   const [convertMsg, setConvertMsg] = useState('');
 
   const [coupons, setCoupons] = useState([]);
-  const [couponForm, setCouponForm] = useState({ code: '', pct: '', maxRs: '', minRs: '' });
+  const [couponForm, setCouponForm] = useState({ code: '', pct: '', maxRs: '', minRs: '', expires: '', maxUses: '' });
   const [couponMsg, setCouponMsg] = useState('');
 
   const [messages, setMessages] = useState([]);
@@ -187,11 +187,13 @@ export default function AdminPage() {
         pct_off: Number(couponForm.pct),
         max_discount_paise: couponForm.maxRs ? Math.round(Number(couponForm.maxRs) * 100) : 0,
         min_order_paise: couponForm.minRs ? Math.round(Number(couponForm.minRs) * 100) : 0,
+        expires_at: couponForm.expires ? new Date(couponForm.expires).toISOString() : null,
+        max_uses: couponForm.maxUses ? Number(couponForm.maxUses) : null,
         active: true
       };
       const r = await saveCoupon(token, payload);
       setCouponMsg(`Saved coupon ${r.coupon?.code || payload.code}.`);
-      setCouponForm({ code: '', pct: '', maxRs: '', minRs: '' });
+      setCouponForm({ code: '', pct: '', maxRs: '', minRs: '', expires: '', maxUses: '' });
       await loadCoupons();
     } catch (err) {
       setError(err.message);
@@ -619,6 +621,8 @@ export default function AdminPage() {
                   <input value={couponForm.pct} onChange={(e) => setCouponForm({ ...couponForm, pct: e.target.value })} placeholder="% off 1-90" type="number" min="1" max="90" className="input" />
                   <input value={couponForm.maxRs} onChange={(e) => setCouponForm({ ...couponForm, maxRs: e.target.value })} placeholder="Max discount ₹ (blank=none)" type="number" min="0" className="input" />
                   <input value={couponForm.minRs} onChange={(e) => setCouponForm({ ...couponForm, minRs: e.target.value })} placeholder="Min order ₹ (blank=none)" type="number" min="0" className="input" />
+                  <input value={couponForm.expires} onChange={(e) => setCouponForm({ ...couponForm, expires: e.target.value })} type="date" className="input" title="Expiry date (blank = never)" />
+                  <input value={couponForm.maxUses} onChange={(e) => setCouponForm({ ...couponForm, maxUses: e.target.value })} placeholder="Max uses (blank=unlimited)" type="number" min="1" className="input" />
                 </form>
                 <button onClick={onCouponSave} className="btn-primary mt-3">Save coupon</button>
                 {couponMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{couponMsg}</p> : null}
@@ -631,6 +635,8 @@ export default function AdminPage() {
                       <th className="p-2">% Off</th>
                       <th className="p-2">Max discount</th>
                       <th className="p-2">Min order</th>
+                      <th className="p-2">Expires</th>
+                      <th className="p-2">Uses</th>
                       <th className="p-2">Status</th>
                       <th className="p-2">Actions</th>
                     </tr>
@@ -642,13 +648,15 @@ export default function AdminPage() {
                         <td className="p-2">{c.pct_off}%</td>
                         <td className="p-2">{c.max_discount_paise ? `₹${(Number(c.max_discount_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
                         <td className="p-2">{c.min_order_paise ? `₹${(Number(c.min_order_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
+                        <td className="p-2">{c.expires_at ? new Date(c.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : 'never'}</td>
+                        <td className="p-2">{Number(c.used_count) || 0}{c.max_uses ? ` / ${c.max_uses}` : ''}</td>
                         <td className="p-2"><span className="badge bg-gray-100">{c.active ? 'active' : 'off'}</span></td>
                         <td className="p-2">
                           <button onClick={() => onCouponToggle(c.code, c.active)} className="btn-outline !py-1 !px-2 text-xs">{c.active ? 'Disable' : 'Enable'}</button>
                         </td>
                       </tr>
                     ))}
-                    {coupons.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
+                    {coupons.length === 0 ? <tr><td colSpan={8} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

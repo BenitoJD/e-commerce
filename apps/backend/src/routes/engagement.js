@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { applyCoupon } = require('../lib/pricing');
 
 const router = express.Router();
 
@@ -117,6 +118,8 @@ router.post('/answers/:id', async (req, res) => {
 });
 
 // GET /store/engage/coupons/validate?code=&amount_paise=
+// Delegates to the same tested pricing helper checkout uses, so the rules
+// (expiry, usage caps, minimums, discount ceiling) can never drift apart.
 router.get('/coupons/validate', async (req, res) => {
   try {
     const code = String(req.query.code || '').trim();
@@ -124,15 +127,14 @@ router.get('/coupons/validate', async (req, res) => {
     if (!code) return res.json({ valid: false, reason: 'code required' });
     const { rows } = await db.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1)', [code]);
     if (!rows.length) return res.json({ valid: false, reason: 'Invalid coupon code' });
-    const c = rows[0];
-    if (!c.active) return res.json({ valid: false, reason: 'Coupon is inactive' });
-    if (amount < (c.min_order_paise || 0)) {
-      return res.json({ valid: false, reason: `Minimum order is ${c.min_order_paise} paise` });
-    }
-    let discount = Math.floor((amount * c.pct_off) / 100);
-    if (c.max_discount_paise > 0) discount = Math.min(discount, c.max_discount_paise);
-    discount = Math.max(0, Math.min(discount, amount));
-    res.json({ valid: true, pct_off: c.pct_off, discount_paise: discount });
+    const applied = applyCoupon(amount, rows[0]);
+    if (applied.reason) return res.json({ valid: false, reason: applied.reason });
+    res.json({
+      valid: true,
+      pct_off: rows[0].pct_off,
+      discount_paise: applied.discountPaise,
+      final_paise: applied.finalPaise,
+    });
   } catch (err) {
     console.error('[engage] coupon validate error:', err.message);
     res.status(500).json({ error: 'Failed to validate coupon' });

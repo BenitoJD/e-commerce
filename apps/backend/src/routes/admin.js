@@ -426,7 +426,7 @@ router.get('/coupons', async (req, res) => {
   }
 });
 
-// POST /admin/coupons { code, pct_off, max_discount_paise?, min_order_paise?, active? }
+// POST /admin/coupons { code, pct_off, max_discount_paise?, min_order_paise?, active?, expires_at?, max_uses? }
 router.post('/coupons', async (req, res) => {
   try {
     const code = String((req.body && req.body.code) || '').trim().toUpperCase();
@@ -438,14 +438,25 @@ router.post('/coupons', async (req, res) => {
     const maxD = Math.max(0, parseInt(req.body.max_discount_paise, 10) || 0);
     const minO = Math.max(0, parseInt(req.body.min_order_paise, 10) || 0);
     const active = req.body.active !== false;
+    let expiresAt = null;
+    if (req.body.expires_at) {
+      const d = new Date(req.body.expires_at);
+      if (Number.isNaN(d.getTime())) return res.status(400).json({ error: 'expires_at must be a valid date' });
+      if (d.getTime() <= Date.now()) return res.status(400).json({ error: 'expires_at must be in the future' });
+      expiresAt = d.toISOString();
+    }
+    const maxUsesRaw = parseInt(req.body.max_uses, 10);
+    const maxUses = Number.isInteger(maxUsesRaw) && maxUsesRaw > 0 ? maxUsesRaw : null;
     const { rows } = await db.query(
-      `INSERT INTO coupons (code, pct_off, max_discount_paise, min_order_paise, active)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (code) DO UPDATE SET pct_off = EXCLUDED.pct_off, max_discount_paise = EXCLUDED.max_discount_paise, min_order_paise = EXCLUDED.min_order_paise, active = EXCLUDED.active
+      `INSERT INTO coupons (code, pct_off, max_discount_paise, min_order_paise, active, expires_at, max_uses)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (code) DO UPDATE SET pct_off = EXCLUDED.pct_off, max_discount_paise = EXCLUDED.max_discount_paise,
+         min_order_paise = EXCLUDED.min_order_paise, active = EXCLUDED.active,
+         expires_at = EXCLUDED.expires_at, max_uses = EXCLUDED.max_uses
        RETURNING *`,
-      [code, pct, maxD, minO, active]
+      [code, pct, maxD, minO, active, expiresAt, maxUses]
     );
-    console.log(`[admin] coupon upsert ${code} ${pct}%`);
+    console.log(`[admin] coupon upsert ${code} ${pct}% exp=${expiresAt || '-'} maxUses=${maxUses || '-'}`);
     res.status(201).json({ coupon: rows[0] });
   } catch (err) {
     console.error('[admin] coupon save error:', err.message);

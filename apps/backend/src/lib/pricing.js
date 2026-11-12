@@ -1,6 +1,7 @@
 // Pure pricing helpers (zero dependencies).
-function applyCoupon(amountPaise, coupon) {
+function applyCoupon(amountPaise, coupon, nowMs) {
   const amount = Math.floor(Number(amountPaise) || 0);
+  const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
   if (amount <= 0) {
     return { discountPaise: 0, finalPaise: Math.max(0, amount), reason: 'Invalid amount' };
   }
@@ -9,6 +10,17 @@ function applyCoupon(amountPaise, coupon) {
   }
   if (coupon.active === false) {
     return { discountPaise: 0, finalPaise: amount, reason: 'Coupon is inactive' };
+  }
+  // Expiry / usage cap: an unlimited reusable code is a money leak.
+  if (coupon.expires_at) {
+    const exp = new Date(coupon.expires_at).getTime();
+    if (Number.isFinite(exp) && exp <= now) {
+      return { discountPaise: 0, finalPaise: amount, reason: 'Coupon has expired' };
+    }
+  }
+  const maxUses = Number(coupon.max_uses);
+  if (Number.isFinite(maxUses) && maxUses > 0 && Number(coupon.used_count) >= maxUses) {
+    return { discountPaise: 0, finalPaise: amount, reason: 'Coupon usage limit reached' };
   }
   const pct = Number(coupon.pct_off) || 0;
   if (pct <= 0) {

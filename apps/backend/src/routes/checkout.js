@@ -73,6 +73,23 @@ router.post('/create', async (req, res) => {
     try {
       created = await withTransaction(async (tx) => {
         await reserveItems(tx, lineItems);
+        // Claim a coupon use atomically so a usage-limited code can't be redeemed
+        // twice by two simultaneous checkouts. Returns 0 rows when the cap is hit.
+        if (couponCode) {
+          const claim = await tx.query(
+            `UPDATE coupons
+                SET used_count = used_count + 1
+              WHERE UPPER(code) = UPPER($1)
+                AND (max_uses IS NULL OR max_uses <= 0 OR used_count < max_uses)
+              RETURNING code`,
+            [couponCode]
+          );
+          if (!claim.rows.length) {
+            const err = new Error('Coupon usage limit reached');
+            err.code = 'COUPON_EXHAUSTED';
+            throw err;
+          }
+        }
         const { rows } = await tx.query(
           `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise)
            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, receipt`,
@@ -83,6 +100,9 @@ router.post('/create', async (req, res) => {
     } catch (err) {
       if (err.code === 'INSUFFICIENT_STOCK') {
         return res.status(409).json({ error: `Insufficient stock for ${err.slug}` });
+      }
+      if (err.code === 'COUPON_EXHAUSTED') {
+        return res.status(400).json({ error: 'Coupon usage limit reached' });
       }
       throw err;
     }

@@ -117,6 +117,11 @@ CREATE TABLE IF NOT EXISTS stock_alerts (
 );
 CREATE INDEX IF NOT EXISTS idx_stock_alerts_slug ON stock_alerts(product_slug);
 
+-- Wave 64: coupon expiry + usage caps (idempotent for existing DBs)
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS max_uses INTEGER;
+ALTER TABLE coupons ADD COLUMN IF NOT EXISTS used_count INTEGER NOT NULL DEFAULT 0;
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

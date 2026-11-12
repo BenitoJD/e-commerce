@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 59 (DB-down resilience + readiness probe, 64/64).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 64 (coupon expiry + usage caps, 67/67).
 
 ## Storefront
 
@@ -20,7 +20,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` |
-| Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown (`coupon_code`/`discount_paise`); admin Coupons tab; seeded WELCOME10/TOOLS15 |
+| Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown; expiry dates + usage caps enforced atomically; admin Coupons tab; seeded WELCOME10/TOOLS15 |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |
@@ -46,12 +46,12 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 64 tests (pricing math, GST, EMI, catalog validity,
-webhook state machine + signature, LIKE escaping, status transitions, refunds, readiness
-probe, frontend↔backend API contract (every storefront call resolves to a mounted route),
-plus route-level integration tests against an in-memory DB: checkout/stock, coupons,
-cancel, webhooks, quote conversion, admin guard, invoice balance, returns workflow,
-stock alerts).
+Backend: `cd apps/backend && npm test` — 67 tests (pricing math, GST, EMI, catalog validity,
+coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
+transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
+call resolves to a mounted route), plus route-level integration tests against an
+in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
+invoice balance, returns workflow, stock alerts).
 
 Storefront: `cd apps/storefront && npm test` — 23 tests (cart add/merge/clamp, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,

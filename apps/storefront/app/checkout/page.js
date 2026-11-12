@@ -166,6 +166,28 @@ export default function CheckoutPage() {
           <a href="/cart" className="text-xs font-bold text-[#F97316] underline">Change</a>
         </div>
       )}
+      {Array.isArray(items) && items.length > 0 && (
+        <div className="card p-4 mt-5">
+          <div className="flex items-center justify-between">
+            <b className="text-sm">Order summary</b>
+            <a href="/cart" className="text-xs font-bold text-[#F97316] underline">Edit cart</a>
+          </div>
+          <ul className="mt-3 divide-y text-sm">
+            {items.map((i) => (
+              <li key={i.slug} className="py-2 flex items-center gap-3">
+                {i.image ? (
+                  <img src={i.image} alt={i.name} className="w-12 h-12 rounded border object-cover" loading="lazy" />
+                ) : null}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{i.name}</div>
+                  <div className="text-xs text-gray-500">Qty {i.qty} × ₹{Number(i.price).toLocaleString('en-IN')}</div>
+                </div>
+                <div className="font-bold whitespace-nowrap">₹{(Number(i.price) * Number(i.qty)).toLocaleString('en-IN')}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <form onSubmit={placeOrder} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className="label">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" /></div>

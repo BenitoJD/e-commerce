@@ -1,0 +1,104 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { fetchProducts } from '../../../lib/api';
+
+const FALLBACK = [
+  { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70' },
+  { slug: 'stanley-angle-grinder', name: 'Stanley Angle Grinder 850W', price: 2899, mrp: 3950, brand: 'Stanley', category: 'power-tools', image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&q=70' },
+  { slug: 'crompton-1hp-motor', name: 'Crompton 1HP Single Phase Motor', price: 7299, mrp: 8999, brand: 'Crompton', category: 'motors', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=70' },
+  { slug: 'havells-water-pump', name: 'Havells 1.5HP Self-Priming Pump', price: 9499, mrp: 11500, brand: 'Havells', category: 'motors', image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&q=70' },
+  { slug: 'honda-agri-sprayer', name: 'Honda Type Power Sprayer', price: 12499, mrp: 14999, brand: 'Honda', category: 'agriculture', image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=70' },
+  { slug: 'ibell-arc-welder-200a', name: 'iBell ARC 200A Inverter Welder', price: 5499, mrp: 7999, brand: 'iBell', category: 'welding', image: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=600&q=70' },
+  { slug: 'karcher-hp-washer', name: 'Karcher Type Pressure Washer', price: 8999, mrp: 11999, brand: 'Karcher', category: 'cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=600&q=70' }
+];
+
+export default function CategoryPage({ params }) {
+  const slug = params.slug;
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get('q') || '';
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [brand, setBrand] = useState('All');
+  const [sort, setSort] = useState('pop');
+  const [q, setQ] = useState(initialQ);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await fetchProducts({ category: slug, limit: 40, search: initialQ });
+        const list = Array.isArray(data) ? data : data.products || data.items || [];
+        if (alive) setItems(list.length ? list : FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+      } catch {
+        if (alive) setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+    load();
+    return () => { alive = false; };
+  }, [slug, initialQ]);
+
+  const brands = useMemo(() => ['All', ...new Set(items.map((p) => p.brand).filter(Boolean))], [items]);
+
+  const filtered = useMemo(() => {
+    let list = [...items];
+    if (brand !== 'All') list = list.filter((p) => p.brand === brand);
+    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+    if (sort === 'low') list.sort((a, b) => a.price - b.price);
+    if (sort === 'high') list.sort((a, b) => b.price - a.price);
+    if (sort === 'off') list.sort((a, b) => (((b.mrp - b.price) / (b.mrp || 1)) - ((a.mrp - a.price) / (a.mrp || 1))));
+    return list;
+  }, [items, brand, sort, q]);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-extrabold capitalize">{slug.replace(/-/g, ' ')}</h1>
+      <p className="text-sm text-gray-500 mt-1">{filtered.length} products • GST invoice • EMI available</p>
+
+      <div className="mt-4 flex flex-wrap gap-3 items-center">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" />
+        <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input max-w-[180px]">
+          {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select value={sort} onChange={(e) => setSort(e.target.value)} className="input max-w-[200px]">
+          <option value="pop">Sort: Popularity</option>
+          <option value="low">Price: Low to High</option>
+          <option value="high">Price: High to Low</option>
+          <option value="off">Discount</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="mt-8 text-gray-500">Loading products...</p>
+      ) : filtered.length === 0 ? (
+        <p className="mt-8 text-gray-500">No products found.</p>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {filtered.map((p) => {
+            const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+            return (
+              <a key={p.slug || p.id} href={`/product/${p.slug || p.id}`} className="card">
+                <div className="relative">
+                  <img src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
+                  {off > 0 && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off}% OFF</span>}
+                </div>
+                <div className="p-3">
+                  <div className="text-xs text-gray-500 font-semibold">{p.brand || ''}</div>
+                  <div className="text-sm font-bold line-clamp-2 min-h-[2.5rem]">{p.name}</div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="font-extrabold text-lg">₹{Number(p.price).toLocaleString('en-IN')}</span>
+                    {p.mrp && <span className="text-xs text-gray-400 line-through">₹{Number(p.mrp).toLocaleString('en-IN')}</span>}
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

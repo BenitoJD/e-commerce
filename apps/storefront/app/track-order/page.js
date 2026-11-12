@@ -1,26 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import { trackOrder } from '../../lib/api';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { cancelOrder, trackOrder } from '../../lib/api';
 
 const STEPS = ['placed', 'paid', 'shipped', 'delivered'];
+const CANCELLABLE = ['pending', 'payment pending', 'payment_pending', 'payment-pending', 'paymentpending', 'cod', 'placed', 'unpaid'];
 
-export default function TrackOrderPage() {
-  const [receipt, setReceipt] = useState('');
-  const [phone, setPhone] = useState('');
+function TrackInner() {
+  const sp = useSearchParams();
+  const paramReceipt = sp.get('receipt') || '';
+  const paramPhone = sp.get('phone') || '';
+  const [receipt, setReceipt] = useState(paramReceipt);
+  const [phone, setPhone] = useState(paramPhone);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [data, setData] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [notice, setNotice] = useState('');
+  const autoRan = useRef(false);
 
-  const go = async (e) => {
-    e.preventDefault();
+  const lookup = async (r, p) => {
     setErr('');
+    setNotice('');
     setData(null);
-    if (!receipt.trim() || !phone.trim()) { setErr('Enter both receipt ID and phone number.'); return; }
+    if (!String(r || '').trim() || !String(p || '').trim()) {
+      setErr('Enter both receipt ID and phone number.');
+      return;
+    }
     setBusy(true);
     try {
-      const r = await trackOrder(receipt.trim(), phone.trim());
-      setData(r.order || r);
+      const res = await trackOrder(String(r).trim(), String(p).trim());
+      setData(res.order || res);
     } catch (e2) {
       setErr(e2.message || 'Order not found. Check receipt & phone.');
     } finally {
@@ -28,9 +39,46 @@ export default function TrackOrderPage() {
     }
   };
 
+  // Prefill from ?receipt= (and ?phone= when present) and auto-lookup when both are known.
+  useEffect(() => {
+    if (paramReceipt) setReceipt(paramReceipt);
+    if (paramPhone) setPhone(paramPhone);
+    if (paramReceipt && paramPhone && !autoRan.current) {
+      autoRan.current = true;
+      lookup(paramReceipt, paramPhone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paramReceipt, paramPhone]);
+
+  const go = async (e) => {
+    e.preventDefault();
+    autoRan.current = true;
+    await lookup(receipt, phone);
+  };
+
   const status = String(data?.status || '').toLowerCase();
   const terminal = ['cancelled', 'canceled', 'refunded', 'failed'].includes(status);
   const activeIdx = STEPS.indexOf(status);
+  const cancellable = !terminal && CANCELLABLE.includes(status);
+
+  const onCancel = async () => {
+    if (typeof window !== 'undefined') {
+      const ok = window.confirm(`Cancel order ${data?.receipt || receipt}? This cannot be undone.`);
+      if (!ok) return;
+    }
+    setCancelling(true);
+    setErr('');
+    setNotice('');
+    try {
+      const r = await cancelOrder(String(data?.receipt || receipt).trim(), phone.trim());
+      setNotice(`Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`);
+      await lookup(data?.receipt || receipt, phone);
+    } catch (e2) {
+      setErr(e2.message || 'Could not cancel this order. Contact care@toolskart.in.');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -41,6 +89,7 @@ export default function TrackOrderPage() {
         <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" /></div>
         <div className="sm:col-span-2">
           {err && <p className="text-sm text-red-600 font-semibold mb-2">{err}</p>}
+          {notice && <p className="text-sm text-green-700 font-semibold mb-2">{notice}</p>}
           <button disabled={busy} className="btn-primary w-full disabled:opacity-60">{busy ? 'Tracking...' : 'Track Order'}</button>
         </div>
       </form>
@@ -76,6 +125,15 @@ export default function TrackOrderPage() {
             </div>
           )}
 
+          {cancellable && (
+            <div className="mt-5 border-t pt-4">
+              <button onClick={onCancel} disabled={cancelling} className="btn-outline !border-red-300 !text-red-600 w-full disabled:opacity-60">
+                {cancelling ? 'Cancelling...' : 'Cancel order'}
+              </button>
+              <p className="text-xs text-gray-500 mt-1 text-center">COD & unpaid orders can be cancelled here. Paid-order refunds reach source in 3–5 working days.</p>
+            </div>
+          )}
+
           {Array.isArray(data.timeline) && data.timeline.length > 0 && (
             <div className="mt-5 border-t pt-4 space-y-2">
               {data.timeline.map((t, i) => (
@@ -100,5 +158,13 @@ export default function TrackOrderPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading...</div>}>
+      <TrackInner />
+    </Suspense>
   );
 }

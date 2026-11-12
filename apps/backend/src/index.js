@@ -12,6 +12,8 @@ const adminRouter = require('./routes/admin');
 const searchRouter = require('./routes/search');
 const engagementRouter = require('./routes/engagement');
 const serviceRouter = require('./routes/service');
+const invoiceRouter = require('./routes/invoice');
+const sitemapHandler = require('./routes/sitemap');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -37,6 +39,9 @@ app.use('/store/search', searchRouter);
 app.use('/admin', adminRouter);
 app.use('/store/engage', engagementRouter);
 app.use('/store/service', serviceRouter);
+app.use('/store/invoice', invoiceRouter);
+
+app.get('/sitemap.xml', sitemapHandler);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 

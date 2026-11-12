@@ -101,4 +101,74 @@ router.post('/subscribe', async (req, res) => {
   }
 });
 
+// GET /store/service/orders?phone=
+router.get('/orders', async (req, res) => {
+  try {
+    const phone = digits(req.query.phone);
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
+    }
+    const last10 = phone.slice(-10);
+    const { rows } = await db.query(
+      `SELECT receipt, status, amount_paise, items, customer, created_at FROM orders
+       WHERE RIGHT(regexp_replace(COALESCE(customer->>'phone', ''), '\\D', '', 'g'), 10) = $1
+       ORDER BY created_at DESC LIMIT 20`,
+      [last10]
+    );
+    res.json({
+      orders: rows.map((o) => ({
+        receipt: o.receipt,
+        status: o.status,
+        amount_paise: o.amount_paise,
+        created_at: o.created_at,
+        itemCount: Array.isArray(o.items)
+          ? o.items.reduce((sum, it) => sum + (parseInt(it && it.qty, 10) || 0), 0)
+          : 0,
+      })),
+    });
+  } catch (err) {
+    console.error('[service] orders error:', err.message);
+    res.status(500).json({ error: 'Orders lookup failed' });
+  }
+});
+
+// POST /store/service/cancel { receipt, phone }
+router.post('/cancel', async (req, res) => {
+  try {
+    const receipt = String((req.body && req.body.receipt) || '').trim();
+    const phone = digits(req.body && req.body.phone);
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
+    }
+    const { rows } = await db.query(
+      'SELECT receipt, status, customer FROM orders WHERE receipt = $1',
+      [receipt]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    const order = rows[0];
+    const customerPhone = digits(order.customer && order.customer.phone);
+    const match =
+      customerPhone === phone ||
+      (customerPhone.length >= 10 &&
+        phone.length >= 10 &&
+        customerPhone.slice(-10) === phone.slice(-10));
+    if (!match) return res.status(404).json({ error: 'Phone does not match order' });
+    const cancellable = ['pending', 'paid', 'cod_pending'];
+    if (!cancellable.includes(String(order.status))) {
+      return res
+        .status(409)
+        .json({ error: `Cannot cancel order with status '${order.status}'` });
+    }
+    const { rows: updated } = await db.query(
+      "UPDATE orders SET status = 'cancelled' WHERE receipt = $1 RETURNING receipt, status",
+      [receipt]
+    );
+    res.json({ ok: true, receipt: updated[0].receipt, status: updated[0].status });
+  } catch (err) {
+    console.error('[service] cancel error:', err.message);
+    res.status(500).json({ error: 'Cancel failed' });
+  }
+});
+
 module.exports = router;

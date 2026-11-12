@@ -202,3 +202,25 @@ export function asList(data) {
   if (data && Array.isArray(data.items)) return data.items;
   return [];
 }
+
+// ---- Service: my orders / cancel / invoice ----
+export async function getMyOrders(phone) {
+  const q = new URLSearchParams({ phone: phone || '' });
+  const res = await fetch(`${BASE}/store/service/orders?${q.toString()}`, { cache: 'no-store' });
+  return handle(res);
+}
+
+export async function cancelOrder(receipt, phone) {
+  const res = await fetch(`${BASE}/store/service/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ receipt, phone }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getInvoice(receipt) {
+  const res = await fetch(`${BASE}/store/invoice/${encodeURIComponent(receipt)}`, { cache: 'no-store' });
+  return handle(res);
+}

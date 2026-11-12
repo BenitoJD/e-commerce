@@ -74,6 +74,7 @@ export default function RootLayout({ children }) {
                 <li><a className="hover:text-white font-bold text-amber-400" href="/deals">🔥 Deals of the Day</a></li>
                 <li><a className="hover:text-white" href="/brands">All Brands</a></li>
                 <li><a className="hover:text-white" href="/track-order">Track Order</a></li>
+                <li><a className="hover:text-white" href="/my-orders">My Orders</a></li>
                 <li><a className="hover:text-white" href="/bulk-orders">Bulk Orders (B2B)</a></li>
                 <li><a className="hover:text-white" href="/emi-options">EMI Options</a></li>
               </ul>

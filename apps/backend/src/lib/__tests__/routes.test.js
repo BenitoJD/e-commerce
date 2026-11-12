@@ -17,8 +17,8 @@ const db = require('../../db');
 
 function makeFakeDb() {
   const products = new Map([
-    ['drill-a', { slug: 'drill-a', name: 'Drill A', price_paise: 100000, mrp_paise: 120000, stock: 5 }],
-    ['motor-b', { slug: 'motor-b', name: 'Motor B', price_paise: 500000, mrp_paise: 600000, stock: 1 }],
+    ['drill-a', { slug: 'drill-a', name: 'Drill A', price_paise: 100000, mrp_paise: 120000, stock: 100 }],
+    ['motor-b', { slug: 'motor-b', name: 'Motor B', price_paise: 500000, mrp_paise: 600000, stock: 1 }], // keep at 1: oversell test needs qty 2 to fail
   ]);
   const coupons = new Map([
     ['SAVE10', { code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000, active: true }],
@@ -88,6 +88,10 @@ function makeFakeDb() {
     if (t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer FROM orders WHERE receipt')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ ...o }] : [] };
+    }
+    if (t.includes('FROM orders WHERE receipt = $1') && t.includes('coupon_code')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0 }] : [] };
     }
     if (t.startsWith('SELECT id, receipt, status, amount_paise, items FROM orders WHERE razorpay_order_id')) {
       const o = orders.find((x) => x.razorpay_order_id === params[0]);
@@ -167,6 +171,7 @@ app.use('/store/products', require('../../routes/products'));
 app.use('/store/checkout', require('../../routes/checkout'));
 app.use('/store/engage', require('../../routes/engagement'));
 app.use('/store/service', require('../../routes/service'));
+app.use('/store/invoice', require('../../routes/invoice'));
 app.use('/admin', require('../../routes/admin'));
 
 let server;
@@ -200,6 +205,7 @@ function signedWebhook(event, entity) {
 }
 
 test('checkout creates order with server-side stock reservation', async () => {
+  const before = fake.products.get('drill-a').stock;
   const r = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 2 }],
     customer: { name: 'Ravi', phone: '9876543210' },
@@ -209,7 +215,7 @@ test('checkout creates order with server-side stock reservation', async () => {
   assert.match(r.json.receipt, /^rcpt_/);
   assert.match(r.json.razorpayOrderId, /^order_mock_/);
   const p = fake.products.get('drill-a');
-  assert.equal(p.stock, 3); // 5 - 2 reserved
+  assert.equal(p.stock, before - 2); // exactly the 2 units reserved
 });
 
 test('checkout rejects oversell with 409 and keeps stock', async () => {
@@ -322,6 +328,26 @@ test('admin cancel of a paid order restocks and flags manual refund (no live key
   assert.equal(r.status, 200);
   assert.equal(r.json.refund, 'manual'); // placeholder keys: no gateway call, needs human follow-up
   assert.equal(fake.products.get('drill-a').stock, stockAfterBuy + 1);
+});
+test('invoice balances: lines minus coupon equal grand total', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    couponCode: 'SAVE10',
+  });
+  assert.equal(created.status, 200);
+  const inv = await api('GET', `/store/invoice/${created.json.receipt}`);
+  assert.equal(inv.status, 200);
+  assert.equal(inv.json.couponCode, 'SAVE10');
+  assert.ok(inv.json.discountPaise > 0);
+  const lines = inv.json.items.reduce((s, it) => s + it.linePaise, 0);
+  assert.equal(lines - inv.json.discountPaise, inv.json.grandPaise);
+  assert.equal(inv.json.grandPaise, created.json.amount_paise);
+});
+
+test('invoice 404s unknown receipts', async () => {
+  const r = await api('GET', '/store/invoice/rcpt_nope_123');
+  assert.equal(r.status, 404);
 });
 test('admin: transition guard blocks nonsense moves, allows real ones', async () => {
   const created = await api('POST', '/store/checkout/create', {

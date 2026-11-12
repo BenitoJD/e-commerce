@@ -141,7 +141,7 @@ export default function ProductPage({ params }) {
       removeFromWishlist(p.slug || slug);
       setWished(false);
     } else {
-      addToWishlist({ slug: p.slug || slug, name: p.name, price: p.price, brand: p.brand, image: images[0] });
+      addToWishlist({ slug: p.slug || slug, name: p.name, price: p.price, brand: p.brand, image: images[0], stock: p.stock });
       setWished(true);
     }
   };

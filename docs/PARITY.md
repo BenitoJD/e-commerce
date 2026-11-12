@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 35 (payment IDs in admin).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 36 (wishlist stock badges).
 
 ## Storefront
 

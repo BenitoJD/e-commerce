@@ -3,12 +3,14 @@ function sanitizeWish(i) {
   const slug = i.slug || i.id;
   if (!slug) return null;
   const price = Number(i.price);
+  const stock = i.stock == null ? null : Number(i.stock);
   return {
     slug,
     name: i.name || slug,
     price: Number.isFinite(price) && price >= 0 ? price : 0,
     brand: i.brand || '',
     image: i.image || (i.images && i.images[0]) || '',
+    stock: stock == null || !Number.isFinite(stock) ? null : Math.max(0, Math.floor(stock)),
   };
 }
 
@@ -36,12 +38,14 @@ export function addToWishlist(product) {
   const found = items.find((i) => i.slug === slug);
   if (!found) {
     const price = Number(product.price);
+    const stock = product.stock == null ? null : Number(product.stock);
     items.push({
       slug,
       name: product.name || slug,
       price: Number.isFinite(price) && price >= 0 ? price : 0,
       brand: product.brand || '',
-      image: product.image || (product.images && product.images[0]) || ''
+      image: product.image || (product.images && product.images[0]) || '',
+      stock: stock == null || !Number.isFinite(stock) ? null : Math.max(0, Math.floor(stock)),
     });
     saveWishlist(items);
   }

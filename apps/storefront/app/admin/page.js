@@ -33,7 +33,7 @@ function inrMaybe(v) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
-const ORDER_STATUSES = ['pending', 'paid', 'cod', 'shipped', 'delivered', 'cancelled', 'refunded', 'failed'];
+const ORDER_STATUSES = ['pending', 'paid', 'cod_pending', 'shipped', 'delivered', 'cancelled', 'refunded', 'failed'];
 const QUOTE_STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
 
 export default function AdminPage() {
@@ -314,7 +314,7 @@ export default function AdminPage() {
     const st = String(o.status || '').toLowerCase();
     const id = o.id || o._id || o.receipt;
     const btns = [];
-    if (st === 'paid' || st === 'cod' || st === 'pending') {
+    if (st === 'paid' || st === 'cod_pending' || st === 'pending') {
       btns.push(['shipped', 'Ship']);
     }
     if (st === 'shipped') {

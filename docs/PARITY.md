@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 18 (wishlist hardening).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 19 (VPS build-args fix, YAML-validated).
 
 ## Storefront
 

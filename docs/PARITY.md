@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 54 (product videos shipped).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 55 (fresh-clone verification; released catalog files).
 
 ## Storefront
 
@@ -53,3 +53,7 @@ self-healing storage, wishlist dedupe + stock, store contact config + wa.me link
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
 Build: `cd apps/storefront && npm run build` must compile all 23 routes.
+
+Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
+run the storefront suite (needs no install) and `apps/backend` install + suite.
+Both must be green with zero setup beyond `git clone`.

@@ -98,7 +98,7 @@ per-page titles/descriptions/canonical/OG; Organization + WebSite/SearchAction +
 
 ## Admin console (`/admin`, header `x-admin-token`)
 
-Overview (revenue incl. delivered, orders by status, low stock, new quotes) ·
+Overview (orders today, revenue today, 7-day revenue, unpaid/COD pending, manual refunds, status breakdown, low stock, new quotes) ·
 Orders (filter, search by receipt/name/phone, **open an order for items/address/payment**,
 refund status, guarded status transitions, **date-range filters and CSV export for accounting**) · **Products
 (create/edit/delete without touching seed files)** · Returns · Quotes (convert to order at
@@ -115,7 +115,7 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 143 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 146 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

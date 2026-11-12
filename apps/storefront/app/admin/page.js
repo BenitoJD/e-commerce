@@ -603,6 +603,30 @@ export default function AdminPage() {
                       <div className="text-2xl font-extrabold mt-1">{newQuotesCount ?? stats.totalQuotes ?? stats.quotes ?? '—'}</div>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                    <div className="card p-4">
+                      <div className="text-xs text-gray-500 font-semibold uppercase">Orders today</div>
+                      <div className="text-2xl font-extrabold mt-1">{stats.ordersToday ?? 0}</div>
+                    </div>
+                    <div className="card p-4">
+                      <div className="text-xs text-gray-500 font-semibold uppercase">Revenue today</div>
+                      <div className="text-2xl font-extrabold mt-1">{inrFromPaise(stats.revenueTodayPaise ?? 0)}</div>
+                    </div>
+                    <div className="card p-4">
+                      <div className="text-xs text-gray-500 font-semibold uppercase">Last 7 days</div>
+                      <div className="text-2xl font-extrabold mt-1">{inrFromPaise(stats.revenue7dPaise ?? 0)}</div>
+                    </div>
+                    <div className="card p-4">
+                      <div className="text-xs text-gray-500 font-semibold uppercase">Needs action</div>
+                      <div className="text-sm mt-1 space-y-0.5">
+                        <div className="flex justify-between"><span className="text-gray-600">Unpaid / COD pending</span><b>{stats.pendingOrders ?? 0}</b></div>
+                        <div className={`flex justify-between ${(stats.manualRefunds ?? 0) > 0 ? 'text-red-600 font-bold' : ''}`}>
+                          <span>Manual refunds</span><b>{stats.manualRefunds ?? 0}</b>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid sm:grid-cols-2 gap-3 mt-3">
                     <div className="card p-4">
                       <div className="font-bold mb-2">Orders by status</div>

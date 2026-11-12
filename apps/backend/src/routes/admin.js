@@ -5,6 +5,7 @@ const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransition
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
+const { summarizeRecentOrders } = require('../lib/stats');
 
 const router = express.Router();
 
@@ -47,7 +48,19 @@ router.get('/stats', async (req, res) => {
     );
     const quotesNew = quoteRows[0] ? quoteRows[0].count : 0;
 
-    res.json({ ordersByStatus, totalOrders, revenuePaise, lowStock, quotesNew });
+    // Time-window numbers: one query for the last 8 days, summarised in JS (tested).
+    let recent = { ordersToday: 0, revenueTodayPaise: 0, revenue7dPaise: 0, pendingOrders: 0, manualRefunds: 0 };
+    try {
+      const { rows: recentRows } = await db.query(
+        `SELECT created_at, status, amount_paise, refund_mode FROM orders
+          WHERE created_at >= NOW() - INTERVAL '8 days'`
+      );
+      recent = summarizeRecentOrders(recentRows, new Date());
+    } catch (e) {
+      console.error('[admin] recent stats failed:', e.message);
+    }
+
+    res.json({ ordersByStatus, totalOrders, revenuePaise, lowStock, quotesNew, ...recent });
   } catch (err) {
     console.error('[admin] stats error:', err.message);
     res.status(500).json({ error: 'Failed to load stats' });

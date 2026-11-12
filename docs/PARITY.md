@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 90 (constant-time admin token, bulk cart/wishlist actions, 95 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 91 (repeatable seed preserving stock, doc-encoding guard, 101 backend tests).
 
 ## Storefront
 
@@ -59,7 +59,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 95 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 101 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
@@ -78,3 +78,7 @@ Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real c
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.
 Both must be green with zero setup beyond `git clone`.
+
+Seed (`cd apps/backend && npm run seed`) is **repeatable**: it refreshes catalogue
+content (names, prices, images, specs, videos) and coupon terms, but never overwrites
+live `stock` or coupon `used_count`/`active`.

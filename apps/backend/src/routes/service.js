@@ -72,11 +72,36 @@ router.get('/track', async (req, res) => {
         phone.length >= 10 &&
         customerPhone.slice(-10) === phone.slice(-10));
     if (!match) return res.status(401).json({ error: 'Phone does not match order' });
+    // Enrich line items with catalog names so tracking pages show names, not slugs.
+    const lineItems = Array.isArray(order.items) ? order.items : [];
+    const slugs = [...new Set(lineItems.map((it) => it && it.slug).filter(Boolean))];
+    let bySlug = {};
+    if (slugs.length) {
+      try {
+        const { rows: found } = await db.query(
+          'SELECT slug, name, price_paise FROM products WHERE slug = ANY($1)',
+          [slugs]
+        );
+        bySlug = Object.fromEntries(found.map((p) => [p.slug, p]));
+      } catch { /* best-effort: fall back to raw line items */ }
+    }
+    const items = lineItems.map((it) => {
+      const p = (it && bySlug[it.slug]) || {};
+      const qty = parseInt(it && it.qty, 10) || 0;
+      const unitPaise = it && it.unit_price_paise != null ? it.unit_price_paise : p.price_paise || 0;
+      return {
+        slug: it && it.slug,
+        name: p.name || (it && it.slug),
+        qty,
+        unit_price_paise: unitPaise,
+        price: Math.round(Number(unitPaise) / 100),
+      };
+    });
     res.json({
       receipt: order.receipt,
       status: order.status,
       amount_paise: order.amount_paise,
-      items: order.items,
+      items,
       timeline: buildTimeline(order),
     });
   } catch (err) {

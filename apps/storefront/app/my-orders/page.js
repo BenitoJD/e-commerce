@@ -12,7 +12,7 @@ function statusBadge(status) {
   const s = String(status || '').toLowerCase();
   if (['cancelled', 'canceled', 'refunded', 'failed'].includes(s)) return 'bg-red-100 text-red-700';
   if (['delivered', 'paid'].includes(s)) return 'bg-green-100 text-green-800';
-  if (['shipped'].includes(s)) return 'bg-blue-100 text-blue-800';
+  if (['shipped', 'cod', 'cod_pending'].includes(s)) return 'bg-blue-100 text-blue-800';
   return 'bg-yellow-50 text-yellow-800';
 }
 

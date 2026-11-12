@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { cancelOrder, trackOrder } from '../../lib/api';
 
 const STEPS = ['placed', 'paid', 'shipped', 'delivered'];
-const CANCELLABLE = ['pending', 'payment pending', 'payment_pending', 'payment-pending', 'paymentpending', 'cod', 'placed', 'unpaid'];
+// Must stay in sync with backend cancellable statuses (pending, paid, cod_pending).
+const CANCELLABLE = ['pending', 'paid', 'cod_pending', 'cod', 'payment pending', 'payment_pending', 'payment-pending', 'paymentpending', 'placed', 'unpaid'];
 
 function TrackInner() {
   const sp = useSearchParams();

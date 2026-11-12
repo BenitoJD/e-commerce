@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 40 (live server boot test).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 41 (production build green, 23/23 routes).
 
 ## Storefront
 

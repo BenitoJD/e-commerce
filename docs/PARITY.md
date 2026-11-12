@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 17 (tracking names + paid/COD cancel).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 18 (wishlist hardening).
 
 ## Storefront
 

@@ -1,7 +1,24 @@
+function sanitizeWish(i) {
+  if (!i || typeof i !== 'object') return null;
+  const slug = i.slug || i.id;
+  if (!slug) return null;
+  const price = Number(i.price);
+  return {
+    slug,
+    name: i.name || slug,
+    price: Number.isFinite(price) && price >= 0 ? price : 0,
+    brand: i.brand || '',
+    image: i.image || (i.images && i.images[0]) || '',
+  };
+}
+
 export function getWishlist() {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem('tw_wishlist') || '[]');
+    const raw = JSON.parse(localStorage.getItem('tw_wishlist') || '[]');
+    if (!Array.isArray(raw)) return [];
+    // Self-heal: drop corrupt/legacy entries so one bad item never breaks the page.
+    return raw.map(sanitizeWish).filter(Boolean);
   } catch {
     return [];
   }
@@ -18,10 +35,11 @@ export function addToWishlist(product) {
   if (!slug) return items;
   const found = items.find((i) => i.slug === slug);
   if (!found) {
+    const price = Number(product.price);
     items.push({
       slug,
-      name: product.name,
-      price: Number(product.price),
+      name: product.name || slug,
+      price: Number.isFinite(price) && price >= 0 ? price : 0,
       brand: product.brand || '',
       image: product.image || (product.images && product.images[0]) || ''
     });

@@ -84,7 +84,7 @@ Messages · Reviews/Questions (verify, answer, delete) · Stock (update by slug)
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 67 tests: pricing/GST/EMI, catalog, webhooks,
+cd apps/backend && npm test        # 68 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
 cd apps/storefront && npm test     # 23 tests: cart self-healing, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist

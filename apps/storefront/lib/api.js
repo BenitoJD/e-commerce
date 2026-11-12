@@ -74,6 +74,12 @@ export async function fetchProducts({ category, limit = 20, search = '', brand =
   return data;
 }
 
+export async function suggestSearch(q, signal) {
+  const params = new URLSearchParams({ q: String(q || '') });
+  const res = await fetch(`${BASE}/store/search/suggest?${params.toString()}`, { cache: 'no-store', signal });
+  return handle(res);
+}
+
 export async function fetchProduct(slug) {
   const res = await fetch(`${BASE}/store/products/${encodeURIComponent(slug)}`, { cache: 'no-store' });
   const data = await handle(res);

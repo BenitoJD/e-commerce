@@ -51,4 +51,40 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /store/search/suggest?q= — lightweight typeahead (products + brands + categories)
+// Kept deliberately small so the header can call it on every keystroke.
+router.get('/suggest', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (q.length < 2) {
+      return res.json({ products: [], brands: [], categories: [] });
+    }
+    const like = `%${escapeLike(q)}%`;
+    const prefix = `${escapeLike(q)}%`;
+
+    const { rows: products } = await db.query(
+      `SELECT slug, name, brand, price_paise, mrp_paise, stock, images
+         FROM products
+        WHERE name ILIKE $1 ESCAPE '\\' OR brand ILIKE $1 ESCAPE '\\' OR category ILIKE $1 ESCAPE '\\'
+        ORDER BY (name ILIKE $2 ESCAPE '\\') DESC, stock > 0 DESC, name ASC
+        LIMIT 6`,
+      [like, prefix]
+    );
+    const { rows: brands } = await db.query(
+      `SELECT brand, COUNT(*)::int AS count FROM products
+        WHERE brand ILIKE $1 ESCAPE '\\' GROUP BY brand ORDER BY count DESC LIMIT 4`,
+      [like]
+    );
+    const { rows: categories } = await db.query(
+      `SELECT category, COUNT(*)::int AS count FROM products
+        WHERE category ILIKE $1 ESCAPE '\\' GROUP BY category ORDER BY count DESC LIMIT 3`,
+      [like]
+    );
+    res.json({ products, brands, categories, q });
+  } catch (err) {
+    console.error('[search] suggest error:', err.message);
+    res.status(500).json({ error: 'Suggestions unavailable' });
+  }
+});
+
 module.exports = router;

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 64 (coupon expiry + usage caps, 67/67).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 65 (search typeahead, 68/68).
 
 ## Storefront
 
@@ -8,7 +8,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 |---|---|
 | Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` + deals/brand/recently-viewed strips |
 | Mega-menu / category nav | ✅ header category nav |
-| Search with suggestions | ✅ `/store/search` + header search |
+| Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` (gallery + EMI 3/6/9/12) |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |

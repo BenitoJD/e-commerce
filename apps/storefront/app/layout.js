@@ -1,5 +1,6 @@
 import './globals.css';
 import NewsletterForm from '../components/NewsletterForm';
+import SearchBox from '../components/SearchBox';
 import { STORE, waLink } from '../lib/store';
 
 export const metadata = {
@@ -19,8 +20,7 @@ export default function RootLayout({ children }) {
               <span className="font-extrabold text-xl tracking-tight">{storeName}</span>
             </a>
             <form action="/category/all" method="get" className="hidden md:flex flex-1 max-w-xl">
-              <input name="q" placeholder="Search drills, motors, pumps, welders..." className="input rounded-r-none" />
-              <button type="submit" className="bg-[#F97316] text-white px-4 rounded-r-lg font-semibold">Search</button>
+              <SearchBox />
             </form>
             <nav className="ml-auto flex items-center gap-3 text-sm font-semibold">
               <a href="/track-order" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">Track Order</a>
@@ -31,8 +31,7 @@ export default function RootLayout({ children }) {
           </div>
           <div className="md:hidden px-4 pb-3">
             <form action="/category/all" method="get" className="flex">
-              <input name="q" placeholder="Search tools..." className="input rounded-r-none" />
-              <button type="submit" className="bg-[#F97316] text-white px-4 rounded-r-lg font-semibold">Go</button>
+              <SearchBox compact />
             </form>
           </div>
           <div className="bg-gray-900 text-white text-xs">

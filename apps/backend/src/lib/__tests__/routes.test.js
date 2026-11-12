@@ -148,6 +148,15 @@ function makeFakeDb() {
       }
       return { rows: [] };
     }
+    if (t.startsWith('SELECT slug, name, brand, price_paise, mrp_paise, stock, images FROM products')) {
+      return { rows: [...products.values()].map((p) => ({ slug: p.slug, name: p.name, brand: p.brand, price_paise: p.price_paise, stock: p.stock, images: [] })) };
+    }
+    if (t.includes('FROM products') && t.includes('GROUP BY brand')) {
+      return { rows: [{ brand: 'DrillCo', count: 1 }] };
+    }
+    if (t.includes('FROM products') && t.includes('GROUP BY category')) {
+      return { rows: [{ category: 'power-tools', count: 1 }] };
+    }
     if (t.startsWith('INSERT INTO stock_alerts')) {
       const [slug, email] = params;
       if (!alerts.some((a) => a.product_slug === slug && a.email === email)) {
@@ -211,6 +220,7 @@ app.use('/webhooks', express.raw({ type: '*/*' }), require('../../routes/webhook
 app.use(express.json({ limit: '1mb' }));
 app.use('/store/products', require('../../routes/products'));
 app.use('/store/checkout', require('../../routes/checkout'));
+app.use('/store/search', require('../../routes/search'));
 app.use('/store/engage', require('../../routes/engagement'));
 app.use('/store/service', require('../../routes/service'));
 app.use('/store/invoice', require('../../routes/invoice'));
@@ -464,6 +474,19 @@ test('returns: delivered order files a request; admin can progress it', async ()
 
   const bad = await api('PATCH', `/admin/returns/${ok.json.id}`, { status: 'nonsense' }, adminHeaders);
   assert.equal(bad.status, 400);
+});
+
+test('search suggestions: short queries return nothing, real queries return groups', async () => {
+  const short = await api('GET', '/store/search/suggest?q=a');
+  assert.equal(short.status, 200);
+  assert.deepEqual(short.json.products, []);
+
+  const real = await api('GET', '/store/search/suggest?q=drill');
+  assert.equal(real.status, 200);
+  assert.ok(real.json.products.length >= 1);
+  assert.equal(real.json.products[0].slug, 'drill-a');
+  assert.ok(Array.isArray(real.json.brands));
+  assert.ok(Array.isArray(real.json.categories));
 });
 
 test('stock alerts: valid request stored once, admin can list', async () => {

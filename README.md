@@ -49,13 +49,17 @@ Admin console: open `/admin`, paste your `ADMIN_TOKEN`.
 ## Quick start (VPS, one command)
 
 ```bash
-cp .env.example .env      # Razorpay live keys, NEXT_PUBLIC_BACKEND_URL, ADMIN_TOKEN
+cp .env.example .env      # Razorpay live keys, ADMIN_TOKEN
+#   single domain:  NEXT_PUBLIC_BACKEND_URL=https://yourdomain.com/api
+#   two domains:    NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com
 docker compose up -d --build
 docker compose exec backend npm run seed
-# store: http://YOUR_IP:3000   api: http://YOUR_IP:9000/health
+# store: http://YOUR_IP  (nginx :80)   api: http://YOUR_IP/api/health
 ```
 
-Point your domain at the VPS (Cloudflare recommended), then set the Razorpay webhook to
+Compose runs postgres + redis + backend + storefront + nginx (single domain: store at `/`,
+API at `/api/*`). Drop the `nginx:` block for a two-subdomain Cloudflare Tunnel setup.
+Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
 `NEXT_PUBLIC_*` values are baked in at **build** time — changing them requires a rebuild.
 

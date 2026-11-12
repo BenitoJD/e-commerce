@@ -66,6 +66,19 @@ services:
     ports:
       - "3000:3000"
 
+  # Single-domain reverse proxy. Comment this block out if you prefer Cloudflare
+  # Tunnel or two subdomains pointing straight at :3000 / :9000.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - storefront
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+
 volumes:
   pgdata:
   redisdata:

@@ -14,26 +14,44 @@ const FALLBACK = [
   { slug: 'karcher-hp-washer', name: 'Karcher Type Pressure Washer', price: 8999, mrp: 11999, brand: 'Karcher', category: 'cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=600&q=70' }
 ];
 
+const PAGE_SIZE = 40;
+
 export default function CategoryPage({ params }) {
   const slug = params.slug;
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [brand, setBrand] = useState('All');
   const [sort, setSort] = useState('pop');
   const [q, setQ] = useState(initialQ);
+
+  const filtersActive = brand !== 'All' || q.trim() !== '' || sort !== 'pop';
 
   useEffect(() => {
     let alive = true;
     async function load() {
       setLoading(true);
+      setHasMore(false);
       try {
-        const data = await fetchProducts({ category: slug, limit: 40, search: initialQ });
+        // Filters run client-side, so pull a wide set when they are active; otherwise paginate.
+        const data = await fetchProducts({
+          category: slug,
+          limit: filtersActive ? 200 : PAGE_SIZE,
+          offset: 0,
+          search: initialQ
+        });
         const list = Array.isArray(data) ? data : data.products || data.items || [];
-        if (alive) setItems(list.length ? list : FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+        if (!alive) return;
+        setItems(list.length ? list : FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+        setHasMore(!filtersActive && list.length === PAGE_SIZE);
       } catch {
-        if (alive) setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+        if (alive) {
+          setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+          setHasMore(false);
+        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -41,6 +59,21 @@ export default function CategoryPage({ params }) {
     load();
     return () => { alive = false; };
   }, [slug, initialQ]);
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await fetchProducts({ category: slug, limit: PAGE_SIZE, offset: items.length, search: initialQ });
+      const list = Array.isArray(data) ? data : data.products || data.items || [];
+      setItems((prev) => [...prev, ...list]);
+      setHasMore(list.length === PAGE_SIZE);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const brands = useMemo(() => ['All', ...new Set(items.map((p) => p.brand).filter(Boolean))], [items]);
 
@@ -99,6 +132,13 @@ export default function CategoryPage({ params }) {
           })}
         </div>
       )}
+      {!loading && !filtersActive && hasMore ? (
+        <div className="mt-8 text-center">
+          <button onClick={loadMore} disabled={loadingMore} className="btn-outline disabled:opacity-60">
+            {loadingMore ? 'Loading...' : 'Load more products'}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -10,21 +10,47 @@ async function handle(res) {
 
 export function backendUrl() { return BASE; }
 
-export async function fetchProducts({ category, limit = 20, search = '', brand = '', sort = '' } = {}) {
+// Backend stores money in paise (price_paise/mrp_paise); UI reads rupees (price/mrp).
+// Normalize once here so every page works with either shape.
+export function normalizeProduct(p) {
+  if (!p || typeof p !== 'object') return p;
+  const hasPaise = p.price_paise != null || p.mrp_paise != null;
+  const hasPrice = p.price != null || p.mrp != null || p.image != null || p.images != null;
+  if (!hasPaise && !hasPrice) return p;
+  const out = { ...p };
+  if (out.price == null && out.price_paise != null) out.price = Math.round(Number(out.price_paise) / 100);
+  if (out.mrp == null && out.mrp_paise != null) out.mrp = Math.round(Number(out.mrp_paise) / 100);
+  if (!out.image && Array.isArray(out.images) && out.images[0]) out.image = out.images[0];
+  if (out.id == null && out.slug) out.id = out.slug;
+  return out;
+}
+
+export function normalizeList(list) {
+  return (Array.isArray(list) ? list : []).map(normalizeProduct);
+}
+
+export async function fetchProducts({ category, limit = 20, search = '', brand = '', sort = '', offset = 0 } = {}) {
   const q = new URLSearchParams();
   if (limit) q.set('limit', String(limit));
+  if (offset) q.set('offset', String(offset));
   if (category && category !== 'all') q.set('category', category);
   if (search) q.set('q', search);
   if (search) q.set('search', search);
   if (brand) q.set('brand', brand);
   if (sort) q.set('sort', sort);
   const res = await fetch(`${BASE}/store/products?${q.toString()}`, { cache: 'no-store' });
-  return handle(res);
+  const data = await handle(res);
+  if (Array.isArray(data)) return normalizeList(data);
+  if (data && Array.isArray(data.products)) return { ...data, products: normalizeList(data.products) };
+  if (data && Array.isArray(data.items)) return { ...data, items: normalizeList(data.items) };
+  return data;
 }
 
 export async function fetchProduct(slug) {
   const res = await fetch(`${BASE}/store/products/${encodeURIComponent(slug)}`, { cache: 'no-store' });
-  return handle(res);
+  const data = await handle(res);
+  if (data && data.product) return { ...data, product: normalizeProduct(data.product) };
+  return normalizeProduct(data);
 }
 
 export async function createCheckout(payload) {
@@ -187,7 +213,7 @@ export async function subscribe(email) {
 }
 
 // ---- Search (contract endpoint) with fallback to /store/products ----
-export async function searchProducts({ q = '', brand = '', category = '', maxPrice = '', sort = '', limit = 20 } = {}) {
+export async function searchProducts({ q = '', brand = '', category = '', maxPrice = '', sort = '', limit = 20, offset = 0 } = {}) {
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (brand) params.set('brand', brand);
@@ -195,21 +221,22 @@ export async function searchProducts({ q = '', brand = '', category = '', maxPri
   if (maxPrice) params.set('maxPrice', String(maxPrice));
   if (sort) params.set('sort', sort);
   if (limit) params.set('limit', String(limit));
+  if (offset) params.set('offset', String(offset));
   try {
     const res = await fetch(`${BASE}/store/search?${params.toString()}`, { cache: 'no-store' });
     const data = await handle(res);
-    const list = Array.isArray(data) ? data : data.products || data.items || [];
+    const list = normalizeList(Array.isArray(data) ? data : data.products || data.items || []);
     if (list.length) return list;
   } catch {
     // fall through to legacy endpoint
   }
-  return fetchProducts({ category: category || undefined, limit, search: q, brand, sort });
+  return fetchProducts({ category: category || undefined, limit, search: q, brand, sort, offset });
 }
 
 export function asList(data) {
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.products)) return data.products;
-  if (data && Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data)) return normalizeList(data);
+  if (data && Array.isArray(data.products)) return normalizeList(data.products);
+  if (data && Array.isArray(data.items)) return normalizeList(data.items);
   return [];
 }
 

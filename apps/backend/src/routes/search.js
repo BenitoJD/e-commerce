@@ -1,21 +1,22 @@
 const express = require('express');
 const db = require('../db');
+const { escapeLike, clampInt } = require('../lib/text');
 
 const router = express.Router();
 
-// GET /store/search?q=&brand=&category=&maxPrice=&sort=&limit=
+// GET /store/search?q=&brand=&category=&maxPrice=&sort=&limit=&offset=
 router.get('/', async (req, res) => {
   try {
     const { q, brand, category, maxPrice, sort } = req.query;
-    let limit = parseInt(req.query.limit, 10) || 20;
-    limit = Math.min(Math.max(limit, 1), 50);
+    const limit = clampInt(req.query.limit, 20, 1, 50);
+    const offset = clampInt(req.query.offset, 0, 0, 10000);
 
     const conds = [];
     const params = [];
 
     if (q) {
-      params.push(`%${q}%`);
-      conds.push(`(name ILIKE $${params.length} OR brand ILIKE $${params.length} OR category ILIKE $${params.length})`);
+      params.push(`%${escapeLike(q)}%`);
+      conds.push(`(name ILIKE $${params.length} ESCAPE '\\' OR brand ILIKE $${params.length} ESCAPE '\\' OR category ILIKE $${params.length} ESCAPE '\\')`);
     }
     if (brand) {
       params.push(brand);
@@ -40,12 +41,13 @@ router.get('/', async (req, res) => {
     else if (sort === 'new') orderBy = 'created_at DESC, id DESC';
 
     params.push(limit);
+    params.push(offset);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(
-      `SELECT * FROM products ${where} ORDER BY ${orderBy} LIMIT $${params.length}`,
+      `SELECT * FROM products ${where} ORDER BY ${orderBy} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    res.json({ products: rows });
+    res.json({ products: rows, limit, offset });
   } catch (err) {
     console.error('[search] error:', err.message);
     res.status(500).json({ error: 'Search failed' });

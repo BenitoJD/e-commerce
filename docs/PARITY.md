@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 134 (true result totals from the API, 154 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 135 (SSR passes the true total; filters debounced; honest sort label).
 
 ## Storefront
 
@@ -10,7 +10,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); results page has a **query-specific heading, breadcrumb and noindex** (search URLs never compete with category pages) |
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
-| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text and sort applied **by the API** (no client-side truncation), with paging that respects filters; brand options from `/store/brands`; **result count is the true total, not the loaded page** |
+| Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |

@@ -1,5 +1,5 @@
 import CategoryView from '../../../components/CategoryView';
-import { getProductsForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
+import { getProductsPage, getProductsForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
@@ -51,7 +51,7 @@ export async function generateMetadata({ params, searchParams }) {
 export default async function CategoryPage({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
   const initialQ = (searchParams && searchParams.q) || '';
-  const items = await getProductsForMeta(slug, PAGE_SIZE);
+  const { items, total } = await getProductsPage(slug, PAGE_SIZE);
   return (
     <>
       <script
@@ -63,7 +63,7 @@ export default async function CategoryPage({ params, searchParams }) {
           ]),
         }}
       />
-      <CategoryView slug={slug} initialItems={items} initialQ={initialQ} />
+      <CategoryView slug={slug} initialItems={items} initialQ={initialQ} initialTotal={total} />
     </>
   );
 }

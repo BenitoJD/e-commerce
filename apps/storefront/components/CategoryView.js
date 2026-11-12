@@ -16,13 +16,13 @@ const FALLBACK = [
 
 const PAGE_SIZE = 40;
 
-export default function CategoryView({ slug, initialItems = [], initialQ = '' }) {
+export default function CategoryView({ slug, initialItems = [], initialQ = '', initialTotal = null }) {
   const [items, setItems] = useState(Array.isArray(initialItems) ? initialItems : []);
   const [loading, setLoading] = useState(!(Array.isArray(initialItems) && initialItems.length));
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState((initialItems || []).length === PAGE_SIZE);
   // True match count from the API (the loaded page can be shorter than the total).
-  const [total, setTotal] = useState(null);
+  const [total, setTotal] = useState(Number.isFinite(Number(initialTotal)) ? Number(initialTotal) : null);
   const [brand, setBrand] = useState('All');
   const [sort, setSort] = useState('pop');
   const [q, setQ] = useState(initialQ);
@@ -68,8 +68,9 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
         if (alive) setLoading(false);
       }
     }
-    load();
-    return () => { alive = false; };
+    // Typing in the filter box must not fire one request per keystroke.
+    const timer = setTimeout(load, 250);
+    return () => { alive = false; clearTimeout(timer); };
     // Any filter change re-queries the API (server-side filtering + paging).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, initialQ, brand, sort, q, priceMin, priceMax]);
@@ -157,7 +158,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
           {brands.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
         <select value={sort} onChange={(e) => setSort(e.target.value)} className="input max-w-[200px]">
-          <option value="pop">Sort: Popularity</option>
+          <option value="pop">Sort: Newest first</option>
           <option value="low">Price: Low to High</option>
           <option value="high">Price: High to Low</option>
           <option value="off">Discount</option>

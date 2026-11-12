@@ -32,10 +32,18 @@ export async function getProductForMeta(slug) {
 }
 
 export async function getProductsForMeta(category, limit = 8) {
+  const page = await getProductsPage(category, limit);
+  return page.items;
+}
+
+// First page + the true match count, for pages that render a result total.
+export async function getProductsPage(category, limit = 40) {
   const budget = category && category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
   const data = await cachedJson(`${BASE}/store/products?limit=${limit}${budget}`);
-  if (!data) return [];
-  return Array.isArray(data) ? data : data.products || [];
+  if (!data) return { items: [], total: null };
+  const items = Array.isArray(data) ? data : data.products || [];
+  const total = !Array.isArray(data) && Number.isFinite(Number(data.total)) ? Number(data.total) : null;
+  return { items, total };
 }
 
 export async function getRatingForMeta(slug) {

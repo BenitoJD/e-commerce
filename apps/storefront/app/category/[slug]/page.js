@@ -11,8 +11,21 @@ function humanize(slug) {
 
 // Category pages are SEO landing pages ("power tools price"), so the first page of
 // products is rendered on the server and the client only takes over for filtering.
-export async function generateMetadata({ params }) {
+// Search URLs (?q=) are a different animal: noindex them so they don't compete with the
+// category pages as thin duplicates.
+export async function generateMetadata({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
+  const query = String((searchParams && searchParams.q) || '').trim();
+
+  if (query) {
+    return {
+      title: `Search: ${query} | ${STORE.name}`,
+      description: `Products matching "${query}" at ${STORE.name} — GST invoice, EMI and pan-India delivery.`,
+      robots: { index: false, follow: true },
+      alternates: { canonical: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+    };
+  }
+
   const label = slug === 'all' ? 'All Products' : humanize(slug);
   const items = await getProductsForMeta(slug, 8);
   const prices = items.map((p) => paiseToRupees(p.price_paise)).filter((n) => n > 0);

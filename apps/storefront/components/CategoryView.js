@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchProducts } from '../lib/api';
 import { filterProducts } from '../lib/catalog';
+import { STORE } from '../lib/store';
 
 const FALLBACK = [
   { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70' },
@@ -102,10 +103,20 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
       <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-2">
         <a href="/" className="hover:text-[#F97316]">Home</a>
         <span className="mx-1">/</span>
-        <span className="text-gray-700 capitalize">{slug === 'all' ? 'All products' : slug.replace(/-/g, ' ')}</span>
+        {initialQ ? (
+          <>
+            <a href="/category/all" className="hover:text-[#F97316]">Search</a>
+            <span className="mx-1">/</span>
+            <span className="text-gray-700">&ldquo;{initialQ}&rdquo;</span>
+          </>
+        ) : (
+          <span className="text-gray-700 capitalize">{slug === 'all' ? 'All products' : slug.replace(/-/g, ' ')}</span>
+        )}
       </nav>
-      <h1 className="text-3xl font-extrabold capitalize">{slug.replace(/-/g, ' ')}</h1>
-      <p className="text-sm text-gray-500 mt-1">{filtered.length} products • GST invoice • EMI available</p>
+      <h1 className="text-3xl font-extrabold capitalize">
+        {initialQ ? <>Results for &ldquo;{initialQ}&rdquo;</> : slug.replace(/-/g, ' ')}
+      </h1>
+      <p className="text-sm text-gray-500 mt-1">{filtered.length} product{filtered.length === 1 ? '' : 's'} • GST invoice • EMI available</p>
 
       <div className="mt-4 flex flex-wrap gap-3 items-center">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" />
@@ -131,7 +142,22 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
       {loading ? (
         <p className="mt-8 text-gray-500">Loading products...</p>
       ) : filtered.length === 0 ? (
-        <p className="mt-8 text-gray-500">No products found.</p>
+        <div className="card p-8 mt-8 text-center">
+          <p className="font-bold text-lg">
+            {initialQ ? <>No products match &ldquo;{initialQ}&rdquo;</> : 'No products match these filters'}
+          </p>
+          <p className="text-sm text-gray-600 mt-1">
+            Try a shorter search, or browse a category below. We stock 30+ tools across seven categories.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <a href="/category/all" className="btn-primary">Browse all products</a>
+            <button onClick={clearFilters} className="btn-outline">Clear filters</button>
+            <a href={`https://wa.me/${STORE.phoneDigits}?text=${encodeURIComponent(`Hi, do you have "${initialQ || 'this item'}" in stock?`)}`}
+               target="_blank" rel="noreferrer" className="btn-outline !text-green-700">
+              Ask on WhatsApp
+            </a>
+          </div>
+        </div>
       ) : (
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           {filtered.map((p) => {

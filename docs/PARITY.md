@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 125 (wishlist refreshes live stock; sold-out guarded).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 126 (search results heading/noindex + helpful empty state).
 
 ## Storefront
 
@@ -8,7 +8,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 |---|---|
 | Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` — **server-rendered** catalogue strips + ItemList JSON-LD; client adds recently-viewed/wishlist |
 | Mega-menu / category nav | ✅ header category nav |
-| Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
+| Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); results page has a **query-specific heading, breadcrumb and noindex** (search URLs never compete with category pages) |
+| No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |

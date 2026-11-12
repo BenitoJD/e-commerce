@@ -4,22 +4,35 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { verifyOrder } from '../../lib/api';
 
-function statusBadge(status) {
+function normStatus(status) {
   const s = String(status || '').toLowerCase();
+  if (s === 'cod_pending' || s === 'cod') return 'cod';
+  return s;
+}
+
+function statusBadge(status) {
+  const s = normStatus(status);
   if (s === 'paid') return 'bg-green-100 text-green-800 border-green-200';
   if (s === 'cod') return 'bg-blue-100 text-blue-800 border-blue-200';
   if (s === 'failed') return 'bg-red-100 text-red-800 border-red-200';
+  if (s === 'cancelled' || s === 'refunded') return 'bg-gray-100 text-gray-700 border-gray-300';
   return 'bg-yellow-50 text-yellow-800 border-yellow-200';
 }
 
 function statusLabel(status, fallbackMode) {
-  const s = String(status || '').toLowerCase();
+  const s = normStatus(status);
   if (s === 'paid') return 'Paid';
   if (s === 'cod') return 'COD';
   if (s === 'failed') return 'Failed';
   if (s === 'pending') return 'Pending';
+  if (s === 'cancelled') return 'Cancelled';
+  if (s === 'refunded') return 'Refunded';
+  if (s === 'shipped') return 'Shipped';
+  if (s === 'delivered') return 'Delivered';
   return fallbackMode || 'Pending';
 }
+
+const TERMINAL = new Set(['paid', 'cod', 'failed', 'cancelled', 'refunded']);
 
 function SuccessInner() {
   const sp = useSearchParams();
@@ -38,9 +51,9 @@ function SuccessInner() {
         const data = await verifyOrder(receipt);
         if (cancelled) return;
         setVerify(data);
-        const st = String(data?.status || '').toLowerCase();
+        const st = normStatus(data?.status);
         // stop early on terminal states
-        if (st === 'paid' || st === 'cod' || st === 'failed') return;
+        if (TERMINAL.has(st)) return;
       } catch {
         // ignore transient errors, keep polling
       }
@@ -83,6 +96,12 @@ function SuccessInner() {
       </div>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <a href="/category/all" className="btn-outline">Continue Shopping</a>
+        {receipt && receipt !== '—' ? (
+          <a href={`/track-order?receipt=${encodeURIComponent(receipt)}`} className="btn-outline">Track Order</a>
+        ) : null}
+        {receipt && receipt !== '—' ? (
+          <a href={`/invoice/${encodeURIComponent(receipt)}`} className="btn-outline">GST Invoice</a>
+        ) : null}
         <a href="https://wa.me/919999999999?text=Hi%20ToolsKart%2C%20need%20help%20with%20my%20order" target="_blank" rel="noreferrer" className="btn-primary">WhatsApp Support</a>
       </div>
     </div>

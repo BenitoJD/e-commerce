@@ -46,6 +46,21 @@ export async function getRatingForMeta(slug) {
   return count > 0 ? { avg, count } : null;
 }
 
+// Brand directory straight from SQL aggregation — never truncates at one product page.
+export async function getBrandsForMeta() {
+  const data = await cachedJson(`${BASE}/store/brands`);
+  if (!data) return [];
+  return Array.isArray(data.brands) ? data.brands : [];
+}
+
+// Products for one brand via the search endpoint's brand filter (up to 50 per call).
+export async function getBrandProducts(name, limit = 48) {
+  const q = new URLSearchParams({ brand: String(name || ''), limit: String(limit) });
+  const data = await cachedJson(`${BASE}/store/search?${q.toString()}`);
+  if (!data) return [];
+  return Array.isArray(data) ? data : data.products || [];
+}
+
 export function paiseToRupees(paise) {
   return Math.round(Number(paise || 0) / 100);
 }

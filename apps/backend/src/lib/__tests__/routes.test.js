@@ -41,6 +41,14 @@ function makeFakeDb() {
       const brands = [...new Set([...products.values()].map((p) => p.brand).filter(Boolean))].sort();
       return { rows: brands.map((brand) => ({ brand })) };
     }
+    if (t.includes('GROUP BY brand')) {
+      const counts = new Map();
+      for (const p of products.values()) {
+        if (p.brand) counts.set(p.brand, (counts.get(p.brand) || 0) + 1);
+      }
+      const rows = [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([brand, count]) => ({ brand, count }));
+      return { rows };
+    }
     if (t.startsWith('SELECT slug, name, price_paise, stock FROM products WHERE slug = ANY')) {
       return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name, price_paise: p.price_paise, stock: p.stock })) };
     }
@@ -355,6 +363,7 @@ const app = express();
 app.use('/webhooks', express.raw({ type: '*/*' }), require('../../routes/webhooks'));
 app.use(express.json({ limit: '1mb' }));
 app.use('/store/products', require('../../routes/products'));
+app.use('/store/brands', require('../../routes/brands'));
 app.use('/store/checkout', require('../../routes/checkout'));
 app.use('/store/quotes', require('../../routes/quotes'));
 app.use('/store/search', require('../../routes/search'));
@@ -818,6 +827,17 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('brands endpoint aggregates the whole catalogue, not the first page', async () => {
+  const res = await api('GET', '/store/brands');
+  assert.equal(res.status, 200);
+  assert.ok(Array.isArray(res.json.brands));
+  const names = res.json.brands.map((b) => b.name);
+  assert.deepEqual(names, [...names].sort(), 'brands are alphabetical');
+  const drill = res.json.brands.find((b) => b.name === 'DrillCo');
+  assert.ok(drill, 'expected DrillCo in the brand list');
+  assert.equal(drill.count, 1);
 });
 
 test('sitemap lists products and brand pages, not just static URLs', async () => {

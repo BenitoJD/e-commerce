@@ -74,6 +74,7 @@ const lookupLimit = createRateLimiter({
 app.use(['/store/invoice', '/store/service/track', '/store/checkout/verify'], lookupLimit);
 
 app.use('/store/products', productsRouter);
+app.use('/store/brands', require('./routes/brands'));
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);
 app.use('/store/search', searchRouter);

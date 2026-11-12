@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 128 (store identity single-sourced; verified by rebrand build).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 129 (brands aggregated in SQL, no truncation).
 
 ## Storefront
 
@@ -23,7 +23,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Wishlist | ✅ localStorage + `/wishlist` with **live stock refresh** (stale saved stock corrected on load), move-one / move-all (skips sold-out), sold-out button disabled, clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
 | Deals of the day + countdown | ✅ `/deals` — **server-rendered** 20%+ list (`lib/deals.js`), ItemList + breadcrumb JSON-LD, dynamic title, client countdown only |
-| Brand pages | ✅ `/brands` **server-rendered directory** (every brand link in initial HTML, counts per brand) and `/brand/[name]` server-rendered with breadcrumbs |
+| Brand pages | ✅ `GET /store/brands` (SQL aggregation — no 100-product truncation) drives a **server-rendered directory**, and `/brand/[name]` renders via the brand filter with breadcrumbs |
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; **order summary with per-line qty/price and "Edit cart"** before payment; COD capped by **one shared policy** (`COD_MAX_PAISE`, mirrored to the UI via `NEXT_PUBLIC_COD_MAX_PAISE`), enforced server-side and reflected in pincode answers |
 | Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout |
@@ -83,14 +83,14 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 148 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 149 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 60 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 58 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

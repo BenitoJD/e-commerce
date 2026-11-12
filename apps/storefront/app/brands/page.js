@@ -1,13 +1,11 @@
-import { brandSummary } from '../../lib/brands';
-import { getProductsForMeta, absoluteUrl } from '../../lib/serverApi';
+import { getBrandsForMeta, absoluteUrl } from '../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../lib/jsonld';
 import { STORE } from '../../lib/store';
 
 // Directory page: server-rendered so every brand link is in the initial HTML, which is
 // how crawlers discover /brand/<name> pages without relying on the sitemap alone.
 export async function generateMetadata() {
-  const products = await getProductsForMeta('', 100);
-  const brands = brandSummary(products);
+  const brands = await getBrandsForMeta();
   const title = `Shop by Brand — ${brands.length} tool brands | ${STORE.name}`;
   const description = `Browse ${brands.length} genuine brands — ${brands.slice(0, 6).map((b) => b.name).join(', ')} and more. GST invoice, warranty support and pan-India delivery.`;
   return {
@@ -19,8 +17,7 @@ export async function generateMetadata() {
 }
 
 export default async function BrandsPage() {
-  const products = await getProductsForMeta('', 100);
-  const brands = brandSummary(products);
+  const brands = await getBrandsForMeta();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

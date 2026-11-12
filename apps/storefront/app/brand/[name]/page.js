@@ -1,5 +1,5 @@
 import BrandView from '../../../components/BrandView';
-import { getProductsForMeta, absoluteUrl } from '../../../lib/serverApi';
+import { getBrandProducts, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
@@ -19,9 +19,8 @@ export async function generateMetadata({ params }) {
 
 export default async function BrandPage({ params }) {
   const name = decodeURIComponent(params.name || '');
-  // getProductsForMeta takes a category; for brands we fetch the catalog and filter.
-  const all = await getProductsForMeta('', 100);
-  const items = all.filter((p) => String(p.brand || '').toLowerCase() === name.toLowerCase());
+  // Brand filter server-side: filtering a 100-product page would silently truncate large brands.
+  const items = await getBrandProducts(name);
   return (
     <>
       <script

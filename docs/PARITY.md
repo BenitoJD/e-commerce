@@ -13,7 +13,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12 |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
-| Admin catalogue CRUD (create/edit/delete products) | ? admin Products tab + `POST/DELETE /admin/products` |
+| Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order (agreed price, stock reserved) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`, admin list) |
@@ -47,7 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 68 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 70 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
@@ -59,7 +59,7 @@ self-healing storage, wishlist dedupe + stock, store contact config + wa.me link
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
 Build: `cd apps/storefront && npm run build` must compile all 24 routes.
-Smoke: `BASE_URL=... node scripts/smoke.mjs` � 28 routes, expects 200 + real content.
+Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.

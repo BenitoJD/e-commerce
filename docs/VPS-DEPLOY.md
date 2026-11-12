@@ -10,6 +10,7 @@ git clone https://github.com/BenitoJD/toolsvilla-clone.git
 cd toolsvilla-clone
 nano .env
 #   NEXT_PUBLIC_BACKEND_URL=/api          <-- single domain behind nginx (compose default)
+#   BACKEND_INTERNAL_URL=http://backend:9000  <-- used by SSR + /sitemap.xml rewrite
 #   FRONTEND_URL=https://yourdomain.com
 #   RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / RAZORPAY_WEBHOOK_SECRET
 #   ADMIN_TOKEN=<long random string>

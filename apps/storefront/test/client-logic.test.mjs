@@ -300,6 +300,19 @@ test('api: friendly fallbacks by status when no body is usable', () => {
 
 // ---------------- api: video embed safety ----------------
 
+test('serverApiBase prefers the internal URL and ignores relative bases', async () => {
+  const { serverApiBase } = await import('../lib/serverApiBase.cjs');
+  // internal wins over the public one
+  assert.equal(serverApiBase({ BACKEND_INTERNAL_URL: 'http://backend:9000', NEXT_PUBLIC_BACKEND_URL: '/api' }), 'http://backend:9000');
+  // trailing slash and whitespace tolerated
+  assert.equal(serverApiBase({ BACKEND_INTERNAL_URL: ' http://backend:9000/ ' }), 'http://backend:9000');
+  // relative public base is unusable server-side -> fall back to dev default
+  assert.equal(serverApiBase({ NEXT_PUBLIC_BACKEND_URL: '/api' }), 'http://localhost:9000');
+  // absolute public base is accepted when no internal URL is given
+  assert.equal(serverApiBase({ NEXT_PUBLIC_BACKEND_URL: 'https://api.shop.test' }), 'https://api.shop.test');
+  assert.equal(serverApiBase({}), 'http://localhost:9000');
+});
+
 test('api: localhost base on a public host is flagged as a misconfiguration', () => {
   const f = api.detectMisconfiguredBase;
   assert.match(f('http://localhost:9000', 'shop.example.com'), /localhost/);

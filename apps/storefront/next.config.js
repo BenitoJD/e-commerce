@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000').replace(/\/+$/, '');
+const { serverApiBase } = require('./lib/serverApiBase.cjs');
+
+// Browser calls and server calls need different bases in a container deploy:
+//   NEXT_PUBLIC_BACKEND_URL -> what the browser uses (often "/api")
+//   BACKEND_INTERNAL_URL    -> what the server uses for rewrites (e.g. http://backend:9000)
+// The rewrite below runs on the server, so it must use the internal base.
+const BACKEND = serverApiBase();
 
 const nextConfig = {
   images: {

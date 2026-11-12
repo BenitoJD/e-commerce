@@ -1,6 +1,8 @@
 // Server-side data helpers (used by metadata/layouts). Never throws: metadata must not
 // break a page when the API is briefly unavailable.
-const BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000').replace(/\/+$/, '');
+import { serverApiBase } from './serverApiBase';
+
+const BASE = serverApiBase();
 
 async function safeJson(url) {
   try {

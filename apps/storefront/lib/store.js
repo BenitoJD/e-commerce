@@ -26,6 +26,12 @@ export function waLink(text) {
   return `https://wa.me/${STORE.phoneDigits}${t}`;
 }
 
+// Share a product/page on WhatsApp (wa.me without a number opens the share sheet).
+export function waShareLink(text, url) {
+  const parts = [text, url].filter(Boolean).join(' ');
+  return `https://wa.me/?text=${encodeURIComponent(parts)}`;
+}
+
 // Deep link to a *customer's* WhatsApp (admin/support use). Accepts local 10-digit
 // numbers, +91-prefixed numbers, and numbers with spaces or dashes.
 export function waLinkTo(phone, text) {

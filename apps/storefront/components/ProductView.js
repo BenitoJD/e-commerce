@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestions, addQuestion, checkPincode, safeVideoUrls, stockAlert } from '../lib/api';
 import { addToCart } from '../lib/cart';
 import { addToWishlist, removeFromWishlist, isWishlisted } from '../lib/wishlist';
+import { waShareLink } from '../lib/store';
 
 const FALLBACK = {
   slug: 'bosch-gsb-13-re-drill',
@@ -321,6 +322,18 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             <button onClick={toggleWish} aria-label="Toggle wishlist" className={`border rounded-lg px-4 py-2.5 font-bold transition ${wished ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-400'}`}>
               {wished ? '❤ Wishlisted' : '♡ Wishlist'}
             </button>
+            <a
+              href={waShareLink(
+                `${p.name} — ₹${Number(p.price || 0).toLocaleString('en-IN')}`,
+                typeof window !== 'undefined' ? window.location.href : `/product/${p.slug || slug}`
+              )}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Share on WhatsApp"
+              className="border rounded-lg px-4 py-2.5 font-bold border-green-300 text-green-700 hover:bg-green-50"
+            >
+              Share
+            </a>
           </div>
 
           <div className="mt-5 card p-4 text-sm">

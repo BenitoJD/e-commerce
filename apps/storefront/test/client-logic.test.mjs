@@ -252,6 +252,17 @@ test('pricing: GST split is inclusive and matches the invoice formula', async ()
   assert.equal(gstInclusiveSplit(112, 12).gstPaise, 1200);
 });
 
+test('store: waShareLink encodes text + url for the share sheet', () => {
+  const link = storeLib.waShareLink('Bosch GSB 13 RE Drill — ₹5,495', 'https://shop.test/product/bosch-gsb-13-re-drill');
+  assert.ok(link.startsWith('https://wa.me/?text='));
+  const decoded = decodeURIComponent(link.split('text=')[1]);
+  assert.equal(decoded, 'Bosch GSB 13 RE Drill — ₹5,495 https://shop.test/product/bosch-gsb-13-re-drill');
+  // missing pieces degrade gracefully instead of producing "undefined"
+  assert.equal(storeLib.waShareLink('just text'), 'https://wa.me/?text=just%20text');
+  assert.equal(storeLib.waShareLink('', 'https://x.test/p'), 'https://wa.me/?text=https%3A%2F%2Fx.test%2Fp');
+  assert.equal(storeLib.waShareLink(), 'https://wa.me/?text=');
+});
+
 test('store: waLinkTo normalises Indian numbers for customer chats', () => {
   assert.equal(storeLib.waLinkTo('9876543210'), 'https://wa.me/919876543210');
   assert.equal(storeLib.waLinkTo('+91 98765 43210'), 'https://wa.me/919876543210');

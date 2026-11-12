@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 94 (inclusive GST surfaced at checkout, formula pinned by tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 95 (WhatsApp product sharing, 37 frontend tests).
 
 ## Storefront
 
@@ -10,7 +10,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
-| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12 |
+| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
@@ -58,6 +58,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
+| Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
 
 ## Tests
 
@@ -68,9 +69,9 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 36 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, GST-inclusive split, WhatsApp link
-normalisation, API base + server base resolution, misconfiguration guard, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 37 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, GST-inclusive split, WhatsApp links
+(customer + share), API base + server base resolution, misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

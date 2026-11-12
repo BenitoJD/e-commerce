@@ -73,7 +73,7 @@ Point your domain at the VPS, then set the Razorpay webhook to
 
 Shopping: homepage strips (deals, brands, recently viewed) · category listing with
 brand/price/sort/text filters and load-more · product pages with specs, EMI 3/6/9/12,
-video embeds, pincode ETA, reviews + Q&A, related items · search with typeahead ·
+video embeds, pincode ETA, reviews + Q&A, related items, WhatsApp share · search with typeahead ·
 wishlist (move one / move all, skips out-of-stock) · cart with live stock checks,
 clear-all and coupons · Razorpay checkout (UPI/cards/netbanking/EMI) · COD capped at
 `COD_MAX_PAISE` (default ₹20,000) and enforced server-side · optional buyer GSTIN for
@@ -112,7 +112,7 @@ cd apps/backend && npm test        # 106 tests: pricing/GST/EMI, catalog, coupon
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 36 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 37 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 25 routes

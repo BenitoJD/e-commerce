@@ -85,7 +85,7 @@ function makeFakeDb() {
       return { rows: [] };
     }
     if (t.startsWith('INSERT INTO orders')) {
-      const [receipt, status, items, amount, customer, coupon, discount, payMode] = params;
+      const [receipt, status, items, amount, customer, coupon, discount, payMode, shipping] = params;
       const row = {
         id: seq++, receipt, status,
         items: typeof items === 'string' ? JSON.parse(items) : items,
@@ -93,6 +93,7 @@ function makeFakeDb() {
         customer: typeof customer === 'string' ? JSON.parse(customer) : customer,
         coupon_code: coupon ?? null, discount_paise: discount ?? 0,
         pay_mode: payMode ?? null,
+        shipping_paise: shipping ?? 0,
         razorpay_order_id: null, razorpay_payment_id: null,
         created_at: new Date().toISOString(),
       };
@@ -118,7 +119,7 @@ function makeFakeDb() {
     }
     if (t.includes('FROM orders WHERE receipt = $1') && t.includes('coupon_code')) {
       const o = orders.find((x) => x.receipt === params[0]);
-      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null }] : [] };
+      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null, shipping_paise: o.shipping_paise || 0 }] : [] };
     }
     if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders')) {
       const o = orders.find((x) => x.receipt === params[0]);
@@ -134,7 +135,9 @@ function makeFakeDb() {
           receipt: o.receipt, created_at: o.created_at, status: o.status,
           pay_mode: o.pay_mode || null, refund_mode: o.refund_mode || null,
           amount_paise: o.amount_paise, discount_paise: o.discount_paise || 0,
+          shipping_paise: o.shipping_paise || 0,
           coupon_code: o.coupon_code || null, customer: o.customer,
+          shipping_paise: o.shipping_paise || 0,
           razorpay_payment_id: o.razorpay_payment_id || null,
         }));
       return { rows };
@@ -572,6 +575,38 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
   assert.equal(inv.json.grandPaise, created.json.amount_paise);
 });
 
+test('invoice reconciles when shipping is charged: items - discount + shipping = total', async () => {
+  const savedFee = process.env.SHIPPING_FEE_PAISE;
+  const savedThreshold = process.env.FREE_SHIPPING_ABOVE_PAISE;
+  try {
+    process.env.SHIPPING_FEE_PAISE = '14900';
+    process.env.FREE_SHIPPING_ABOVE_PAISE = '0'; // charge on every order
+
+    const created = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 2 }], // ₹2,000
+      customer: { name: 'Ravi', phone: '9876543210' },
+      couponCode: 'SAVE10',
+    });
+    assert.equal(created.status, 200);
+
+    const inv = await api('GET', `/store/invoice/${created.json.receipt}`);
+    assert.equal(inv.status, 200);
+    assert.equal(inv.json.shippingPaise, 14900);
+
+    const itemsTotal = inv.json.itemsTotalPaise;
+    const discount = inv.json.discountPaise;
+    const shipping = inv.json.shippingPaise;
+    const grand = inv.json.grandPaise;
+    assert.equal(itemsTotal - discount + shipping, grand, 'invoice must balance');
+    assert.equal(grand, created.json.amount_paise, 'invoice total equals what was charged');
+  } finally {
+    if (savedFee === undefined) delete process.env.SHIPPING_FEE_PAISE;
+    else process.env.SHIPPING_FEE_PAISE = savedFee;
+    if (savedThreshold === undefined) delete process.env.FREE_SHIPPING_ABOVE_PAISE;
+    else process.env.FREE_SHIPPING_ABOVE_PAISE = savedThreshold;
+  }
+});
+
 test('invoice GST split never adds tax on top of the charged amount', async () => {
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],
@@ -895,7 +930,7 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type'), /text\/csv/);
   const header = body.split('\r\n')[0];
-  assert.equal(header, 'receipt,date,status,payment_mode,refund,amount_inr,discount_inr,coupon,customer,phone,pincode,gstin,payment_id');
+  assert.equal(header, 'receipt,date,status,payment_mode,refund,amount_inr,discount_inr,shipping_inr,coupon,customer,phone,pincode,gstin,payment_id');
 
   const row = body.split('\r\n').find((l) => l.includes(created.json.receipt));
   assert.ok(row, 'export should contain the new order');

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 105 (real shipping policy, server-authoritative, 128 backend / 42 frontend).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 106 (shipping persisted + invoiced, totals reconcile, 129 backend tests).
 
 ## Storefront
 
@@ -14,7 +14,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
-| Accounting export | ✅ `GET /admin/orders/export.csv` (status filter, RFC-style quoting) + Orders tab "Export CSV" |
+| Accounting export | ✅ `GET /admin/orders/export.csv` (status filter, RFC-style quoting, shipping column) + Orders tab "Export CSV" |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`, admin list) |
@@ -28,7 +28,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
-| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout** and printed |
+| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout**, item lines with HSN, **shipping line**, coupon line, and totals that reconcile (`items − discount + shipping = total`) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow; **customers can check their return status** by receipt + phone |
@@ -77,7 +77,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (28/28)
 ```
 
-Backend: `cd apps/backend && npm test` — 128 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 129 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

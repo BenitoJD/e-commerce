@@ -130,6 +130,10 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS pay_mode TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_mode TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
 
+-- Wave 106: shipping charged on the order (0 = free). Needed so invoices reconcile:
+-- items − discount + shipping = total.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_paise INTEGER NOT NULL DEFAULT 0;
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

@@ -10,7 +10,8 @@ router.get('/:receipt', async (req, res) => {
     if (!receipt) return res.status(400).json({ error: 'receipt required' });
     const { rows } = await db.query(
       `SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer, created_at,
-              coupon_code, COALESCE(discount_paise, 0) AS discount_paise, pay_mode
+              coupon_code, COALESCE(discount_paise, 0) AS discount_paise, pay_mode,
+              COALESCE(shipping_paise, 0) AS shipping_paise
        FROM orders WHERE receipt = $1`,
       [receipt]
     );
@@ -48,6 +49,7 @@ router.get('/:receipt', async (req, res) => {
     const customer = order.customer || {};
     const itemsTotalPaise = items.reduce((s, it) => s + (it.linePaise || 0), 0);
     const discountPaise = Number(order.discount_paise) || 0;
+    const shippingPaise = Number(order.shipping_paise) || 0;
 
     res.json({
       receipt: order.receipt,
@@ -57,6 +59,7 @@ router.get('/:receipt', async (req, res) => {
       payMode: order.pay_mode || (String(order.status) === 'cod_pending' ? 'cod' : 'online'),
       discountPaise,
       itemsTotalPaise,
+      shippingPaise,
       customer: {
         name: customer.name || '',
         phone: customer.phone || '',

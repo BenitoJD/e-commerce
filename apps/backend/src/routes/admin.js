@@ -98,11 +98,12 @@ router.get('/orders/export.csv', async (req, res) => {
     }
     const { rows } = await db.query(
       `SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise,
-              COALESCE(discount_paise, 0) AS discount_paise, coupon_code, customer, razorpay_payment_id
+              COALESCE(discount_paise, 0) AS discount_paise, COALESCE(shipping_paise, 0) AS shipping_paise,
+              coupon_code, customer, razorpay_payment_id
          FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT 5000`,
       params
     );
-    const header = ['receipt', 'date', 'status', 'payment_mode', 'refund', 'amount_inr', 'discount_inr', 'coupon', 'customer', 'phone', 'pincode', 'gstin', 'payment_id'];
+    const header = ['receipt', 'date', 'status', 'payment_mode', 'refund', 'amount_inr', 'discount_inr', 'shipping_inr', 'coupon', 'customer', 'phone', 'pincode', 'gstin', 'payment_id'];
     const csvEscape = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
     const lines = rows.map((o) => {
       const c = o.customer || {};
@@ -114,6 +115,7 @@ router.get('/orders/export.csv', async (req, res) => {
         o.refund_mode || '',
         (Number(o.amount_paise || 0) / 100).toFixed(2),
         (Number(o.discount_paise || 0) / 100).toFixed(2),
+        (Number(o.shipping_paise || 0) / 100).toFixed(2),
         o.coupon_code || '',
         c.name || '',
         c.phone || '',
@@ -209,6 +211,7 @@ router.get('/orders/:id', async (req, res) => {
         amountPaise: order.amount_paise,
         couponCode: order.coupon_code || null,
         discountPaise: Number(order.discount_paise) || 0,
+        shippingPaise: Number(order.shipping_paise) || 0,
         razorpayOrderId: order.razorpay_order_id || null,
         razorpayPaymentId: order.razorpay_payment_id || null,
         payMode: order.pay_mode || (String(order.status) === 'cod_pending' ? 'cod' : 'online'),

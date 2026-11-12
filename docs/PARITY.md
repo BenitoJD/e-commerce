@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 49 (out-of-stock badges everywhere).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 50 (build-caught JSX fix, green).
 
 ## Storefront
 

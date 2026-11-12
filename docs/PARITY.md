@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 22 (full-catalog brand discovery + brand pagination).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 23 (pumps nav + full sitemap).
 
 ## Storefront
 

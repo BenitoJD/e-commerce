@@ -39,6 +39,7 @@ export default function RootLayout({ children }) {
               <a href="/category/power-tools" className="hover:text-orange-400">Power Tools</a>
               <a href="/category/motors" className="hover:text-orange-400">Motors</a>
               <a href="/category/agriculture" className="hover:text-orange-400">Agriculture</a>
+              <a href="/category/pumps" className="hover:text-orange-400">Pumps</a>
               <a href="/category/welding" className="hover:text-orange-400">Welding</a>
               <a href="/category/cleaning" className="hover:text-orange-400">Cleaning</a>
               <a href="/category/all" className="hover:text-orange-400">All Products</a>
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
                 <li><a className="hover:text-white" href="/category/power-tools">Power Tools</a></li>
                 <li><a className="hover:text-white" href="/category/motors">Motors</a></li>
                 <li><a className="hover:text-white" href="/category/agriculture">Agriculture</a></li>
+                <li><a className="hover:text-white" href="/category/pumps">Pumps</a></li>
                 <li><a className="hover:text-white" href="/category/welding">Welding</a></li>
                 <li><a className="hover:text-white" href="/category/cleaning">Cleaning</a></li>
                 <li><a className="hover:text-white font-bold text-amber-400" href="/deals">🔥 Deals of the Day</a></li>

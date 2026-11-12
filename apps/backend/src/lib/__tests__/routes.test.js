@@ -28,6 +28,7 @@ function makeFakeDb() {
   const quotes = [];
   let quoteSeq = 1;
   let ret = [];
+  let alerts = [];
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
@@ -138,6 +139,19 @@ function makeFakeDb() {
         q.order_receipt = params[0];
       }
       return { rows: [] };
+    }
+    if (t.startsWith('INSERT INTO stock_alerts')) {
+      const [slug, email] = params;
+      if (!alerts.some((a) => a.product_slug === slug && a.email === email)) {
+        alerts.push({ id: alerts.length + 1, product_slug: slug, email, notified: false, created_at: new Date().toISOString() });
+      }
+      return { rows: [] };
+    }
+    if (t.startsWith('SELECT * FROM stock_alerts')) {
+      return { rows: alerts.slice() };
+    }
+    if (t.startsWith('SELECT 1 FROM products WHERE slug')) {
+      return { rows: products.has(params[0]) ? [{ '?column?': 1 }] : [] };
     }
     if (t.startsWith('INSERT INTO return_requests')) {
       const [receipt, phone, reason, details] = params;
@@ -404,6 +418,25 @@ test('returns: delivered order files a request; admin can progress it', async ()
 
   const bad = await api('PATCH', `/admin/returns/${ok.json.id}`, { status: 'nonsense' }, adminHeaders);
   assert.equal(bad.status, 400);
+});
+
+test('stock alerts: valid request stored once, admin can list', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const ok = await api('POST', '/store/service/stock-alert', { slug: 'drill-a', email: 'buyer@example.com' });
+  assert.equal(ok.status, 201);
+
+  // duplicate must not create a second row
+  await api('POST', '/store/service/stock-alert', { slug: 'drill-a', email: 'BUYER@example.com' });
+  const list = await api('GET', '/admin/stock-alerts', undefined, adminHeaders);
+  assert.equal(list.status, 200);
+  assert.equal(list.json.alerts.length, 1);
+});
+
+test('stock alerts: reject bad email and unknown product', async () => {
+  const badEmail = await api('POST', '/store/service/stock-alert', { slug: 'drill-a', email: 'nope' });
+  assert.equal(badEmail.status, 400);
+  const badSlug = await api('POST', '/store/service/stock-alert', { slug: 'ghost', email: 'a@b.co' });
+  assert.equal(badSlug.status, 404);
 });
 
 test('returns: rejects phone mismatch and unknown reasons', async () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestions, addQuestion, checkPincode, safeVideoUrls } from '../../../lib/api';
+import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestions, addQuestion, checkPincode, safeVideoUrls, stockAlert } from '../../../lib/api';
 import { addToCart } from '../../../lib/cart';
 import { addToWishlist, removeFromWishlist, isWishlisted } from '../../../lib/wishlist';
 
@@ -34,6 +34,9 @@ export default function ProductPage({ params }) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [wished, setWished] = useState(false);
+  const [alertEmail, setAlertEmail] = useState('');
+  const [alertBusy, setAlertBusy] = useState(false);
+  const [alertMsg, setAlertMsg] = useState('');
 
   // pincode
   const [pin, setPin] = useState('');
@@ -125,6 +128,25 @@ export default function ProductPage({ params }) {
   const stockNum = p.stock == null ? null : Math.max(0, Number(p.stock) || 0);
   const outOfStock = stockNum !== null && stockNum <= 0;
   const lowStock = stockNum !== null && stockNum > 0 && stockNum <= 5;
+
+  const doStockAlert = async () => {
+    setAlertMsg('');
+    const email = alertEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setAlertMsg('Enter a valid email address.');
+      return;
+    }
+    setAlertBusy(true);
+    try {
+      await stockAlert(p.slug || slug, email);
+      setAlertMsg(`Saved — we'll email ${email} as soon as it's back.`);
+      setAlertEmail('');
+    } catch (err) {
+      setAlertMsg(err.message || 'Could not save. Try again.');
+    } finally {
+      setAlertBusy(false);
+    }
+  };
 
   const doAdd = () => {
     if (outOfStock) return;
@@ -258,6 +280,27 @@ export default function ProductPage({ params }) {
           <p className={`text-sm font-bold mt-2 ${outOfStock ? 'text-red-600' : lowStock ? 'text-amber-600' : 'text-green-700'}`}>
             {outOfStock ? 'Out of stock' : lowStock ? `Only ${stockNum} left — order soon` : stockNum !== null ? 'In stock' : 'In stock'}
           </p>
+
+          {outOfStock && (
+            <div className="mt-3 card p-4">
+              <b className="text-sm">Notify me when back in stock</b>
+              <p className="text-xs text-gray-500 mt-1">We&apos;ll email you the moment this is available again.</p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={alertEmail}
+                  onChange={(e) => setAlertEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="input"
+                  inputMode="email"
+                  type="email"
+                />
+                <button onClick={doStockAlert} disabled={alertBusy} className="btn-primary whitespace-nowrap disabled:opacity-60">
+                  {alertBusy ? 'Saving...' : 'Notify me'}
+                </button>
+              </div>
+              {alertMsg && <p className="text-xs font-semibold mt-2 text-green-700">{alertMsg}</p>}
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-3">
             <span className="label !mb-0">Qty</span>

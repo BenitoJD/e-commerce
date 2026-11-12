@@ -271,4 +271,28 @@ router.post('/returns', async (req, res) => {
   }
 });
 
+// POST /store/service/stock-alert { slug, email } — notify me when back in stock
+router.post('/stock-alert', async (req, res) => {
+  try {
+    const slug = String((req.body && req.body.slug) || '').trim();
+    const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+    if (!slug) return res.status(400).json({ error: 'product slug required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'valid email required' });
+    }
+    const { rows: found } = await db.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+    if (!found.length) return res.status(404).json({ error: 'Product not found' });
+    await db.query(
+      `INSERT INTO stock_alerts (product_slug, email) VALUES ($1, $2)
+       ON CONFLICT (product_slug, email) DO NOTHING`,
+      [slug, email]
+    );
+    console.log(`[service] stock alert for ${slug}`);
+    res.status(201).json({ ok: true, slug, email });
+  } catch (err) {
+    console.error('[service] stock-alert error:', err.message);
+    res.status(500).json({ error: 'Failed to save alert' });
+  }
+});
+
 module.exports = router;

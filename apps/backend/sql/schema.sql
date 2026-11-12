@@ -106,6 +106,17 @@ CREATE TABLE IF NOT EXISTS return_requests (
 CREATE INDEX IF NOT EXISTS idx_returns_status ON return_requests(status);
 CREATE INDEX IF NOT EXISTS idx_returns_receipt ON return_requests(receipt);
 
+-- Wave 58: "notify me when back in stock" alerts
+CREATE TABLE IF NOT EXISTS stock_alerts (
+  id SERIAL PRIMARY KEY,
+  product_slug TEXT NOT NULL REFERENCES products(slug),
+  email TEXT NOT NULL,
+  notified BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (product_slug, email)
+);
+CREATE INDEX IF NOT EXISTS idx_stock_alerts_slug ON stock_alerts(product_slug);
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

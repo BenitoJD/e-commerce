@@ -396,6 +396,22 @@ export async function cancelOrder(receipt, phone) {
   return handle(res);
 }
 
+export async function stockAlert(slug, email) {
+  const res = await fetch(`${BASE}/store/service/stock-alert`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, email }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getAdminStockAlerts(token, slug = '') {
+  const q = slug ? `?slug=${encodeURIComponent(slug)}` : '';
+  const res = await fetch(`${BASE}/admin/stock-alerts${q}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
 export async function requestReturn(payload) {
   const res = await fetch(`${BASE}/store/service/returns`, {
     method: 'POST',

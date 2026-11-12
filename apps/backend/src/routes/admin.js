@@ -302,6 +302,28 @@ router.delete('/questions/:id', async (req, res) => {
 
 const RETURN_STATUSES = ['requested', 'approved', 'rejected', 'picked_up', 'refunded', 'closed'];
 
+// GET /admin/stock-alerts?slug= — people waiting for restock
+router.get('/stock-alerts', async (req, res) => {
+  try {
+    const { slug } = req.query;
+    const conds = [];
+    const params = [];
+    if (slug) {
+      params.push(slug);
+      conds.push(`product_slug = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM stock_alerts ${where} ORDER BY created_at DESC, id DESC LIMIT 500`,
+      params
+    );
+    res.json({ alerts: rows });
+  } catch (err) {
+    console.error('[admin] stock-alerts error:', err.message);
+    res.status(500).json({ error: 'Failed to list stock alerts' });
+  }
+});
+
 // GET /admin/returns?status=
 router.get('/returns', async (req, res) => {
   try {

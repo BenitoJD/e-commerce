@@ -35,7 +35,6 @@ export async function fetchProducts({ category, limit = 20, search = '', brand =
   if (offset) q.set('offset', String(offset));
   if (category && category !== 'all') q.set('category', category);
   if (search) q.set('q', search);
-  if (search) q.set('search', search);
   if (brand) q.set('brand', brand);
   if (sort) q.set('sort', sort);
   const res = await fetch(`${BASE}/store/products?${q.toString()}`, { cache: 'no-store' });

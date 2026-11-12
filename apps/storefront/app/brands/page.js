@@ -1,47 +1,50 @@
-'use client';
+import { brandSummary } from '../../lib/brands';
+import { getProductsForMeta, absoluteUrl } from '../../lib/serverApi';
+import { breadcrumbJsonLd } from '../../lib/jsonld';
+import { STORE } from '../../lib/store';
 
-import { useEffect, useState } from 'react';
-import { fetchProducts, asList } from '../../lib/api';
+// Directory page: server-rendered so every brand link is in the initial HTML, which is
+// how crawlers discover /brand/<name> pages without relying on the sitemap alone.
+export async function generateMetadata() {
+  const products = await getProductsForMeta('', 100);
+  const brands = brandSummary(products);
+  const title = `Shop by Brand — ${brands.length} tool brands | ${STORE.name}`;
+  const description = `Browse ${brands.length} genuine brands — ${brands.slice(0, 6).map((b) => b.name).join(', ')} and more. GST invoice, warranty support and pan-India delivery.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: absoluteUrl('/brands') },
+    openGraph: { title, description, url: absoluteUrl('/brands') },
+  };
+}
 
-export default function BrandsPage() {
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    async function load() {
-      try {
-        // Page through the whole catalog so no brand is missed past the first 100 products.
-        const map = {};
-        for (let page = 0; page < 10; page++) {
-          const data = await fetchProducts({ limit: 100, offset: page * 100 });
-          const list = asList(data);
-          if (!list.length) break;
-          list.forEach((p) => {
-            const b = (p.brand || '').trim();
-            if (b) map[b] = (map[b] || 0) + 1;
-          });
-          if (list.length < 100) break;
-        }
-        const arr = Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
-        if (alive) setBrands(arr);
-      } catch {
-        if (alive) setBrands([]);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    }
-    load();
-    return () => { alive = false; };
-  }, []);
+export default async function BrandsPage() {
+  const products = await getProductsForMeta('', 100);
+  const brands = brandSummary(products);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: breadcrumbJsonLd([
+            { name: 'Home', url: absoluteUrl('/') },
+            { name: 'Brands', url: absoluteUrl('/brands') },
+          ]),
+        }}
+      />
+      <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-2">
+        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <span className="mx-1">/</span>
+        <span className="text-gray-700">Brands</span>
+      </nav>
+
       <h1 className="text-3xl font-extrabold">Shop by Brand</h1>
-      <p className="text-sm text-gray-500 mt-1">Genuine brands with GST invoice & warranty support.</p>
-      {loading ? (
-        <p className="mt-8 text-gray-500">Loading brands...</p>
-      ) : brands.length === 0 ? (
+      <p className="text-sm text-gray-500 mt-1">
+        {brands.length} genuine brand{brands.length === 1 ? '' : 's'} with GST invoice &amp; warranty support.
+      </p>
+
+      {brands.length === 0 ? (
         <p className="mt-8 text-gray-500">No brands found right now.</p>
       ) : (
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">

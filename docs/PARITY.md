@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 86 (product images exist and are guarded by a test, 92 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 87 (API base defaulted to /api with a misconfiguration guard, 34 frontend tests).
 
 ## Storefront
 
@@ -55,8 +55,9 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 33 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, WhatsApp link normalisation, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 34 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, WhatsApp link normalisation, API
+base misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

@@ -9,7 +9,7 @@ apt update && apt install -y docker.io docker-compose-plugin
 git clone https://github.com/BenitoJD/toolsvilla-clone.git
 cd toolsvilla-clone
 nano .env
-#   NEXT_PUBLIC_BACKEND_URL=https://yourdomain.com/api     <-- note the /api suffix
+#   NEXT_PUBLIC_BACKEND_URL=/api          <-- single domain behind nginx (compose default)
 #   FRONTEND_URL=https://yourdomain.com
 #   RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / RAZORPAY_WEBHOOK_SECRET
 #   ADMIN_TOKEN=<long random string>

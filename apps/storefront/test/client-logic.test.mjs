@@ -300,6 +300,18 @@ test('api: friendly fallbacks by status when no body is usable', () => {
 
 // ---------------- api: video embed safety ----------------
 
+test('api: localhost base on a public host is flagged as a misconfiguration', () => {
+  const f = api.detectMisconfiguredBase;
+  assert.match(f('http://localhost:9000', 'shop.example.com'), /localhost/);
+  assert.match(f('http://127.0.0.1:9000', 'shop.example.com'), /localhost/);
+  // dev is fine
+  assert.equal(f('http://localhost:9000', 'localhost'), null);
+  assert.equal(f('http://localhost:9000', '127.0.0.1'), null);
+  // production-style values are fine
+  assert.equal(f('https://shop.example.com/api', 'shop.example.com'), null);
+  assert.equal(f('/api', 'shop.example.com'), null);
+});
+
 test('api: only known embed hosts pass video validation', () => {
   const ok = api.safeVideoUrls([
     'https://www.youtube.com/embed/abc123',

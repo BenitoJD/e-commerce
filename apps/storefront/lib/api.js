@@ -1,5 +1,24 @@
 const BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000').replace(/\/$/, '');
 
+// A bundle built with a localhost API URL works in dev and fails silently in
+// production (browser tries the visitor's own machine). Surface it loudly instead.
+export function detectMisconfiguredBase(base, hostname) {
+  const b = String(base || '');
+  const host = String(hostname || '');
+  const baseIsLocal = /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:|\/|$)/i.test(b);
+  const pageIsLocal = !host || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(host);
+  if (baseIsLocal && !pageIsLocal) {
+    return `API base "${b}" points at localhost but the site is served from ${host}. Set NEXT_PUBLIC_BACKEND_URL to your domain (e.g. https://${host}/api) and rebuild.`;
+  }
+  return null;
+}
+
+if (typeof window !== 'undefined') {
+  const problem = detectMisconfiguredBase(BASE, window.location && window.location.hostname);
+  // eslint-disable-next-line no-console
+  if (problem) console.error(`[storefront] ${problem}`);
+}
+
 // Turn a failed response body into a message a shopper can actually read.
 // Backend returns {"error": "..."} — show that, never a raw JSON/HTML dump.
 export function parseErrorMessage(status, bodyText) {

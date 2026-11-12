@@ -669,6 +669,38 @@ test('customer cancel of a paid order persists the refund outcome', async () => 
   assert.equal(order.status, 'cancelled');
 });
 
+test('checkout normalises the customer block and rejects untrackable orders', async () => {
+  // A phone with formatting must be stored canonically, or tracking can never match it.
+  const formatted = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: '  Ravi Kumar  ', phone: '+91 98765 43210', address: 'A'.repeat(900), pincode: '560001' },
+  });
+  assert.equal(formatted.status, 200);
+  const stored = fake.orders.find((o) => o.receipt === formatted.json.receipt);
+  assert.equal(stored.customer.phone, '9876543210');
+  assert.equal(stored.customer.name, 'Ravi Kumar');
+  assert.equal(stored.customer.address.length, 500, 'address must be truncated');
+  assert.equal(stored.customer.pincode, '560001');
+
+  // ...and the order is retrievable by tracking with the same number in any format.
+  const tracked = await api('GET', `/store/service/track?receipt=${formatted.json.receipt}&phone=%2B91%2098765%2043210`);
+  assert.equal(tracked.status, 200);
+
+  const badPhone = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '12345' },
+  });
+  assert.equal(badPhone.status, 400);
+  assert.match(badPhone.json.error, /phone/i);
+
+  const badPincode = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210', pincode: '56' },
+  });
+  assert.equal(badPincode.status, 400);
+  assert.match(badPincode.json.error, /pincode/i);
+});
+
 test('COD orders never claim a payment in the tracking timeline', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const created = await api('POST', '/store/checkout/create', {

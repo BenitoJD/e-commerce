@@ -4,6 +4,7 @@ const { applyCoupon } = require('../lib/pricing');
 const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
 const { makeReceipt } = require('../lib/receipt');
+const { clampText, normalizePhone } = require('../lib/validate');
 
 const router = express.Router();
 
@@ -25,12 +26,31 @@ router.post('/create', async (req, res) => {
     if (!customer || !customer.name || !customer.phone) {
       return res.status(400).json({ error: 'customer {name, phone} required' });
     }
+    // Normalise and bound the customer block. A malformed phone would make the order
+    // untrackable later (tracking/My Orders both match on digits), and addresses have no
+    // business being megabytes.
+    const cleanName = clampText(customer.name, 120);
+    const cleanPhone = normalizePhone(customer.phone);
+    if (!cleanName) return res.status(400).json({ error: 'customer name required' });
+    if (!cleanPhone) {
+      return res.status(400).json({ error: 'customer phone must be a valid 10-digit number' });
+    }
+    const rawPincode = String(customer.pincode == null ? '' : customer.pincode).replace(/\D/g, '');
+    if (rawPincode && rawPincode.length !== 6) {
+      return res.status(400).json({ error: 'pincode must be 6 digits' });
+    }
     // Business buyers need their GSTIN on the tax invoice; validate when supplied.
     const buyerGstin = String(customer.gstin || '').replace(/\s+/g, '').toUpperCase();
     if (buyerGstin && !/^[0-9A-Z]{15}$/.test(buyerGstin)) {
       return res.status(400).json({ error: 'GSTIN must be 15 letters/digits' });
     }
-    const buyer = { ...customer, gstin: buyerGstin || null };
+    const buyer = {
+      name: cleanName,
+      phone: cleanPhone,
+      address: clampText(customer.address, 500),
+      pincode: rawPincode,
+      gstin: buyerGstin || null,
+    };
 
     // Lookup products
     const slugs = [...new Set(items.map((i) => i.slug))];

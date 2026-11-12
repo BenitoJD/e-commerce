@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
-const { shouldReleaseOnCancel } = require('../lib/orderTransitions');
+const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
 
 const router = express.Router();
 
@@ -86,6 +86,10 @@ router.patch('/orders/:id', async (req, res) => {
     }
     const { rows: current } = await db.query('SELECT status, items FROM orders WHERE id = $1', [req.params.id]);
     if (!current.length) return res.status(404).json({ error: 'Order not found' });
+    const guard = canTransition(current[0].status, status);
+    if (!guard.ok) {
+      return res.status(409).json({ error: guard.reason });
+    }
     const { rows } = await db.query(
       'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
       [status, req.params.id]

@@ -5,6 +5,7 @@ const {
   amountMatches,
   decideTransition,
   shouldReleaseOnCancel,
+  canTransition,
 } = require('../orderTransitions');
 const crypto = require('crypto');
 
@@ -93,4 +94,24 @@ test('shouldReleaseOnCancel', () => {
   assert.equal(shouldReleaseOnCancel('delivered'), false);
   assert.equal(shouldReleaseOnCancel('failed'), false);
   assert.equal(shouldReleaseOnCancel('cancelled'), false);
+});
+
+test('canTransition allows the normal fulfillment path', () => {
+  for (const [from, to] of [['pending', 'paid'], ['paid', 'shipped'], ['shipped', 'delivered'], ['cod_pending', 'shipped'], ['failed', 'pending']]) {
+    assert.equal(canTransition(from, to).ok, true, `${from}->${to}`);
+  }
+});
+
+test('canTransition blocks nonsense moves', () => {
+  for (const [from, to] of [['delivered', 'shipped'], ['cancelled', 'paid'], ['refunded', 'shipped'], ['paid', 'pending'], ['failed', 'delivered']]) {
+    const r = canTransition(from, to);
+    assert.equal(r.ok, false, `${from}->${to}`);
+    assert.match(r.reason, /Cannot move/);
+  }
+});
+
+test('canTransition allows returns and no-ops, passes unknown through', () => {
+  assert.equal(canTransition('delivered', 'refunded').ok, true);
+  assert.equal(canTransition('paid', 'paid').ok, true);
+  assert.equal(canTransition('custom_state', 'anything').ok, true);
 });

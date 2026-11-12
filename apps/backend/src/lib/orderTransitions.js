@@ -55,4 +55,26 @@ function shouldReleaseOnCancel(fromStatus) {
   return STOCK_HOLDING.includes(String(fromStatus || ''));
 }
 
-module.exports = { verifySignature, amountMatches, decideTransition, shouldReleaseOnCancel, STOCK_HOLDING };
+// Admin/customer status changes allowed from each state (terminal states locked).
+const ALLOWED_TARGETS = {
+  pending: ['paid', 'shipped', 'cod_pending', 'cancelled', 'failed'],
+  paid: ['shipped', 'cancelled', 'refunded'],
+  cod_pending: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled', 'refunded'],
+  delivered: ['refunded', 'cancelled'],
+  cancelled: [],
+  refunded: [],
+  failed: ['pending', 'cancelled'],
+};
+
+// Returns { ok:true } or { ok:false, reason }. Unknown statuses pass through (forward-compat).
+function canTransition(fromStatus, toStatus) {
+  const from = String(fromStatus || '');
+  const to = String(toStatus || '');
+  if (from === to) return { ok: true };
+  if (!Object.prototype.hasOwnProperty.call(ALLOWED_TARGETS, from)) return { ok: true };
+  if (ALLOWED_TARGETS[from].includes(to)) return { ok: true };
+  return { ok: false, reason: `Cannot move order from '${from}' to '${to}'` };
+}
+
+module.exports = { verifySignature, amountMatches, decideTransition, shouldReleaseOnCancel, canTransition, STOCK_HOLDING };

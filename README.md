@@ -99,16 +99,16 @@ per-page titles/descriptions/canonical/OG; generated `robots.txt` from
 
 Overview (revenue incl. delivered, orders by status, low stock, new quotes) ·
 Orders (filter, search by receipt/name/phone, **open an order for items/address/payment**,
-refund status, guarded status transitions) · **Products (create/edit/delete without
-touching seed files)** · Returns · Quotes (convert to order at an agreed price, WhatsApp
-customer) · Coupons (CRUD with expiry/usage caps) · Messages (+ **newsletter subscriber
-list and CSV export**, WhatsApp reply) · Reviews/Questions (verify, answer, delete) ·
-Stock (update by slug).
+refund status, guarded status transitions, **CSV export for accounting**) · **Products
+(create/edit/delete without touching seed files)** · Returns · Quotes (convert to order at
+an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · Messages
+(+ **newsletter subscriber list and CSV export**, WhatsApp reply) · Reviews/Questions
+(verify, answer, delete) · Stock (update by slug).
 
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 99 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 102 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

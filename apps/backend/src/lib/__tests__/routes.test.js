@@ -123,6 +123,21 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items, customer: o.customer, created_at: o.created_at, pay_mode: o.pay_mode || null }] : [] };
     }
+    if (t.startsWith('SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise')) {
+      const wantStatus = t.includes('WHERE status = $1') ? params[0] : null;
+      const rows = orders
+        .filter((o) => !wantStatus || o.status === wantStatus)
+        .sort((a, b) => b.id - a.id)
+        .slice(0, 5000)
+        .map((o) => ({
+          receipt: o.receipt, created_at: o.created_at, status: o.status,
+          pay_mode: o.pay_mode || null, refund_mode: o.refund_mode || null,
+          amount_paise: o.amount_paise, discount_paise: o.discount_paise || 0,
+          coupon_code: o.coupon_code || null, customer: o.customer,
+          razorpay_payment_id: o.razorpay_payment_id || null,
+        }));
+      return { rows };
+    }
     if (t.startsWith('SELECT id, receipt, status, amount_paise, items FROM orders WHERE razorpay_order_id')) {
       const o = orders.find((x) => x.razorpay_order_id === params[0]);
       return { rows: o ? [{ id: o.id, receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items }] : [] };
@@ -694,6 +709,34 @@ test('COD is refused above the configured cap, and allowed just below it', async
   assert.equal(online.status, 200);
 
   weapon.stock = originalStock;
+});
+
+test('orders CSV export is token-guarded and escapes quotes/commas', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Ravi "RK" Kumar, Jr', phone: '9876543210', pincode: '560001', gstin: '27AABCU9603R1ZM' },
+    payMode: 'cod',
+  });
+  assert.equal(created.status, 200);
+
+  const res = await fetch(`${base}/admin/orders/export.csv`, { headers: adminHeaders });
+  const body = await res.text();
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /text\/csv/);
+  const header = body.split('\r\n')[0];
+  assert.equal(header, 'receipt,date,status,payment_mode,refund,amount_inr,discount_inr,coupon,customer,phone,pincode,gstin,payment_id');
+
+  const row = body.split('\r\n').find((l) => l.includes(created.json.receipt));
+  assert.ok(row, 'export should contain the new order');
+  assert.ok(row.includes('"Ravi ""RK"" Kumar, Jr"'), 'quotes doubled and comma kept inside the field');
+  assert.ok(row.includes('"cod"'));
+  assert.ok(row.includes('"560001"'));
+  assert.ok(row.includes('"27AABCU9603R1ZM"'));
+  assert.ok(row.includes(`"${(created.json.amount_paise / 100).toFixed(2)}"`));
+
+  const anonymous = await fetch(`${base}/admin/orders/export.csv`);
+  assert.equal(anonymous.status, 401);
 });
 
 test('admin order detail: items enriched with names, customer and payment ids', async () => {

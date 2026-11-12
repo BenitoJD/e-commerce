@@ -172,6 +172,21 @@ export async function getAdminOrders(token, status = '', search = '') {
   return handle(res);
 }
 
+// CSV downloads need the token, so the browser can't just link to the URL — fetch it
+// with headers and hand back the text for a Blob download.
+export async function getAdminOrdersCsv(token, status = '') {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/orders/export.csv${q}`, {
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  if (!res.ok) {
+    const msg = await parseErrorMessage(res);
+    throw new Error(msg);
+  }
+  return res.text();
+}
+
 export async function getAdminOrderDetail(token, id) {
   const res = await fetch(`${BASE}/admin/orders/${encodeURIComponent(id)}`, {
     headers: adminHeaders(token),

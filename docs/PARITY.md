@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 91 (repeatable seed preserving stock, doc-encoding guard, 101 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 92 (orders CSV export for accounting, 102 backend tests).
 
 ## Storefront
 
@@ -14,6 +14,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
+| Accounting export | ✅ `GET /admin/orders/export.csv` (status filter, RFC-style quoting) + Orders tab "Export CSV" |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`, admin list) |
@@ -59,7 +60,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 101 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 102 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

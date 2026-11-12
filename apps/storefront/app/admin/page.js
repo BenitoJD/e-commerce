@@ -5,6 +5,7 @@ import {
   fetchProducts,
   getAdminStats,
   getAdminOrders,
+  getAdminOrdersCsv,
   getAdminOrderDetail,
   updateOrderStatus,
   getAdminQuotes,
@@ -414,6 +415,22 @@ export default function AdminPage() {
     }
   }
 
+  async function downloadOrdersCsv() {
+    setError('');
+    try {
+      const csv = await getAdminOrdersCsv(token, orderFilter);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = orderFilter ? `orders-${orderFilter}.csv` : 'orders.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function onOrderAction(id, status) {
     setError('');
     try {
@@ -621,6 +638,9 @@ export default function AdminPage() {
                   className="input !w-auto flex-1 min-w-[200px]"
                 />
                 <button onClick={loadOrders} className="btn-outline !py-2">Search</button>
+                <button onClick={downloadOrdersCsv} className="btn-outline !py-2" title="Accounting export">
+                  Export CSV
+                </button>
                 <span className="text-xs text-gray-500">{orders.length} order(s)</span>
               </div>
               <div className="overflow-x-auto card">

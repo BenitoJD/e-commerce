@@ -85,6 +85,53 @@ router.get('/orders', async (req, res) => {
   }
 });
 
+// GET /admin/orders/export.csv — accounting export (Tally/Excel).
+// Declared before /orders/:id or "export.csv" would be read as an order id.
+router.get('/orders/export.csv', async (req, res) => {
+  try {
+    const status = String(req.query.status || '').trim();
+    const params = [];
+    let where = '';
+    if (status && ORDER_STATUSES.includes(status)) {
+      params.push(status);
+      where = 'WHERE status = $1';
+    }
+    const { rows } = await db.query(
+      `SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise,
+              COALESCE(discount_paise, 0) AS discount_paise, coupon_code, customer, razorpay_payment_id
+         FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT 5000`,
+      params
+    );
+    const header = ['receipt', 'date', 'status', 'payment_mode', 'refund', 'amount_inr', 'discount_inr', 'coupon', 'customer', 'phone', 'pincode', 'gstin', 'payment_id'];
+    const csvEscape = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const lines = rows.map((o) => {
+      const c = o.customer || {};
+      return [
+        o.receipt,
+        o.created_at ? new Date(o.created_at).toISOString() : '',
+        o.status,
+        o.pay_mode || (o.status === 'cod_pending' ? 'cod' : 'online'),
+        o.refund_mode || '',
+        (Number(o.amount_paise || 0) / 100).toFixed(2),
+        (Number(o.discount_paise || 0) / 100).toFixed(2),
+        o.coupon_code || '',
+        c.name || '',
+        c.phone || '',
+        c.pincode || '',
+        c.gstin || '',
+        o.razorpay_payment_id || '',
+      ].map(csvEscape).join(',');
+    });
+    const csv = [header.join(','), ...lines].join('\r\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="orders.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error('[admin] orders export error:', err.message);
+    res.status(500).json({ error: 'Failed to export orders' });
+  }
+});
+
 // PATCH /admin/orders/:id {status}
 router.patch('/orders/:id', async (req, res) => {
   try {

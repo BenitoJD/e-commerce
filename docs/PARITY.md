@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 107 (My Orders shows item names, 130 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 108 (back-in-stock requests visible in admin).
 
 ## Storefront
 
@@ -17,7 +17,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Accounting export | ✅ `GET /admin/orders/export.csv` (status filter, RFC-style quoting, shipping column) + Orders tab "Export CSV" |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |
-| Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`, admin list) |
+| Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`); admin Stock tab lists pending restock requests (filter by slug) |
 | Wishlist | ✅ localStorage + `/wishlist`, move-one / **move-all to cart** (skips out-of-stock), clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |

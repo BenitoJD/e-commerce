@@ -19,6 +19,7 @@ import {
   getAdminReturns,
   updateReturnStatus,
   getAdminSubscribers,
+  getAdminStockAlerts,
   saveAdminProduct,
   deleteAdminProduct,
   getAdminReviews,
@@ -66,6 +67,19 @@ export default function AdminPage() {
   const [slug, setSlug] = useState('');
   const [stock, setStock] = useState('');
   const [stockResult, setStockResult] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [alertSlug, setAlertSlug] = useState('');
+
+  async function loadStockAlerts(filterSlug = alertSlug) {
+    setError('');
+    try {
+      const r = await getAdminStockAlerts(token, filterSlug);
+      const rows = Array.isArray(r) ? r : r.alerts || r.items || [];
+      setAlerts(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   const [convertMsg, setConvertMsg] = useState('');
 
   const [coupons, setCoupons] = useState([]);
@@ -162,6 +176,7 @@ export default function AdminPage() {
     if (tab === 'messages') loadMessages();
     if (tab === 'returns') loadReturns();
     if (tab === 'products') loadCatalog();
+    if (tab === 'stock') loadStockAlerts();
     if (tab === 'reviews') loadModReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
@@ -1124,6 +1139,7 @@ export default function AdminPage() {
           )}
 
           {tab === 'stock' && (
+            <>
             <div className="mt-4 card p-4 max-w-lg">
               <div className="font-bold mb-2">Update stock</div>
               <form onSubmit={onStockUpdate} className="space-y-2">
@@ -1133,6 +1149,41 @@ export default function AdminPage() {
               </form>
               {stockResult ? <pre className="mt-3 text-xs bg-gray-50 border rounded-lg p-3 overflow-x-auto">{JSON.stringify(stockResult, null, 2)}</pre> : null}
             </div>
+
+            <div className="card p-4 mt-4">
+              <div className="flex flex-wrap items-center gap-2 justify-between">
+                <div>
+                  <b>Back-in-stock requests</b>
+                  <span className="text-xs text-gray-500 ml-2">{alerts.length} waiting</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={alertSlug}
+                    onChange={(e) => setAlertSlug(e.target.value)}
+                    placeholder="Filter by slug"
+                    className="input !w-auto"
+                  />
+                  <button onClick={() => loadStockAlerts()} className="btn-outline !py-2">Load</button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Customers who tapped &quot;notify me&quot; while out of stock — message them once you restock.
+              </p>
+              {alerts.length ? (
+                <ul className="mt-3 text-xs text-gray-700 max-h-64 overflow-y-auto divide-y">
+                  {alerts.map((a, i) => (
+                    <li key={`${a.product_slug || a.slug}-${a.email}-${i}`} className="py-1.5 flex flex-wrap justify-between gap-2">
+                      <span className="font-mono">{a.product_slug || a.slug}</span>
+                      <span>{a.email}</span>
+                      <span className="text-gray-400">{a.created_at ? new Date(a.created_at).toLocaleDateString('en-IN') : ''}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-gray-500 mt-2">No pending restock requests.</p>
+              )}
+            </div>
+            </>
           )}
         </>
       )}

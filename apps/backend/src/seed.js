@@ -1,7 +1,7 @@
 require('dotenv').config();
 const db = require('./db');
-
 const products = require('../data/products');
+const coupons = require('../data/coupons');
 
 async function main() {
   for (const p of products) {
@@ -15,10 +15,6 @@ async function main() {
   const r = await db.query('SELECT COUNT(*)::int AS n FROM products');
   console.log(`[seed] done. products count = ${r.rows[0].n}`);
 
-  const coupons = [
-    { code: 'WELCOME10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 99900, active: true },
-    { code: 'TOOLS15', pct_off: 15, max_discount_paise: 150000, min_order_paise: 499900, active: true },
-  ];
   for (const c of coupons) {
     await db.query(
       `INSERT INTO coupons (code, pct_off, max_discount_paise, min_order_paise, active)

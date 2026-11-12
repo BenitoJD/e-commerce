@@ -30,6 +30,7 @@ function makeFakeDb() {
   let ret = [];
   let alerts = [];
   const subscribers = [];
+  const reviews = [];
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
@@ -238,6 +239,12 @@ function makeFakeDb() {
     }
     if (t.startsWith('SELECT * FROM stock_alerts')) {
       return { rows: alerts.slice() };
+    }
+    if (t.startsWith('INSERT INTO reviews')) {
+      const [product_slug, name, rating, title, body] = params;
+      const row = { id: reviews.length + 1, product_slug, name, rating, title, body, verified: false, created_at: new Date().toISOString() };
+      reviews.push(row);
+      return { rows: [row] };
     }
     if (t.startsWith('SELECT 1 FROM products WHERE slug')) {
       return { rows: products.has(params[0]) ? [{ '?column?': 1 }] : [] };
@@ -450,6 +457,40 @@ test('newsletter subscribers are listed for the admin only', async () => {
 
   const noToken = await api('GET', '/admin/subscribers');
   assert.equal(noToken.status, 401);
+});
+
+test('bulk quote endpoint clamps quantity and rejects unusable contact details', async () => {
+  const anonymous = { name: 'Buyer', phone: '9876500022', qty: -5, message: 'x'.repeat(5000), product_slug: 'drill-a' };
+  const created = await api('POST', '/store/quotes', anonymous);
+  assert.equal(created.status, 201);
+  const stored = fake.quotes.find((q) => q.phone === '9876500022');
+  assert.equal(stored.qty, 1, 'negative quantity must clamp to 1, not be stored');
+  assert.equal(stored.message.length, 2000, 'message must be truncated');
+  assert.equal(stored.name.length <= 120, true);
+
+  const bigQty = await api('POST', '/store/quotes', { ...anonymous, qty: 999999, phone: '9876500023' });
+  assert.equal(bigQty.status, 201);
+  assert.equal(fake.quotes.find((q) => q.phone === '9876500023').qty, 100000);
+
+  const badPhone = await api('POST', '/store/quotes', { name: 'X', phone: 'hello', qty: 1 });
+  assert.equal(badPhone.status, 400);
+  assert.match(badPhone.json.error, /phone/i);
+
+  const formatted = await api('POST', '/store/quotes', { name: 'Y', phone: '+91 98765 00024', qty: 2 });
+  assert.equal(formatted.status, 201);
+  assert.equal(fake.quotes.find((q) => q.phone === '9876500024').phone, '9876500024');
+});
+
+test('review bodies are truncated and rating bounds enforced', async () => {
+  const long = 'z'.repeat(5000);
+  const ok = await api('POST', '/store/engage/reviews/drill-a', { name: 'n'.repeat(200), rating: 5, title: 't'.repeat(300), body: long });
+  assert.equal(ok.status, 201);
+  assert.equal(ok.json.review.name.length, 80);
+  assert.equal(ok.json.review.title.length, 120);
+  assert.equal(ok.json.review.body.length, 2000);
+
+  const badRating = await api('POST', '/store/engage/reviews/drill-a', { name: 'A', rating: 6, body: 'x' });
+  assert.equal(badRating.status, 400);
 });
 
 test('bulk quote lookup is scoped to the caller phone (no PII leak)', async () => {

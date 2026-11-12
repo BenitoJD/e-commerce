@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { releaseItems } = require('../lib/stock');
 const { refundPayment } = require('../lib/refunds');
+const { clampText } = require('../lib/validate');
 
 const router = express.Router();
 
@@ -225,7 +226,7 @@ router.post('/contact', async (req, res) => {
     }
     const { rows } = await db.query(
       `INSERT INTO contact_messages (name, phone, message) VALUES ($1, $2, $3) RETURNING id, created_at`,
-      [name, phone, message]
+      [clampText(name, 120), phone, clampText(message, 2000)]
     );
     console.log(`[service] contact message #${rows[0].id} from ${name}`);
     res.status(201).json({ ok: true, id: rows[0].id });

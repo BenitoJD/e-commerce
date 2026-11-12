@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { clampText, clampInt, normalizePhone } = require('../lib/validate');
 
 const router = express.Router();
 
@@ -8,6 +9,11 @@ router.post('/', async (req, res) => {
   try {
     const { name, phone, qty, message } = req.body || {};
     if (!name || !phone) return res.status(400).json({ error: 'name and phone required' });
+    const cleanName = clampText(name, 120);
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanName) return res.status(400).json({ error: 'name required' });
+    if (!cleanPhone) return res.status(400).json({ error: 'valid 10-digit phone required' });
+    const cleanQty = clampInt(qty, { min: 1, max: 100000, fallback: 1 });
     // Accept a catalog slug (product_slug) or free text (product): resolve slugs/names to catalog.
     const rawSlug = String((req.body && req.body.product_slug) || '').trim();
     const rawText = String((req.body && (req.body.product ?? req.body.product_name)) || '').trim();
@@ -24,7 +30,7 @@ router.post('/', async (req, res) => {
     const { rows } = await db.query(
       `INSERT INTO bulk_quotes (name, phone, product_slug, product_name, qty, message)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, phone, slug, productName, parseInt(qty, 10) || 1, message || '']
+      [cleanName, cleanPhone, slug, productName, cleanQty, clampText(message, 2000)]
     );
     console.log(`[quotes] new quote #${rows[0].id} from ${name} slug=${slug || '(custom)'}`);
     res.status(201).json({ quote: rows[0] });

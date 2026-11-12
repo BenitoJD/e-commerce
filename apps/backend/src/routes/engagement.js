@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { clampText } = require('../lib/validate');
 const { applyCoupon } = require('../lib/pricing');
 
 const router = express.Router();
@@ -39,7 +40,7 @@ router.post('/reviews/:slug', async (req, res) => {
       `INSERT INTO reviews (product_slug, name, rating, title, body, verified)
        VALUES ($1, $2, $3, $4, $5, false)
        RETURNING id, product_slug, name, rating, title, body, verified, created_at`,
-      [slug, String(name).trim(), r, String(title || ''), String(body || '')]
+      [slug, clampText(name, 80), r, clampText(title, 120), clampText(body, 2000)]
     );
     res.status(201).json({ review: rows[0] });
   } catch (err) {

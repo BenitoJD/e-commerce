@@ -38,6 +38,14 @@ export async function getProductsForMeta(category, limit = 8) {
   return Array.isArray(data) ? data : data.products || [];
 }
 
+export async function getRatingForMeta(slug) {
+  const data = await cachedJson(`${BASE}/store/engage/reviews/${encodeURIComponent(slug)}`);
+  if (!data) return null;
+  const count = Number(data.count) || 0;
+  const avg = Number(data.avg) || 0;
+  return count > 0 ? { avg, count } : null;
+}
+
 export function paiseToRupees(paise) {
   return Math.round(Number(paise || 0) / 100);
 }

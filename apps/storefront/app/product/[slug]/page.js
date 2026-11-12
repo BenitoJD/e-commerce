@@ -1,5 +1,6 @@
 import ProductView from '../../../components/ProductView';
-import { getProductForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
+import { getProductForMeta, getRatingForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
+import { productJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
 // Metadata + structured data are produced here (server) so crawlers see real product
@@ -39,36 +40,18 @@ export async function generateMetadata({ params }) {
   };
 }
 
-function productJsonLd(p) {
-  const data = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: p.name,
-    brand: p.brand ? { '@type': 'Brand', name: p.brand } : undefined,
-    sku: p.slug,
-    hsnCode: p.hsn || undefined,
-    image: Array.isArray(p.images) ? p.images.slice(0, 3).map(absoluteUrl) : undefined,
-    description: `${p.name}${p.brand ? ` by ${p.brand}` : ''} — GST invoice, EMI and pan-India delivery at ${STORE.name}.`,
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'INR',
-      price: String(paiseToRupees(p.price_paise)),
-      availability: Number(p.stock) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: absoluteUrl(`/product/${encodeURIComponent(p.slug)}`),
-      seller: { '@type': 'Organization', name: STORE.name },
-    },
-  };
-  // Escape "<" so a product name can never break out of the script tag.
-  return JSON.stringify(data).replace(/</g, '\\u003c');
-}
-
 export default async function ProductPage({ params }) {
   const slug = decodeURIComponent(params.slug || '');
-  const p = await getProductForMeta(slug);
+  const [p, rating] = await Promise.all([getProductForMeta(slug), getRatingForMeta(slug)]);
   return (
     <>
       {p ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: productJsonLd(p) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: productJsonLd(p, { storeName: STORE.name, absoluteUrl, paiseToRupees, rating }),
+          }}
+        />
       ) : null}
       <ProductView slug={slug} initialProduct={p} />
     </>

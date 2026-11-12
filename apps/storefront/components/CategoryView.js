@@ -21,6 +21,8 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
   const [loading, setLoading] = useState(!(Array.isArray(initialItems) && initialItems.length));
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState((initialItems || []).length === PAGE_SIZE);
+  // True match count from the API (the loaded page can be shorter than the total).
+  const [total, setTotal] = useState(null);
   const [brand, setBrand] = useState('All');
   const [sort, setSort] = useState('pop');
   const [q, setQ] = useState(initialQ);
@@ -56,6 +58,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
         if (!alive) return;
         setItems(list.length ? list : (filtersActive ? [] : FALLBACK.filter((p) => slug === 'all' || p.category === slug)));
         setHasMore(list.length === PAGE_SIZE);
+        if (!Array.isArray(data) && data && Number.isFinite(Number(data.total))) setTotal(Number(data.total));
       } catch {
         if (alive) {
           setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
@@ -144,7 +147,9 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
       <h1 className="text-3xl font-extrabold capitalize">
         {initialQ ? <>Results for &ldquo;{initialQ}&rdquo;</> : slug.replace(/-/g, ' ')}
       </h1>
-      <p className="text-sm text-gray-500 mt-1">{filtered.length} product{filtered.length === 1 ? '' : 's'} • GST invoice • EMI available</p>
+      <p className="text-sm text-gray-500 mt-1">
+        {(total != null ? total : filtered.length)} product{(total != null ? total : filtered.length) === 1 ? '' : 's'} • GST invoice • EMI available
+      </p>
 
       <div className="mt-4 flex flex-wrap gap-3 items-center">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" />

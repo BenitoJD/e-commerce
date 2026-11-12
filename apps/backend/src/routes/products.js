@@ -49,7 +49,21 @@ router.get('/', async (req, res) => {
       `SELECT * FROM products ${where} ORDER BY ${sortClause(sort)} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    res.json({ products: rows, limit, offset });
+
+    // Total matching rows, so the UI can say "23 products" rather than "40 loaded".
+    let total = null;
+    try {
+      const countParams = params.slice(0, -2);
+      const { rows: countRows } = await db.query(
+        `SELECT COUNT(*)::int AS total FROM products ${where}`,
+        countParams
+      );
+      total = countRows[0] ? countRows[0].total : null;
+    } catch (e) {
+      console.error('[products] count error:', e.message);
+    }
+
+    res.json({ products: rows, limit, offset, total });
   } catch (err) {
     console.error('[products] list error:', err.message);
     res.status(500).json({ error: 'Failed to list products' });

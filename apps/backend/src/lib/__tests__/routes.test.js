@@ -75,6 +75,22 @@ function makeFakeDb() {
     if (t.startsWith('SELECT slug, name, hsn, price_paise FROM products')) {
       return { rows: [...products.values()].filter((p) => params[0].includes(p.slug)) };
     }
+    if (t.startsWith('SELECT COUNT(*)::int AS total FROM products')) {
+      // Reuse the list handler's filtering by evaluating the same clause in JS.
+      const args = params;
+      let idx = 0;
+      const conds = [];
+      if (t.includes('name ILIKE $')) {
+        const term = String(args[idx++] || '').replace(/%/g, '').toLowerCase();
+        conds.push((p) => `${p.slug} ${p.name} ${p.brand || ''}`.toLowerCase().includes(term));
+      }
+      if (/(?:AND|WHERE) brand ILIKE \$/.test(t)) {
+        const brand = String(args[idx++] || '').toLowerCase();
+        conds.push((p) => String(p.brand || '').toLowerCase() === brand);
+      }
+      let rows = [...products.values()].filter((p) => conds.every((fn) => fn(p)));
+      return { rows: [{ total: rows.length }] };
+    }
     if (t.startsWith('SELECT * FROM products') && t.includes('LIMIT $')) {
       // Mirrors the server's list endpoint: filters in code order, then limit/offset.
       const limit = Number(params[params.length - 2]) || 50;
@@ -878,6 +894,20 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('product list reports the true total, independent of page size', async () => {
+  const all = await api('GET', '/store/products?limit=100');
+  const total = all.json.total;
+  assert.ok(Number.isInteger(total) && total >= 2, `expected a numeric total, got ${total}`);
+
+  const one = await api('GET', '/store/products?limit=1');
+  assert.equal(one.json.products.length, 1);
+  assert.equal(one.json.total, total, 'total must not shrink with page size');
+
+  const filtered = await api('GET', '/store/products?q=drill&limit=1');
+  assert.ok(filtered.json.total >= 1);
+  assert.ok(filtered.json.total < total, 'a filtered total is smaller than the unfiltered one');
 });
 
 test('product list filters by price band and sorts server-side', async () => {

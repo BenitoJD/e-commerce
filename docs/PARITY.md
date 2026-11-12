@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 55 (fresh-clone verification; released catalog files).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 56 (frontend↔backend contract test, 58/58).
 
 ## Storefront
 
@@ -43,10 +43,11 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 53 tests (pricing math, GST, EMI, catalog validity,
-webhook state machine + signature, LIKE escaping, status transitions, refunds, plus
-route-level integration tests against an in-memory DB: checkout/stock, coupons, cancel,
-webhooks, quote conversion, admin guard, invoice balance).
+Backend: `cd apps/backend && npm test` — 58 tests (pricing math, GST, EMI, catalog validity,
+webhook state machine + signature, LIKE escaping, status transitions, refunds,
+frontend↔backend API contract (every storefront call resolves to a mounted route),
+plus route-level integration tests against an in-memory DB: checkout/stock, coupons,
+cancel, webhooks, quote conversion, admin guard, invoice balance).
 
 Storefront: `cd apps/storefront && npm test` — 23 tests (cart add/merge/clamp, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,

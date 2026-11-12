@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, updateQty, removeItem, cartTotal } from '../../../lib/cart';
-import { validateCoupon } from '../../../lib/api';
+import { validateCoupon, checkPincode } from '../../../lib/api';
 
 function readCoupon() {
   if (typeof window === 'undefined') return null;
@@ -20,6 +20,7 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState(null);
   const [couponMsg, setCouponMsg] = useState('');
   const [couponBusy, setCouponBusy] = useState(false);
+  const [pinMsg, setPinMsg] = useState('');
 
   useEffect(() => {
     setItems(getCart());
@@ -32,6 +33,24 @@ export default function CartPage() {
       window.removeEventListener('storage', sync);
     };
   }, []);
+
+  useEffect(() => {
+    let alive = true;
+    if (!/^\d{6}$/.test(pincode)) {
+      setPinMsg('');
+      return undefined;
+    }
+    setPinMsg('Checking delivery...');
+    checkPincode(pincode)
+      .then((r) => {
+        if (!alive) return;
+        if (r && r.serviceable === false) setPinMsg('Sorry, delivery is not available to this pincode yet.');
+        else if (r && r.etaDays) setPinMsg(`Delivery to ${pincode} in ~${r.etaDays} days${r.codAvailable ? ' • COD available' : ''}.`);
+        else setPinMsg(`Delivery to ${pincode} in 3–7 days.`);
+      })
+      .catch(() => { if (alive) setPinMsg(`Delivery to ${pincode} in 3–7 days.`); });
+    return () => { alive = false; };
+  }, [pincode]);
 
   const subtotal = cartTotal(items);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
@@ -117,7 +136,7 @@ export default function CartPage() {
                 <input value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="e.g. 110001" className="input" />
               </div>
               {pincode.length === 6 ? (
-                <p className="text-xs text-green-700 font-semibold mt-2">Delivery to {pincode} in 3–7 days.</p>
+                <p className="text-xs text-green-700 font-semibold mt-2">{pinMsg || `Delivery to ${pincode} in 3–7 days.`}</p>
               ) : (
                 <p className="text-xs text-gray-500 mt-2">Enter 6-digit pincode to check delivery.</p>
               )}

@@ -210,4 +210,57 @@ router.post('/quotes/:id/convert', async (req, res) => {
   }
 });
 
+// GET /admin/coupons — list all coupon codes
+router.get('/coupons', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM coupons ORDER BY created_at DESC');
+    res.json({ coupons: rows });
+  } catch (err) {
+    console.error('[admin] coupons list error:', err.message);
+    res.status(500).json({ error: 'Failed to list coupons' });
+  }
+});
+
+// POST /admin/coupons { code, pct_off, max_discount_paise?, min_order_paise?, active? }
+router.post('/coupons', async (req, res) => {
+  try {
+    const code = String((req.body && req.body.code) || '').trim().toUpperCase();
+    const pct = parseInt(req.body && req.body.pct_off, 10);
+    if (!code) return res.status(400).json({ error: 'code required' });
+    if (!Number.isInteger(pct) || pct < 1 || pct > 90) {
+      return res.status(400).json({ error: 'pct_off must be an integer 1-90' });
+    }
+    const maxD = Math.max(0, parseInt(req.body.max_discount_paise, 10) || 0);
+    const minO = Math.max(0, parseInt(req.body.min_order_paise, 10) || 0);
+    const active = req.body.active !== false;
+    const { rows } = await db.query(
+      `INSERT INTO coupons (code, pct_off, max_discount_paise, min_order_paise, active)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (code) DO UPDATE SET pct_off = EXCLUDED.pct_off, max_discount_paise = EXCLUDED.max_discount_paise, min_order_paise = EXCLUDED.min_order_paise, active = EXCLUDED.active
+       RETURNING *`,
+      [code, pct, maxD, minO, active]
+    );
+    console.log(`[admin] coupon upsert ${code} ${pct}%`);
+    res.status(201).json({ coupon: rows[0] });
+  } catch (err) {
+    console.error('[admin] coupon save error:', err.message);
+    res.status(500).json({ error: 'Failed to save coupon' });
+  }
+});
+
+// PATCH /admin/coupons/:code { active } — quick enable/disable
+router.patch('/coupons/:code', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'UPDATE coupons SET active = $1 WHERE UPPER(code) = UPPER($2) RETURNING *',
+      [req.body && req.body.active !== false, req.params.code]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ coupon: rows[0] });
+  } catch (err) {
+    console.error('[admin] coupon toggle error:', err.message);
+    res.status(500).json({ error: 'Failed to update coupon' });
+  }
+});
+
 module.exports = router;

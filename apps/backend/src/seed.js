@@ -14,6 +14,21 @@ async function main() {
   }
   const r = await db.query('SELECT COUNT(*)::int AS n FROM products');
   console.log(`[seed] done. products count = ${r.rows[0].n}`);
+
+  const coupons = [
+    { code: 'WELCOME10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 99900, active: true },
+    { code: 'TOOLS15', pct_off: 15, max_discount_paise: 150000, min_order_paise: 499900, active: true },
+  ];
+  for (const c of coupons) {
+    await db.query(
+      `INSERT INTO coupons (code, pct_off, max_discount_paise, min_order_paise, active)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (code) DO NOTHING`,
+      [c.code, c.pct_off, c.max_discount_paise, c.min_order_paise, c.active]
+    );
+  }
+  const rc = await db.query('SELECT COUNT(*)::int AS n FROM coupons');
+  console.log(`[seed] done. coupons count = ${rc.rows[0].n}`);
   await db.pool.end();
 }
 

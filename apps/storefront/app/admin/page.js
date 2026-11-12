@@ -8,6 +8,9 @@ import {
   getAdminQuotes,
   updateQuoteStatus,
   convertQuote,
+  listCoupons,
+  saveCoupon,
+  toggleCoupon,
   updateStock
 } from '../../lib/api';
 
@@ -45,6 +48,10 @@ export default function AdminPage() {
   const [stock, setStock] = useState('');
   const [stockResult, setStockResult] = useState(null);
   const [convertMsg, setConvertMsg] = useState('');
+
+  const [coupons, setCoupons] = useState([]);
+  const [couponForm, setCouponForm] = useState({ code: '', pct: '', maxRs: '', minRs: '' });
+  const [couponMsg, setCouponMsg] = useState('');
 
   useEffect(() => {
     try {
@@ -119,6 +126,7 @@ export default function AdminPage() {
     if (tab === 'overview') loadStats();
     if (tab === 'orders') loadOrders();
     if (tab === 'quotes') loadQuotes();
+    if (tab === 'coupons') loadCoupons();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
 
@@ -131,6 +139,51 @@ export default function AdminPage() {
     if (token && tab === 'quotes') loadQuotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteFilter]);
+
+  async function loadCoupons() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await listCoupons(token);
+      setCoupons(Array.isArray(data) ? data : data.coupons || data.items || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onCouponSave(e) {
+    e.preventDefault();
+    setError('');
+    setCouponMsg('');
+    try {
+      const payload = {
+        code: couponForm.code,
+        pct_off: Number(couponForm.pct),
+        max_discount_paise: couponForm.maxRs ? Math.round(Number(couponForm.maxRs) * 100) : 0,
+        min_order_paise: couponForm.minRs ? Math.round(Number(couponForm.minRs) * 100) : 0,
+        active: true
+      };
+      const r = await saveCoupon(token, payload);
+      setCouponMsg(`Saved coupon ${r.coupon?.code || payload.code}.`);
+      setCouponForm({ code: '', pct: '', maxRs: '', minRs: '' });
+      await loadCoupons();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function onCouponToggle(code, active) {
+    setError('');
+    try {
+      await toggleCoupon(token, code, !active);
+      await loadCoupons();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   async function onOrderAction(id, status) {
     setError('');
@@ -218,6 +271,7 @@ export default function AdminPage() {
     ['overview', 'Overview'],
     ['orders', 'Orders'],
     ['quotes', 'Quotes'],
+    ['coupons', 'Coupons'],
     ['stock', 'Stock']
   ];
 
@@ -254,7 +308,7 @@ export default function AdminPage() {
                 {label}
               </button>
             ))}
-            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); }} className="btn-outline !py-2 ml-auto">
+            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); }} className="btn-outline !py-2 ml-auto">
               Refresh
             </button>
           </div>
@@ -404,6 +458,51 @@ export default function AdminPage() {
                       </tr>
                     ))}
                     {quotes.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No quotes.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'coupons' && (
+            <div className="mt-4">
+              <div className="card p-4 max-w-2xl">
+                <div className="font-bold mb-2">Create / update coupon (code saved UPPERCASE)</div>
+                <form onSubmit={onCouponSave} className="grid sm:grid-cols-4 gap-2">
+                  <input value={couponForm.code} onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })} placeholder="CODE e.g. DIWALI10" className="input uppercase" />
+                  <input value={couponForm.pct} onChange={(e) => setCouponForm({ ...couponForm, pct: e.target.value })} placeholder="% off 1-90" type="number" min="1" max="90" className="input" />
+                  <input value={couponForm.maxRs} onChange={(e) => setCouponForm({ ...couponForm, maxRs: e.target.value })} placeholder="Max discount ₹ (blank=none)" type="number" min="0" className="input" />
+                  <input value={couponForm.minRs} onChange={(e) => setCouponForm({ ...couponForm, minRs: e.target.value })} placeholder="Min order ₹ (blank=none)" type="number" min="0" className="input" />
+                </form>
+                <button onClick={onCouponSave} className="btn-primary mt-3">Save coupon</button>
+                {couponMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{couponMsg}</p> : null}
+              </div>
+              <div className="overflow-x-auto card mt-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">Code</th>
+                      <th className="p-2">% Off</th>
+                      <th className="p-2">Max discount</th>
+                      <th className="p-2">Min order</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map((c, i) => (
+                      <tr key={c.code || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono font-bold">{c.code}</td>
+                        <td className="p-2">{c.pct_off}%</td>
+                        <td className="p-2">{c.max_discount_paise ? `₹${(Number(c.max_discount_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
+                        <td className="p-2">{c.min_order_paise ? `₹${(Number(c.min_order_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{c.active ? 'active' : 'off'}</span></td>
+                        <td className="p-2">
+                          <button onClick={() => onCouponToggle(c.code, c.active)} className="btn-outline !py-1 !px-2 text-xs">{c.active ? 'Disable' : 'Enable'}</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {coupons.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

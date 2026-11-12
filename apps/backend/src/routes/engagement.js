@@ -116,7 +116,7 @@ router.get('/coupons/validate', async (req, res) => {
     const code = String(req.query.code || '').trim();
     const amount = parseInt(req.query.amount_paise, 10) || 0;
     if (!code) return res.json({ valid: false, reason: 'code required' });
-    const { rows } = await db.query('SELECT * FROM coupons WHERE code = $1', [code]);
+    const { rows } = await db.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1)', [code]);
     if (!rows.length) return res.json({ valid: false, reason: 'Invalid coupon code' });
     const c = rows[0];
     if (!c.active) return res.json({ valid: false, reason: 'Coupon is inactive' });

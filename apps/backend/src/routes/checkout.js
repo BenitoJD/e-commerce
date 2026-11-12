@@ -51,7 +51,7 @@ router.post('/create', async (req, res) => {
     let discountPaise = 0;
     const rawCode = String((req.body || {}).couponCode || '').trim();
     if (rawCode) {
-      const { rows: found } = await db.query('SELECT * FROM coupons WHERE code = $1', [rawCode]);
+      const { rows: found } = await db.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1)', [rawCode]);
       const applied = applyCoupon(amount, found[0] || null);
       if (!found.length) {
         return res.status(400).json({ error: 'Invalid coupon code' });

@@ -138,6 +138,31 @@ export async function convertQuote(token, id, unitPricePaise) {
   return handle(res);
 }
 
+export async function listCoupons(token) {
+  const res = await fetch(`${BASE}/admin/coupons`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function saveCoupon(token, payload) {
+  const res = await fetch(`${BASE}/admin/coupons`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function toggleCoupon(token, code, active) {
+  const res = await fetch(`${BASE}/admin/coupons/${encodeURIComponent(code)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ active }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function updateStock(token, slug, stock) {
   const res = await fetch(`${BASE}/admin/products/${encodeURIComponent(slug)}/stock`, {
     method: 'PATCH',

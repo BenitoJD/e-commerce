@@ -73,6 +73,8 @@ After the sale: order success with live status polling · track order + customer
 my orders by phone · printable GST invoice (balanced with coupon line) · returns/exchange
 form · back-in-stock alerts.
 Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter.
+Hardening: per-IP rate limit on public writes (checkout, quotes, contact, reviews,
+stock alerts) via `RATE_LIMIT_MAX`/`RATE_LIMIT_WINDOW_MS`; reads unmetered.
 
 ## Admin console (`/admin`, header `x-admin-token`)
 

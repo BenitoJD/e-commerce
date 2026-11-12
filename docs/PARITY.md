@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 72 (admin product CRUD, 70 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 73 (public write rate limiting, 75 backend tests).
 
 ## Storefront
 
@@ -47,7 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 70 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 75 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

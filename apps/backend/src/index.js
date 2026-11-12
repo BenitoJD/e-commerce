@@ -16,6 +16,7 @@ const invoiceRouter = require('./routes/invoice');
 const sitemapHandler = require('./routes/sitemap');
 const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
+const { createRateLimiter } = require('./lib/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -34,6 +35,18 @@ app.use('/images', express.static(imagesDir));
 
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 app.get('/ready', makeReadyHandler(db));
+
+// Public write endpoints get a per-IP rate limit so form spam / order flooding can't
+// tie up the box. Reads are unmetered (they're the SEO traffic we want).
+const writeLimit = createRateLimiter({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
+  max: Number(process.env.RATE_LIMIT_MAX) || 30,
+});
+app.use(['/store/checkout/create', '/store/quotes', '/store/service'], writeLimit);
+app.use('/store/engage', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  return writeLimit(req, res, next);
+});
 
 app.use('/store/products', productsRouter);
 app.use('/store/checkout', checkoutRouter);

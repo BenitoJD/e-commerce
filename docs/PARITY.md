@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 96 (SSR burst cache measured live, 40 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 97 (env-doc audit + no false email promises, 109 backend tests).
 
 ## Storefront
 
@@ -58,12 +58,13 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Razorpay live keys | Dashboard → backend `.env`, webhook URL |
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
+| Email / SMS notifications | No mailer or SMS gateway is wired up, and no copy promises one (a test enforces this). Supply SMTP or MSG91 credentials to add order-confirmation emails/OTP login. |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 106 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 109 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

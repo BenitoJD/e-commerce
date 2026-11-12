@@ -109,7 +109,7 @@ an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · 
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 106 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 109 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

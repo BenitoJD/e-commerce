@@ -1,0 +1,30 @@
+// Finds customer-facing copy that promises something the code cannot do (email/SMS),
+// because no mailer or SMS gateway is wired up. Run manually or from CI.
+const fs = require('fs');
+const path = require('path');
+
+const ROOTS = ['apps/storefront/app', 'apps/storefront/components', 'apps/backend/src'];
+const PATTERNS = [
+  /will be (?:e-?mailed|mailed|sent by email)/i,
+  /email(?:ed)? to you/i,
+  /SMS(?:ed)? to you/i,
+  /we will (?:call|email|text)/i,
+];
+
+const hits = [];
+function walk(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, entry.name);
+    if (/node_modules|\.next|\.git/.test(p)) continue;
+    if (entry.isDirectory()) walk(p);
+    else if (/\.(js|mjs|cjs)$/.test(entry.name)) {
+      const lines = fs.readFileSync(p, 'utf8').split(/\r?\n/);
+      lines.forEach((line, i) => {
+        if (PATTERNS.some((re) => re.test(line))) hits.push(`${p}:${i + 1}: ${line.trim()}`);
+      });
+    }
+  }
+}
+
+for (const root of ROOTS) if (fs.existsSync(root)) walk(root);
+console.log(hits.length ? hits.join('\n') : 'NO_UNBACKED_PROMISES');

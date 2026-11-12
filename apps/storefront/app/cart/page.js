@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCart, updateQty, removeItem, cartTotal } from '../../../lib/cart';
-import { validateCoupon, checkPincode } from '../../../lib/api';
+import { getCart, updateQty, removeItem, cartTotal } from '../../lib/cart';
+import { validateCoupon, checkPincode } from '../../lib/api';
 
 function readCoupon() {
   if (typeof window === 'undefined') return null;

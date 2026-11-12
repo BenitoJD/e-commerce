@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCart, cartTotal, clearCart } from '../../../lib/cart';
-import { createCheckout } from '../../../lib/api';
+import { getCart, cartTotal, clearCart } from '../../lib/cart';
+import { createCheckout } from '../../lib/api';
 
 function loadRazorpay() {
   return new Promise((resolve, reject) => {

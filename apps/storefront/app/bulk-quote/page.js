@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { createQuote } from '../../../lib/api';
+import { createQuote } from '../../lib/api';
 
 function QuoteInner() {
   const sp = useSearchParams();

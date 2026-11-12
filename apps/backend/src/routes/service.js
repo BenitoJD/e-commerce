@@ -3,6 +3,7 @@ const db = require('../db');
 const { releaseItems } = require('../lib/stock');
 const { refundPayment } = require('../lib/refunds');
 const { clampText } = require('../lib/validate');
+const { codMaxPaise, codAvailableFor } = require('../lib/policy');
 
 const router = express.Router();
 
@@ -25,9 +26,9 @@ router.get('/pincode/:code', (req, res) => {
   let codAvailable = true;
   if (req.query.amount_paise !== undefined) {
     const amount = parseInt(req.query.amount_paise, 10);
-    if (!Number.isNaN(amount)) codAvailable = amount <= 2000000;
+    if (!Number.isNaN(amount)) codAvailable = codAvailableFor(amount);
   }
-  res.json({ serviceable: true, etaDays, codAvailable, zone });
+  res.json({ serviceable: true, etaDays, codAvailable, codMaxPaise: codMaxPaise(), zone });
 });
 
 function digits(s) {

@@ -5,6 +5,7 @@ const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
 const { makeReceipt } = require('../lib/receipt');
 const { clampText, normalizePhone } = require('../lib/validate');
+const { codMaxPaise } = require('../lib/policy');
 
 const router = express.Router();
 
@@ -93,12 +94,12 @@ router.post('/create', async (req, res) => {
 
     // COD policy: capped at COD_MAX_PAISE (default ₹20,000). High-value machinery has to
     // be prepaid — otherwise refused deliveries cost us freight both ways.
-    const codMaxPaise = Number(process.env.COD_MAX_PAISE) || 2000000;
-    if (payMode === 'cod' && amount > codMaxPaise) {
+    const codMax = codMaxPaise();
+    if (payMode === 'cod' && amount > codMax) {
       return res.status(400).json({
-        error: `Cash on Delivery is available up to ₹${(codMaxPaise / 100).toLocaleString('en-IN')}. Please pay online for this order.`,
+        error: `Cash on Delivery is available up to ₹${(codMax / 100).toLocaleString('en-IN')}. Please pay online for this order.`,
         code: 'COD_LIMIT',
-        codMaxPaise,
+        codMaxPaise: codMax,
       });
     }
 

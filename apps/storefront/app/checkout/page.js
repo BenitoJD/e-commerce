@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { createCheckout, validateCoupon } from '../../lib/api';
+import { COD_MAX_RUPEES } from '../../lib/store';
 
 function loadRazorpay() {
   return new Promise((resolve, reject) => {
@@ -71,7 +72,7 @@ export default function CheckoutPage() {
   // If the basket grows past the COD cap (quantity change, coupon removed), don't leave
   // the buyer on an option the server will reject.
   useEffect(() => {
-    if (shown > 20000 && form.payMode === 'COD') {
+    if (shown > COD_MAX_RUPEES && form.payMode === 'COD') {
       setForm((f) => ({ ...f, payMode: 'UPI' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,8 +184,8 @@ export default function CheckoutPage() {
             {['UPI', 'Card', 'EMI', 'COD'].map((m) => {
               // COD is capped server-side; disable it here so nobody picks an option
               // that will be rejected at the payment step.
-              const disabled = m === 'COD' && shown > 20000 && form.payMode !== 'COD';
-              const blocked = m === 'COD' && shown > 20000;
+              const disabled = m === 'COD' && shown > COD_MAX_RUPEES && form.payMode !== 'COD';
+              const blocked = m === 'COD' && shown > COD_MAX_RUPEES;
               return (
                 <label
                   key={m}
@@ -204,8 +205,10 @@ export default function CheckoutPage() {
             })}
           </div>
           <p className="text-xs text-gray-500 mt-2">UPI / Card / EMI go through Razorpay secure checkout. COD pays cash on delivery.</p>
-          {shown > 20000 ? (
-            <p className="text-xs text-amber-700 font-semibold mt-1">COD is available up to ₹20,000 — this order needs online payment.</p>
+          {shown > COD_MAX_RUPEES ? (
+            <p className="text-xs text-amber-700 font-semibold mt-1">
+              COD is available up to ₹{COD_MAX_RUPEES.toLocaleString('en-IN')} — this order needs online payment.
+            </p>
           ) : null}
         </div>
         {discount > 0 && (

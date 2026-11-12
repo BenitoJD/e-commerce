@@ -773,6 +773,35 @@ test('stock endpoint returns live availability for cart slugs', async () => {
   assert.deepEqual(empty.json.stock, {});
 });
 
+test('pincode COD availability follows COD_MAX_PAISE, same as checkout', async () => {
+  const saved = process.env.COD_MAX_PAISE;
+  try {
+    process.env.COD_MAX_PAISE = '5000000'; // ₹50,000
+    const high = await api('GET', '/store/service/pincode/560001?amount_paise=4500000');
+    assert.equal(high.status, 200);
+    assert.equal(high.json.codAvailable, true, 'COD should be offered up to the configured cap');
+    assert.equal(high.json.codMaxPaise, 5000000);
+
+    const over = await api('GET', '/store/service/pincode/560001?amount_paise=5100000');
+    assert.equal(over.json.codAvailable, false);
+
+    // a ₹40,000 COD order is accepted at checkout under the raised cap (was rejected at 20k)
+    const weapon = fake.products.get('motor-b');
+    const original = weapon.stock;
+    weapon.stock = 20;
+    const order = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'motor-b', qty: 8 }], // ₹40,000
+      customer: { name: 'Ravi', phone: '9876543210' },
+      payMode: 'cod',
+    });
+    assert.equal(order.status, 200);
+    weapon.stock = original;
+  } finally {
+    if (saved === undefined) delete process.env.COD_MAX_PAISE;
+    else process.env.COD_MAX_PAISE = saved;
+  }
+});
+
 test('COD is refused above the configured cap, and allowed just below it', async () => {
   // motor-b is ₹5,000 per unit; 4 units = ₹20,000 which is within the default cap,
   // 5 units = ₹25,000 which must be refused. Stock was raised above for this test.

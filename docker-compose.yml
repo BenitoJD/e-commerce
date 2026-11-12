@@ -55,6 +55,7 @@ services:
         NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-00AAAAA0000A1Z5}
         BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_COD_MAX_PAISE: ${NEXT_PUBLIC_COD_MAX_PAISE:-2000000}
     restart: unless-stopped
     depends_on:
       - backend

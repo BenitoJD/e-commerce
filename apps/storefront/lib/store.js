@@ -21,6 +21,13 @@ export const STORE = {
   gstin: process.env.NEXT_PUBLIC_STORE_GSTIN || '00AAAAA0000A1Z5',
 };
 
+// COD cap shown to shoppers. Must mirror the backend's COD_MAX_PAISE; both are
+// configurable so an operator who raises the cap sees the change in the UI too.
+export const COD_MAX_RUPEES = (() => {
+  const paise = Number(process.env.NEXT_PUBLIC_COD_MAX_PAISE);
+  return Number.isFinite(paise) && paise > 0 ? Math.round(paise / 100) : 20000;
+})();
+
 export function waLink(text) {
   const t = text ? `?text=${encodeURIComponent(text)}` : '';
   return `https://wa.me/${STORE.phoneDigits}${t}`;

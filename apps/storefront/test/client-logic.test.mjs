@@ -274,6 +274,13 @@ test('ttlCache: undefined results are cached (not refetched every call)', async 
   assert.equal(calls, 2);
 });
 
+test('store: COD cap mirrors the backend default and is overridable', async () => {
+  const { COD_MAX_RUPEES } = storeLib;
+  assert.equal(typeof COD_MAX_RUPEES, 'number');
+  // With no NEXT_PUBLIC_COD_MAX_PAISE set, the UI must agree with the backend default.
+  assert.equal(COD_MAX_RUPEES, 20000);
+});
+
 test('pricing: GST split is inclusive and matches the invoice formula', async () => {
   const { gstInclusiveSplit } = await import('../lib/pricing.js');
   // ₹1180 at 18% => ₹1000 base + ₹180 tax

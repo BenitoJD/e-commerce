@@ -40,3 +40,60 @@ export function productJsonLd(product, { storeName, absoluteUrl, paiseToRupees, 
   // Escape "<" so a product name can never break out of the script tag.
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
+
+function escapeForScript(data) {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+// Site-level identity. Google uses Organization for brand info and WebSite+SearchAction
+// for the "search this site" box in results.
+export function organizationJsonLd({ store, siteUrl }) {
+  const url = String(siteUrl || '').replace(/\/+$/, '');
+  return escapeForScript({
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: store.name,
+    url,
+    logo: `${url}/favicon.svg`,
+    email: store.email || undefined,
+    contactPoint: store.phoneDigits
+      ? [{
+        '@type': 'ContactPoint',
+        telephone: `+${store.phoneDigits}`,
+        contactType: 'customer service',
+        areaServed: 'IN',
+        availableLanguage: ['en', 'hi'],
+      }]
+      : undefined,
+  });
+}
+
+export function websiteJsonLd({ store, siteUrl }) {
+  const url = String(siteUrl || '').replace(/\/+$/, '');
+  return escapeForScript({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: store.name,
+    url,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${url}/category/all?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  });
+}
+
+// Breadcrumbs for product/search-result trails. Items are [{ name, url }].
+export function breadcrumbJsonLd(items) {
+  const list = (Array.isArray(items) ? items : []).filter((i) => i && i.name && i.url);
+  return escapeForScript({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: list.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  });
+}

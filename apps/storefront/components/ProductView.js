@@ -244,6 +244,21 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-3">
+        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <span className="mx-1">/</span>
+        <a href={`/category/${encodeURIComponent(p.category || 'all')}`} className="hover:text-[#F97316] capitalize">
+          {String(p.category || 'All products').replace(/-/g, ' ')}
+        </a>
+        {p.brand ? (
+          <>
+            <span className="mx-1">/</span>
+            <a href={`/brand/${encodeURIComponent(p.brand)}`} className="hover:text-[#F97316]">{p.brand}</a>
+          </>
+        ) : null}
+        <span className="mx-1">/</span>
+        <span className="text-gray-700">{p.name}</span>
+      </nav>
       <div className="grid md:grid-cols-2 gap-8">
         <div>
           <img src={images[0]} alt={p.name} className="rounded-2xl border w-full h-96 object-cover" />

@@ -1,4 +1,5 @@
 import HomeView from '../components/HomeView';
+import { organizationJsonLd, websiteJsonLd } from '../lib/jsonld';
 import { getProductsForMeta, paiseToRupees, absoluteUrl } from '../lib/serverApi';
 import { STORE } from '../lib/store';
 
@@ -38,8 +39,12 @@ function itemListJsonLd(items) {
 
 export default async function HomePage() {
   const products = await getProductsForMeta('', 24);
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
   return (
     <>
+      {/* Site identity: brand info + the "search this site" box in Google results. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: organizationJsonLd({ store: STORE, siteUrl }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: websiteJsonLd({ store: STORE, siteUrl }) }} />
       {products.length ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: itemListJsonLd(products) }} />
       ) : null}

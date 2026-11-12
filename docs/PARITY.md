@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 52 (first frontend test suite, 13/13).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 53 (readable API errors, 21/21 frontend tests).
 
 ## Storefront
 

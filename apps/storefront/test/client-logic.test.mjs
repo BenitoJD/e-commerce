@@ -16,6 +16,7 @@ globalThis.window = { dispatchEvent: () => {} };
 const cart = await import('../lib/cart.js');
 const wishlist = await import('../lib/wishlist.js');
 const storeLib = await import('../lib/store.js');
+const api = await import('../lib/api.js');
 
 function reset() {
   store.clear();
@@ -133,4 +134,58 @@ test('store: waLink builds a valid wa.me URL with optional text', () => {
 
 test('store: phone display is formatted +91 XXXXX XXXXX', () => {
   assert.match(storeLib.STORE.phoneDisplay, /^\+91 \d{5} \d{5}$/);
+});
+
+// ---------------- api: product normalisation ----------------
+
+test('api: paise are converted to rupees exactly once', () => {
+  const p = api.normalizeProduct({ slug: 'a', price_paise: 549500, mrp_paise: 699500, images: ['/x.jpg'] });
+  assert.equal(p.price, 5495);
+  assert.equal(p.mrp, 6995);
+  assert.equal(p.image, '/x.jpg');
+  assert.equal(p.id, 'a');
+});
+
+test('api: already-rupee shapes are left untouched', () => {
+  const p = api.normalizeProduct({ slug: 'b', price: 3499, mrp: 4995 });
+  assert.equal(p.price, 3499);
+  assert.equal(p.mrp, 4995);
+});
+
+test('api: normalisation never mutates the source object', () => {
+  const src = { slug: 'c', price_paise: 100 };
+  api.normalizeProduct(src);
+  assert.equal(src.price, undefined);
+});
+
+test('api: free/zero-price products keep their zero', () => {
+  const p = api.normalizeProduct({ slug: 'd', price_paise: 0 });
+  assert.equal(p.price, 0);
+});
+
+test('api: garbage input is returned as-is, not thrown on', () => {
+  assert.equal(api.normalizeProduct(null), null);
+  assert.deepEqual(api.normalizeList(null), []);
+  assert.deepEqual(api.normalizeList([{ slug: 'e', price_paise: 1000 }])[0].price, 10);
+});
+
+// ---------------- api: readable error messages ----------------
+
+test('api: backend error field is surfaced verbatim', () => {
+  const msg = api.parseErrorMessage(400, JSON.stringify({ error: 'Insufficient stock for motor-b' }));
+  assert.equal(msg, 'Insufficient stock for motor-b');
+});
+
+test('api: plain-text bodies are trimmed, HTML/JSON dumps are not shown', () => {
+  assert.equal(api.parseErrorMessage(500, '  Service unavailable  '), 'Service unavailable');
+  assert.ok(!api.parseErrorMessage(500, '<html><body>boom</body></html>').includes('<html>'));
+  assert.ok(!api.parseErrorMessage(500, '{"weird":true}').includes('{'));
+});
+
+test('api: friendly fallbacks by status when no body is usable', () => {
+  assert.match(api.parseErrorMessage(401, ''), /not authorised/i);
+  assert.match(api.parseErrorMessage(404, ''), /not found/i);
+  assert.match(api.parseErrorMessage(429, ''), /too many/i);
+  assert.match(api.parseErrorMessage(503, ''), /our side/i);
+  assert.match(api.parseErrorMessage(418, ''), /418/);
 });

@@ -1,9 +1,28 @@
 const BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000').replace(/\/$/, '');
 
+// Turn a failed response body into a message a shopper can actually read.
+// Backend returns {"error": "..."} — show that, never a raw JSON/HTML dump.
+export function parseErrorMessage(status, bodyText) {
+  const raw = String(bodyText == null ? '' : bodyText).trim();
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      const msg = data && (data.error || data.message);
+      if (typeof msg === 'string' && msg.trim()) return msg.trim();
+    } catch { /* not JSON: fall through */ }
+    if (!raw.startsWith('<') && !raw.startsWith('{')) return raw.slice(0, 160);
+  }
+  if (status === 401 || status === 403) return 'You are not authorised to do that.';
+  if (status === 404) return 'Not found.';
+  if (status === 429) return 'Too many requests — please wait a moment.';
+  if (status >= 500) return 'Something went wrong on our side. Please try again.';
+  return `Request failed (${status}).`;
+}
+
 async function handle(res) {
   if (!res.ok) {
     const t = await res.text().catch(() => '');
-    throw new Error(`Backend ${res.status}: ${t.slice(0, 200)}`);
+    throw new Error(parseErrorMessage(res.status, t));
   }
   return res.json();
 }

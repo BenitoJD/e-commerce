@@ -7,14 +7,14 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   icons: { icon: '/favicon.svg' },
   title: {
-    default: 'ToolsKart — India\'s Machinery & Power Tools Store',
+    default: `${STORE.name} — India's Machinery & Power Tools Store`,
     template: '%s'
   },
   description: 'Buy power tools, motors, agriculture equipment, welding machines & cleaning equipment online in India. GST invoice, EMI, UPI & bulk quotes.'
 };
 
 export default function RootLayout({ children }) {
-  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart';
+  const storeName = STORE.name;
   return (
     <html lang="en">
       <body>

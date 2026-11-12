@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 127 (restock alert copy made honest; promise guard widened).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 128 (store identity single-sourced; verified by rebrand build).
 
 ## Storefront
 
@@ -66,6 +66,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | Email / SMS notifications | No mailer or SMS gateway is wired up, and no copy promises one (a test enforces this). Supply SMTP or MSG91 credentials to add order-confirmation emails/OTP login. |
+| Trust / branding | ✅ store name, phone, email and GSTIN come from `lib/store.js` (`NEXT_PUBLIC_STORE_*`) and propagate to every page, the invoice letterhead and WhatsApp templates — a test fails on any hardcoded brand name (verified by building with a different name) |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
 
@@ -82,7 +83,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 146 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 148 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

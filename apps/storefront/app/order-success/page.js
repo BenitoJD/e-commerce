@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { verifyOrder } from '../../lib/api';
-import { waLink } from '../../lib/store';
+import { waLink, STORE } from '../../lib/store';
 
 function normStatus(status) {
   const s = String(status || '').toLowerCase();
@@ -83,7 +83,7 @@ function SuccessInner() {
       <div className="w-16 h-16 mx-auto rounded-full bg-green-100 grid place-items-center text-3xl">✓</div>
       <h1 className="text-3xl font-extrabold mt-4">Order placed!</h1>
       <p className="text-gray-600 mt-2">
-        Thank you for shopping with ToolsKart. Your GST invoice is ready — download or print it any time
+        Thank you for shopping with {STORE.name}. Your GST invoice is ready — download or print it any time
         from the links below, or later from My Orders.
       </p>
       <div className="card p-5 mt-6 text-left text-sm space-y-2">
@@ -106,7 +106,7 @@ function SuccessInner() {
         {receipt && receipt !== '—' ? (
           <a href={`/invoice/${encodeURIComponent(receipt)}`} className="btn-outline">GST Invoice</a>
         ) : null}
-        <a href={waLink('Hi ToolsKart, need help with my order')} target="_blank" rel="noreferrer" className="btn-primary">WhatsApp Support</a>
+        <a href={waLink(`Hi ${STORE.name}, need help with my order`)} target="_blank" rel="noreferrer" className="btn-primary">WhatsApp Support</a>
       </div>
     </div>
   );

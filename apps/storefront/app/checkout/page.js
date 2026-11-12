@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { createCheckout, validateCoupon } from '../../lib/api';
-import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor } from '../../lib/store';
+import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor, STORE } from '../../lib/store';
 
 function loadRazorpay() {
   return new Promise((resolve, reject) => {
@@ -131,7 +131,7 @@ export default function CheckoutPage() {
         order_id: razorpayOrderId,
         amount: chargePaise,
         currency: res.currency || 'INR',
-        name: process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart',
+        name: STORE.name,
         description: `Order ${receipt}`,
         prefill: { name: form.name, contact: form.phone },
         notes: { receipt },

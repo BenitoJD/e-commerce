@@ -70,7 +70,7 @@ export default function InvoicePage({ params }) {
         <div className="card print-card p-6 mt-5 text-sm">
           <div className="flex flex-wrap justify-between gap-4 border-b pb-4">
             <div>
-              <div className="font-extrabold text-lg">ToolsKart</div>
+              <div className="font-extrabold text-lg">{STORE.name}</div>
               <div className="text-gray-600">GSTIN: {STORE.gstin}</div>
               <div className="text-gray-600">Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026</div>
               <div className="text-gray-600">{STORE.email} • {STORE.phoneDisplay}</div>

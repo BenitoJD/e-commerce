@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getMyOrders, trackOrder } from '../../lib/api';
 import { addToCart, orderItemsToCartLines } from '../../lib/cart';
-import { waLink } from '../../lib/store';
+import { waLink, STORE } from '../../lib/store';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
@@ -156,7 +156,7 @@ export default function MyOrdersPage() {
                   )}
                   {receipt && (
                     <a
-                      href={waLink(`Hi ToolsKart, I need help with order ${receipt}`)}
+                      href={waLink(`Hi ${STORE.name}, I need help with order ${receipt}`)}
                       target="_blank"
                       rel="noreferrer"
                       className="btn-outline !py-1.5 !text-green-700"

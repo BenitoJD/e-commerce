@@ -30,7 +30,7 @@ import {
   answerQuestion,
   updateStock
 } from '../../lib/api';
-import { waLinkTo } from '../../lib/store';
+import { waLinkTo, STORE } from '../../lib/store';
 
 function inrFromPaise(paise) {
   const n = Number(paise || 0) / 100;
@@ -837,9 +837,9 @@ export default function AdminPage() {
                           {!q.order_receipt && (q.product_slug || q.product) ? (
                             <button onClick={() => onQuoteConvert(q.id || q._id, q.product_slug || q.product)} className="btn-primary !py-1 !px-2 text-xs mr-1 mb-1">Convert to order</button>
                           ) : null}
-                          {waLinkTo(q.phone, `Hello ${q.name || ''}, this is ToolsKart about your quote request for ${q.product_name || q.product_slug || 'your item'}.`) ? (
+                          {waLinkTo(q.phone, `Hello ${q.name || ''}, this is ${STORE.name} about your quote request for ${q.product_name || q.product_slug || 'your item'}.`) ? (
                             <a
-                              href={waLinkTo(q.phone, `Hello ${q.name || ''}, this is ToolsKart about your quote request for ${q.product_name || q.product_slug || 'your item'}.`)}
+                              href={waLinkTo(q.phone, `Hello ${q.name || ''}, this is ${STORE.name} about your quote request for ${q.product_name || q.product_slug || 'your item'}.`)}
                               target="_blank"
                               rel="noreferrer"
                               className="btn-outline !py-1 !px-2 text-xs !text-green-700 mr-1 mb-1"
@@ -1002,9 +1002,9 @@ export default function AdminPage() {
                           {['approved', 'rejected', 'picked_up', 'refunded', 'closed'].map((s) => (
                             <button key={s} onClick={() => onReturnStatus(r.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
                           ))}
-                          {waLinkTo(r.phone, `Hello, this is ToolsKart about your return for order ${r.receipt || ''}.`) ? (
+                          {waLinkTo(r.phone, `Hello, this is ${STORE.name} about your return for order ${r.receipt || ''}.`) ? (
                             <a
-                              href={waLinkTo(r.phone, `Hello, this is ToolsKart about your return for order ${r.receipt || ''}.`)}
+                              href={waLinkTo(r.phone, `Hello, this is ${STORE.name} about your return for order ${r.receipt || ''}.`)}
                               target="_blank"
                               rel="noreferrer"
                               className="btn-outline !py-1 !px-2 text-xs !text-green-700 mr-1 mb-1"
@@ -1054,9 +1054,9 @@ export default function AdminPage() {
                           {['contacted', 'closed'].map((s) => (
                             <button key={s} onClick={() => onMessageStatus(m.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
                           ))}
-                          {waLinkTo(m.phone, `Hello ${m.name || ''}, this is ToolsKart support about your enquiry.`.trim()) ? (
+                          {waLinkTo(m.phone, `Hello ${m.name || ''}, this is ${STORE.name} support about your enquiry.`.trim()) ? (
                             <a
-                              href={waLinkTo(m.phone, `Hello ${m.name || ''}, this is ToolsKart support about your enquiry.`)}
+                              href={waLinkTo(m.phone, `Hello ${m.name || ''}, this is ${STORE.name} support about your enquiry.`)}
                               target="_blank"
                               rel="noreferrer"
                               className="btn-outline !py-1 !px-2 text-xs !text-green-700 mr-1 mb-1"

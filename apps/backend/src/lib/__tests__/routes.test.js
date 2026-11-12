@@ -157,6 +157,13 @@ function makeFakeDb() {
     if (t.includes('FROM products') && t.includes('GROUP BY category')) {
       return { rows: [{ category: 'power-tools', count: 1 }] };
     }
+    if (t.startsWith('SELECT * FROM orders WHERE id =')) {
+      const o = orders.find((x) => x.id === Number(params[0]));
+      return { rows: o ? [{ ...o }] : [] };
+    }
+    if (t.startsWith('SELECT slug, name, hsn FROM products')) {
+      return { rows: [...products.values()].filter((p) => params[0].includes(p.slug)).map((p) => ({ slug: p.slug, name: p.name, hsn: p.hsn || '' })) };
+    }
     if (t.startsWith('INSERT INTO products') && t.includes('ON CONFLICT (slug) DO UPDATE')) {
       const [slug, name, brand, category, price, mrp, hsn, stock, specs, images, videos] = params;
       products.set(slug, { slug, name, brand, category, price_paise: price, mrp_paise: mrp, hsn, stock, specs: JSON.parse(specs || '{}'), images: images || [], videos: videos || [] });
@@ -447,6 +454,33 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
     code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
     active: true, max_uses: null, used_count: 0, expires_at: null,
   });
+});
+
+test('admin order detail: items enriched with names, customer and payment ids', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Ravi Kumar', phone: '9876543210', address: '12 MG Road', pincode: '560001' },
+    couponCode: 'SAVE10',
+  });
+  assert.equal(created.status, 200);
+  const order = fake.orders.find((o) => o.receipt === created.json.receipt);
+
+  const detail = await api('GET', `/admin/orders/${order.id}`, undefined, adminHeaders);
+  assert.equal(detail.status, 200);
+  const o = detail.json.order;
+  assert.equal(o.receipt, created.json.receipt);
+  assert.equal(o.customer.name, 'Ravi Kumar');
+  assert.equal(o.customer.pincode, '560001');
+  assert.equal(o.items.length, 1);
+  assert.equal(o.items[0].name, 'Drill A'); // enriched from catalogue, not just the slug
+  assert.equal(o.items[0].qty, 2);
+  assert.equal(o.items[0].linePaise, 200000);
+  assert.equal(o.couponCode, 'SAVE10');
+  assert.equal(typeof o.discountPaise, 'number');
+
+  const missing = await api('GET', '/admin/orders/99999', undefined, adminHeaders);
+  assert.equal(missing.status, 404);
 });
 
 test('admin product CRUD: create, update, validation, delete', async () => {

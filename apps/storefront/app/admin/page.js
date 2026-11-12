@@ -5,6 +5,7 @@ import {
   fetchProducts,
   getAdminStats,
   getAdminOrders,
+  getAdminOrderDetail,
   updateOrderStatus,
   getAdminQuotes,
   updateQuoteStatus,
@@ -55,6 +56,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [orderFilter, setOrderFilter] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
+  const [orderDetail, setOrderDetail] = useState(null);
   const [quotes, setQuotes] = useState([]);
   const [quoteFilter, setQuoteFilter] = useState('');
 
@@ -380,6 +382,16 @@ export default function AdminPage() {
     }
   }
 
+  async function onOrderDetail(id) {
+    setError('');
+    try {
+      const r = await getAdminOrderDetail(token, id);
+      setOrderDetail(r.order || r);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function onOrderAction(id, status) {
     setError('');
     try {
@@ -607,13 +619,70 @@ export default function AdminPage() {
                         <td className="p-2">{o.amount_paise != null ? inrFromPaise(o.amount_paise) : (o.amount != null ? inrMaybe(o.amount) : '—')}{(o.coupon_code || o.couponCode) ? <div className="text-xs text-green-700 font-semibold">{o.coupon_code || o.couponCode}{o.discount_paise || o.discountPaise ? ` −₹${(Number(o.discount_paise ?? o.discountPaise) / 100).toLocaleString('en-IN')}` : ''}</div> : null}</td>
                         <td className="p-2 text-xs">{o.customer?.name || o.name || o.email || o.phone || '—'}</td>
                         <td className="p-2"><span className="badge bg-gray-100">{o.status || '—'}</span></td>
-                        <td className="p-2">{orderActions(o)}</td>
+                        <td className="p-2">
+                          <button onClick={() => onOrderDetail(o.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">View</button>
+                          {orderActions(o)}
+                        </td>
                       </tr>
                     ))}
                     {orders.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No orders.</td></tr> : null}
                   </tbody>
                 </table>
               </div>
+
+              {orderDetail ? (
+                <div className="card p-4 mt-4">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <b>Order {orderDetail.receipt}</b>
+                      <span className="badge bg-gray-100 ml-2">{orderDetail.status}</span>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {orderDetail.createdAt ? new Date(orderDetail.createdAt).toLocaleString('en-IN') : ''}
+                        {orderDetail.couponCode ? ` • coupon ${orderDetail.couponCode} −₹${((orderDetail.discountPaise || 0) / 100).toLocaleString('en-IN')}` : ''}
+                      </div>
+                    </div>
+                    <button onClick={() => setOrderDetail(null)} className="btn-outline !py-1 !px-2 text-xs">Close</button>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4 mt-3 text-sm">
+                    <div>
+                      <div className="font-bold mb-1">Ship to</div>
+                      <div>{orderDetail.customer?.name || '—'}</div>
+                      <div className="text-gray-600">{orderDetail.customer?.address || ''}</div>
+                      <div className="text-gray-600">
+                        {orderDetail.customer?.pincode ? `PIN ${orderDetail.customer.pincode} • ` : ''}
+                        {orderDetail.customer?.phone || ''}
+                      </div>
+                    </div>
+                    <div className="sm:text-right text-gray-600">
+                      <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
+                      <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || '—'}</b></div>
+                      <div className="mt-1">Total charged: <b>{inrFromPaise(orderDetail.amountPaise)}</b></div>
+                    </div>
+                  </div>
+
+                  <table className="w-full text-sm mt-4">
+                    <thead>
+                      <tr className="text-left text-gray-500 border-b">
+                        <th className="py-2 pr-2">Item</th>
+                        <th className="py-2 pr-2">HSN</th>
+                        <th className="py-2 pr-2 text-right">Qty</th>
+                        <th className="py-2 text-right">Line</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(orderDetail.items || []).map((it, i) => (
+                        <tr key={it.slug || i} className="border-b last:border-0">
+                          <td className="py-2 pr-2">{it.name || it.slug}</td>
+                          <td className="py-2 pr-2 text-gray-600">{it.hsn || '—'}</td>
+                          <td className="py-2 pr-2 text-right">{it.qty}</td>
+                          <td className="py-2 text-right">{inrFromPaise(it.linePaise)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
             </div>
           )}
 

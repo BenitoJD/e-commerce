@@ -79,10 +79,11 @@ stock alerts) via `RATE_LIMIT_MAX`/`RATE_LIMIT_WINDOW_MS`; reads unmetered.
 ## Admin console (`/admin`, header `x-admin-token`)
 
 Overview (revenue incl. delivered, orders by status, low stock, new quotes) ·
-Orders (filter, search by receipt/name/phone, coupon + payment ID, guarded status
-transitions) · **Products (create/edit/delete without touching seed files)** · Returns ·
-Quotes (convert to order at an agreed price) · Coupons (CRUD with expiry/usage caps) ·
-Messages · Reviews/Questions (verify, answer, delete) · Stock (update by slug).
+Orders (filter, search by receipt/name/phone, **open an order for items/address/payment**,
+coupon + payment ID, guarded status transitions) · **Products (create/edit/delete without
+touching seed files)** · Returns · Quotes (convert to order at an agreed price) ·
+Coupons (CRUD with expiry/usage caps) · Messages · Reviews/Questions (verify, answer,
+delete) · Stock (update by slug).
 
 ## Tests
 

@@ -139,6 +139,14 @@ export async function getAdminOrders(token, status = '', search = '') {
   return handle(res);
 }
 
+export async function getAdminOrderDetail(token, id) {
+  const res = await fetch(`${BASE}/admin/orders/${encodeURIComponent(id)}`, {
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function updateOrderStatus(token, id, status) {
   const res = await fetch(`${BASE}/admin/orders/${encodeURIComponent(id)}`, {
     method: 'PATCH',

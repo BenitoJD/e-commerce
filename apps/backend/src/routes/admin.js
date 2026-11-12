@@ -118,6 +118,53 @@ router.patch('/orders/:id', async (req, res) => {
   }
 });
 
+// GET /admin/orders/:id — full order for packing slips, disputes and support calls
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    const order = rows[0];
+    const lineItems = Array.isArray(order.items) ? order.items : [];
+    const slugs = [...new Set(lineItems.map((it) => it && it.slug).filter(Boolean))];
+    let bySlug = {};
+    if (slugs.length) {
+      const r = await db.query('SELECT slug, name, hsn FROM products WHERE slug = ANY($1)', [slugs]);
+      bySlug = Object.fromEntries(r.rows.map((p) => [p.slug, p]));
+    }
+    const items = lineItems.map((it) => {
+      const p = bySlug[it.slug] || {};
+      const qty = parseInt(it.qty, 10) || 0;
+      const unitPaise = it.unit_price_paise != null ? it.unit_price_paise : 0;
+      return {
+        slug: it.slug,
+        name: p.name || it.slug,
+        hsn: p.hsn || '',
+        qty,
+        unitPaise,
+        linePaise: unitPaise * qty,
+      };
+    });
+    res.json({
+      order: {
+        id: order.id,
+        receipt: order.receipt,
+        status: order.status,
+        createdAt: order.created_at,
+        amountPaise: order.amount_paise,
+        couponCode: order.coupon_code || null,
+        discountPaise: Number(order.discount_paise) || 0,
+        razorpayOrderId: order.razorpay_order_id || null,
+        razorpayPaymentId: order.razorpay_payment_id || null,
+        customer: order.customer || {},
+        items,
+      },
+    });
+  } catch (err) {
+    console.error('[admin] order detail error:', err.message);
+    res.status(500).json({ error: 'Failed to load order' });
+  }
+});
+
 // GET /admin/quotes?status=
 router.get('/quotes', async (req, res) => {
   try {

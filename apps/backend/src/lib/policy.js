@@ -14,4 +14,18 @@ function codAvailableFor(amountPaise, env = process.env) {
   return amount <= codMaxPaise(env);
 }
 
-module.exports = { codMaxPaise, codAvailableFor };
+// Shipping policy. Defaults to free shipping (fee 0): inventing a charge would change
+// every price on the site, so the operator opts in with
+//   SHIPPING_FEE_PAISE=14900  FREE_SHIPPING_ABOVE_PAISE=499900
+function shippingFeePaise(subtotalPaise, env = process.env) {
+  const fee = parseInt(env.SHIPPING_FEE_PAISE, 10);
+  if (!Number.isInteger(fee) || fee <= 0) return 0;
+  const threshold = parseInt(env.FREE_SHIPPING_ABOVE_PAISE, 10);
+  const amount = Number(subtotalPaise);
+  if (Number.isInteger(threshold) && threshold > 0 && Number.isFinite(amount) && amount >= threshold) {
+    return 0;
+  }
+  return fee;
+}
+
+module.exports = { codMaxPaise, codAvailableFor, shippingFeePaise };

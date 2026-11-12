@@ -5,7 +5,7 @@ const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
 const { makeReceipt } = require('../lib/receipt');
 const { clampText, normalizePhone } = require('../lib/validate');
-const { codMaxPaise } = require('../lib/policy');
+const { codMaxPaise, shippingFeePaise } = require('../lib/policy');
 
 const router = express.Router();
 
@@ -92,6 +92,12 @@ router.post('/create', async (req, res) => {
       if (amount < 100) return res.status(400).json({ error: 'Order amount too small after coupon' });
     }
 
+    // Shipping is added after the discount, and the order total (what Razorpay charges)
+    // includes it. Default policy is free shipping; the operator opts in via env.
+    const itemsPaise = amount;
+    const shippingPaise = shippingFeePaise(itemsPaise);
+    amount += shippingPaise;
+
     // COD policy: capped at COD_MAX_PAISE (default ₹20,000). High-value machinery has to
     // be prepaid — otherwise refused deliveries cost us freight both ways.
     const codMax = codMaxPaise();
@@ -155,6 +161,7 @@ router.post('/create', async (req, res) => {
         amount_paise: amount,
         couponCode,
         discount_paise: discountPaise,
+        shipping_paise: shippingPaise,
         razorpayOrderId: null,
         keyId,
         payMode: 'cod',
@@ -178,7 +185,7 @@ router.post('/create', async (req, res) => {
 
     await db.query('UPDATE orders SET razorpay_order_id = $1 WHERE id = $2', [razorpayOrderId, orderId]);
     console.log(`[checkout] order ${receipt} amount=${amount} coupon=${couponCode || '-'} rzp=${razorpayOrderId}`);
-    res.json({ orderId, receipt, amount_paise: amount, couponCode, discount_paise: discountPaise, razorpayOrderId, keyId });
+    res.json({ orderId, receipt, amount_paise: amount, couponCode, discount_paise: discountPaise, shipping_paise: shippingPaise, razorpayOrderId, keyId });
   } catch (err) {
     console.error('[checkout] error:', err.message);
     res.status(500).json({ error: 'Checkout failed' });

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCart, updateQty, removeItem, cartTotal, cartStockStatus, clearCart } from '../../lib/cart';
 import { validateCoupon, checkPincode, fetchStock } from '../../lib/api';
+import { SHIPPING_FEE_RUPEES } from '../../lib/store';
 
 function readCoupon() {
   if (typeof window === 'undefined') return null;
@@ -217,7 +218,9 @@ export default function CartPage() {
               {discount > 0 && <div className="flex justify-between text-sm text-green-700"><span>Coupon ({coupon.code})</span><span>−₹{discount.toLocaleString('en-IN')}</span></div>}
               <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{payable.toLocaleString('en-IN')}</span></div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Prices include GST. Shipping calculated at checkout.</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Prices include GST. {SHIPPING_FEE_RUPEES > 0 ? 'Shipping calculated at checkout.' : 'Free shipping across India.'}
+            </p>
             {!stockStatus.ok ? (
               <>
                 <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-semibold">

@@ -13,6 +13,31 @@ function displayPhone(d) {
 
 const PHONE_DIGITS = digits(process.env.NEXT_PUBLIC_STORE_PHONE, '919999999999');
 
+// Policy mirrors of backend env (see apps/backend/src/lib/policy.js). These must be kept
+// in sync with COD_MAX_PAISE / SHIPPING_FEE_PAISE so the UI disables or charges at the
+// same point the server does.
+export const COD_MAX_RUPEES = (() => {
+  const paise = Number(process.env.NEXT_PUBLIC_COD_MAX_PAISE);
+  return Number.isFinite(paise) && paise > 0 ? Math.round(paise / 100) : 20000;
+})();
+
+export const SHIPPING_FEE_RUPEES = (() => {
+  const paise = Number(process.env.NEXT_PUBLIC_SHIPPING_FEE_PAISE);
+  return Number.isFinite(paise) && paise > 0 ? Math.round(paise / 100) : 0;
+})();
+
+export const FREE_SHIPPING_ABOVE_RUPEES = (() => {
+  const paise = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_ABOVE_PAISE);
+  return Number.isFinite(paise) && paise > 0 ? Math.round(paise / 100) : 0;
+})();
+
+// What the shopper will be charged for delivery at this subtotal.
+export function shippingFor(subtotalRupees) {
+  if (!SHIPPING_FEE_RUPEES) return 0;
+  if (FREE_SHIPPING_ABOVE_RUPEES > 0 && Number(subtotalRupees) >= FREE_SHIPPING_ABOVE_RUPEES) return 0;
+  return SHIPPING_FEE_RUPEES;
+}
+
 export const STORE = {
   name: process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart',
   phoneDigits: PHONE_DIGITS,
@@ -23,11 +48,6 @@ export const STORE = {
 
 // COD cap shown to shoppers. Must mirror the backend's COD_MAX_PAISE; both are
 // configurable so an operator who raises the cap sees the change in the UI too.
-export const COD_MAX_RUPEES = (() => {
-  const paise = Number(process.env.NEXT_PUBLIC_COD_MAX_PAISE);
-  return Number.isFinite(paise) && paise > 0 ? Math.round(paise / 100) : 20000;
-})();
-
 export function waLink(text) {
   const t = text ? `?text=${encodeURIComponent(text)}` : '';
   return `https://wa.me/${STORE.phoneDigits}${t}`;

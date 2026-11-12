@@ -773,6 +773,50 @@ test('stock endpoint returns live availability for cart slugs', async () => {
   assert.deepEqual(empty.json.stock, {});
 });
 
+test('shipping fee is charged when configured and waived above the threshold', async () => {
+  const savedFee = process.env.SHIPPING_FEE_PAISE;
+  const savedThreshold = process.env.FREE_SHIPPING_ABOVE_PAISE;
+  const weapon = fake.products.get('motor-b');
+  const savedStock = weapon.stock;
+  weapon.stock = Math.max(weapon.stock, 5);
+  try {
+    process.env.SHIPPING_FEE_PAISE = '14900'; // ₹149
+    process.env.FREE_SHIPPING_ABOVE_PAISE = '400000'; // ₹4,000
+
+    const small = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }], // ₹1,000
+      customer: { name: 'Ravi', phone: '9876543210' },
+    });
+    assert.equal(small.status, 200);
+    assert.equal(small.json.shipping_paise, 14900);
+    assert.equal(small.json.amount_paise, 100000 + 14900, 'total must include shipping');
+
+    const big = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'motor-b', qty: 1 }], // ₹5,000 — above the ₹4,000 threshold
+      customer: { name: 'Ravi', phone: '9876543210' },
+    });
+    assert.equal(big.status, 200, 'expected the above-threshold order to be accepted');
+    assert.equal(big.json.shipping_paise, 0);
+    assert.equal(big.json.amount_paise, 500000);
+  } finally {
+    weapon.stock = savedStock;
+    if (savedFee === undefined) delete process.env.SHIPPING_FEE_PAISE;
+    else process.env.SHIPPING_FEE_PAISE = savedFee;
+    if (savedThreshold === undefined) delete process.env.FREE_SHIPPING_ABOVE_PAISE;
+    else process.env.FREE_SHIPPING_ABOVE_PAISE = savedThreshold;
+  }
+});
+
+test('shipping is free by default (no surprise charges)', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+  });
+  assert.equal(created.status, 200);
+  assert.equal(created.json.shipping_paise, 0);
+  assert.equal(created.json.amount_paise, 100000);
+});
+
 test('pincode COD availability follows COD_MAX_PAISE, same as checkout', async () => {
   const saved = process.env.COD_MAX_PAISE;
   try {

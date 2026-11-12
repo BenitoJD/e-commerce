@@ -38,6 +38,8 @@ services:
       ADMIN_RATE_LIMIT_MAX: ${ADMIN_RATE_LIMIT_MAX:-120}
       LOOKUP_RATE_LIMIT_MAX: ${LOOKUP_RATE_LIMIT_MAX:-60}
       COD_MAX_PAISE: ${COD_MAX_PAISE:-2000000}
+      SHIPPING_FEE_PAISE: ${SHIPPING_FEE_PAISE:-0}
+      FREE_SHIPPING_ABOVE_PAISE: ${FREE_SHIPPING_ABOVE_PAISE:-0}
     # Loopback only: reachable by nginx/Cloudflare Tunnel on the host, not the internet.
     ports:
       - "127.0.0.1:9000:9000"
@@ -56,6 +58,8 @@ services:
         BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
         NEXT_PUBLIC_COD_MAX_PAISE: ${NEXT_PUBLIC_COD_MAX_PAISE:-2000000}
+        NEXT_PUBLIC_SHIPPING_FEE_PAISE: ${NEXT_PUBLIC_SHIPPING_FEE_PAISE:-0}
+        NEXT_PUBLIC_FREE_SHIPPING_ABOVE_PAISE: ${NEXT_PUBLIC_FREE_SHIPPING_ABOVE_PAISE:-0}
     restart: unless-stopped
     depends_on:
       - backend

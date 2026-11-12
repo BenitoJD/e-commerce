@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { createCheckout, validateCoupon } from '../../lib/api';
-import { COD_MAX_RUPEES } from '../../lib/store';
+import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor } from '../../lib/store';
 
 function loadRazorpay() {
   return new Promise((resolve, reject) => {
@@ -43,7 +43,8 @@ export default function CheckoutPage() {
 
   const subtotal = cartTotal(items);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
-  const total = Math.max(0, subtotal - discount);
+  const shipping = shippingFor(Math.max(0, subtotal - discount));
+  const total = Math.max(0, subtotal - discount) + shipping;
   // Server is authoritative: if backend repriced (stale cart prices), show its total.
   const shown = serverTotal != null ? serverTotal : total;
 
@@ -211,13 +212,17 @@ export default function CheckoutPage() {
             </p>
           ) : null}
         </div>
-        {discount > 0 && (
-          <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
-            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+        <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
+          <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
+          {discount > 0 && coupon ? (
             <div className="flex justify-between text-green-700 font-bold"><span>Coupon {coupon.code}</span><span>−₹{discount.toLocaleString('en-IN')}</span></div>
-            <div className="flex justify-between font-extrabold"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
+          ) : null}
+          <div className="flex justify-between text-gray-600">
+            <span>Shipping</span>
+            <span>{shipping > 0 ? `₹${shipping.toLocaleString('en-IN')}` : 'Free'}</span>
           </div>
-        )}
+          <div className="flex justify-between font-extrabold"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
+        </div>
         {(() => {
           const gst = gstInclusiveSplit(shown);
           if (!gst.gstPaise) return null;

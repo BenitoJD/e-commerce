@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 104 (COD cap centralised across pincode/checkout/UI, 125 backend / 41 frontend).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 105 (real shipping policy, server-authoritative, 128 backend / 42 frontend).
 
 ## Storefront
 
@@ -24,6 +24,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Brand pages | ✅ `/brands`, `/brand/[name]` — **server-rendered** first page |
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; COD capped by **one shared policy** (`COD_MAX_PAISE`, mirrored to the UI via `NEXT_PUBLIC_COD_MAX_PAISE`), enforced server-side and reflected in pincode answers |
+| Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
@@ -76,17 +77,17 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (28/28)
 ```
 
-Backend: `cd apps/backend && npm test` — 125 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 128 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 41 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, GST-inclusive split, COD cap mirror,
-WhatsApp links (customer + share), TTL cache eviction/expiry, API base + server base
-resolution, misconfiguration guard, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 42 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, GST-inclusive split, COD cap + shipping
+mirrors, WhatsApp links (customer + share), TTL cache eviction/expiry, API base + server
+base resolution, misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

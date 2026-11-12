@@ -274,6 +274,14 @@ test('ttlCache: undefined results are cached (not refetched every call)', async 
   assert.equal(calls, 2);
 });
 
+test('store: shipping is free by default and mirrors the backend policy', () => {
+  const { shippingFor, SHIPPING_FEE_RUPEES, FREE_SHIPPING_ABOVE_RUPEES } = storeLib;
+  assert.equal(SHIPPING_FEE_RUPEES, 0);
+  assert.equal(FREE_SHIPPING_ABOVE_RUPEES, 0);
+  assert.equal(shippingFor(100), 0);
+  assert.equal(shippingFor(100000), 0);
+});
+
 test('store: COD cap mirrors the backend default and is overridable', async () => {
   const { COD_MAX_RUPEES } = storeLib;
   assert.equal(typeof COD_MAX_RUPEES, 'number');

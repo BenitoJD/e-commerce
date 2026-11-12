@@ -23,12 +23,37 @@ export default function WishlistPage() {
     setItems(removeFromWishlist(i.slug));
   };
 
+  // Bulk move: only in-stock items go to the cart, so we never add something
+  // the server will reject at checkout.
+  const moveAllToCart = () => {
+    const movable = items.filter((i) => i.stock == null || Number(i.stock) > 0);
+    if (!movable.length) return;
+    let remaining = items;
+    for (const i of movable) {
+      addToCart({ slug: i.slug, name: i.name, price: i.price, image: i.image }, 1);
+      remaining = removeFromWishlist(i.slug);
+    }
+    setItems(remaining);
+    window.location.href = '/cart';
+  };
+
+  const outOfStockCount = items.filter((i) => i.stock != null && Number(i.stock) <= 0).length;
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-3xl font-extrabold">Your Wishlist ❤</h1>
         {items.length > 0 && (
-          <button onClick={() => setItems(clearWishlist() || [])} className="text-xs text-red-600 font-bold">Clear all</button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={moveAllToCart}
+              disabled={items.length === outOfStockCount}
+              className="btn-primary !py-1.5 !px-3 text-xs disabled:opacity-50"
+            >
+              Move all to cart{outOfStockCount ? ` (${items.length - outOfStockCount})` : ''}
+            </button>
+            <button onClick={() => setItems(clearWishlist() || [])} className="text-xs text-red-600 font-bold">Clear all</button>
+          </div>
         )}
       </div>
       {items.length === 0 ? (

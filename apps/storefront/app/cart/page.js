@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCart, updateQty, removeItem, cartTotal, cartStockStatus } from '../../lib/cart';
+import { getCart, updateQty, removeItem, cartTotal, cartStockStatus, clearCart } from '../../lib/cart';
 import { validateCoupon, checkPincode, fetchStock } from '../../lib/api';
 
 function readCoupon() {
@@ -138,6 +138,21 @@ export default function CartPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">{items.length} item{items.length === 1 ? '' : 's'} in cart</span>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined' && !window.confirm('Remove all items from your cart?')) return;
+                  clearCart();
+                  setItems([]);
+                  setCoupon(null);
+                  try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
+                }}
+                className="text-xs text-red-600 font-bold"
+              >
+                Clear cart
+              </button>
+            </div>
             {items.map((i) => {
               const info = (stockMap || {})[i.slug];
               const available = info ? Math.max(0, Number(info.stock) || 0) : null;

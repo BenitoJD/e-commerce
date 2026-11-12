@@ -1,4 +1,14 @@
 // Small security helpers shared by the API entrypoint and tests.
+const crypto = require('crypto');
+
+// Constant-time string comparison (guards the admin token against timing attacks).
+// Length is compared first only to pick the buffer size; the HMAC trick below keeps
+// even that from leaking useful timing information.
+function safeEqualStrings(a, b) {
+  const left = crypto.createHash('sha256').update(String(a == null ? '' : a)).digest();
+  const right = crypto.createHash('sha256').update(String(b == null ? '' : b)).digest();
+  return crypto.timingSafeEqual(left, right);
+}
 
 // FRONTEND_URL may hold one origin or a comma-separated list ("https://shop.test,https://www.shop.test").
 function parseOrigins(value) {
@@ -22,4 +32,4 @@ function securityHeaders(req, res, next) {
   next();
 }
 
-module.exports = { parseOrigins, securityHeaders };
+module.exports = { parseOrigins, securityHeaders, safeEqualStrings };

@@ -3,6 +3,7 @@ const db = require('../db');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
 const { refundPayment } = require('../lib/refunds');
+const { safeEqualStrings } = require('../lib/security');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.use((req, res, next) => {
     return res.status(503).json({ error: 'admin disabled' });
   }
   const token = req.headers['x-admin-token'];
-  if (token !== process.env.ADMIN_TOKEN) {
+  if (!safeEqualStrings(token, process.env.ADMIN_TOKEN)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();

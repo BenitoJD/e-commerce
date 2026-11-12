@@ -1,7 +1,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
-const { parseOrigins, securityHeaders } = require('../security');
+const { parseOrigins, securityHeaders, safeEqualStrings } = require('../security');
+
+test('safeEqualStrings matches only identical values, including odd types', () => {
+  assert.equal(safeEqualStrings('secret-token', 'secret-token'), true);
+  assert.equal(safeEqualStrings('secret-token', 'secret-tokeN'), false);
+  assert.equal(safeEqualStrings('short', 'a-much-longer-token'), false);
+  assert.equal(safeEqualStrings(undefined, 'x'), false);
+  assert.equal(safeEqualStrings(null, ''), true); // both hash to the empty string
+  assert.equal(safeEqualStrings('', ''), true);
+  assert.equal(safeEqualStrings(12345, '12345'), true); // coerced, not thrown on
+  assert.equal(safeEqualStrings(['a'], 'a'), true); // header arrays stringify to "a"
+  assert.equal(safeEqualStrings(['a', 'b'], 'a'), false);
+});
 
 test('parseOrigins splits, trims and drops blanks', () => {
   assert.deepEqual(parseOrigins('https://a.test, https://b.test '), ['https://a.test', 'https://b.test']);

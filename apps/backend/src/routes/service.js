@@ -146,15 +146,32 @@ router.get('/orders', async (req, res) => {
        ORDER BY created_at DESC LIMIT 20`,
       [last10]
     );
+
+    // Attach product names so "My Orders" can show what was bought, not just a count.
+    const allSlugs = [...new Set(
+      rows.flatMap((o) => (Array.isArray(o.items) ? o.items.map((it) => it && it.slug) : [])).filter(Boolean)
+    )];
+    let nameBySlug = {};
+    if (allSlugs.length) {
+      const { rows: found } = await db.query('SELECT slug, name FROM products WHERE slug = ANY($1)', [allSlugs]);
+      nameBySlug = Object.fromEntries(found.map((p) => [p.slug, p.name]));
+    }
+
     res.json({
       orders: rows.map((o) => ({
         receipt: o.receipt,
         status: o.status,
         amount_paise: o.amount_paise,
         created_at: o.created_at,
+        payMode: o.pay_mode || (String(o.status) === 'cod_pending' ? 'cod' : 'online'),
         itemCount: Array.isArray(o.items)
           ? o.items.reduce((sum, it) => sum + (parseInt(it && it.qty, 10) || 0), 0)
           : 0,
+        items: (Array.isArray(o.items) ? o.items : []).slice(0, 5).map((it) => ({
+          slug: it && it.slug,
+          name: (it && nameBySlug[it.slug]) || (it && it.slug) || '',
+          qty: parseInt(it && it.qty, 10) || 0,
+        })),
       })),
     });
   } catch (err) {

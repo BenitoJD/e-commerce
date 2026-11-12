@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 106 (shipping persisted + invoiced, totals reconcile, 129 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 107 (My Orders shows item names, 130 backend tests).
 
 ## Storefront
 
@@ -27,7 +27,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
-| My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
+| My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout**, item lines with HSN, **shipping line**, coupon line, and totals that reconcile (`items − discount + shipping = total`) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
@@ -77,7 +77,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (28/28)
 ```
 
-Backend: `cd apps/backend && npm test` — 129 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 130 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

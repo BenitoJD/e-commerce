@@ -121,9 +121,20 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null, shipping_paise: o.shipping_paise || 0 }] : [] };
     }
-    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders')) {
+    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders') && t.includes('WHERE receipt =')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items, customer: o.customer, created_at: o.created_at, pay_mode: o.pay_mode || null }] : [] };
+    }
+    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders') && t.includes('RIGHT(')) {
+      const phone = String(params[0] || '').slice(-10);
+      const rows = orders
+        .filter((o) => String(o.customer && o.customer.phone || '').replace(/\D/g, '').slice(-10) === phone)
+        .sort((a, b) => b.id - a.id)
+        .slice(0, 20);
+      return { rows };
+    }
+    if (t.startsWith('SELECT slug, name FROM products WHERE slug = ANY')) {
+      return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name })) };
     }
     if (t.startsWith('SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise')) {
       const wantStatus = t.includes('WHERE status = $1') ? params[0] : null;
@@ -1006,6 +1017,29 @@ test('admin product CRUD: create, update, validation, delete', async () => {
 test('admin product routes require the token', async () => {
   const noToken = await api('POST', '/admin/products', { slug: 'x-y', name: 'X Y', price_paise: 1000 });
   assert.equal(noToken.status, 401);
+});
+
+test('my orders includes item names, capped at five lines', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Ravi', phone: '9812345678' },
+  });
+  assert.equal(created.status, 200);
+
+  const list = await api('GET', '/store/service/orders?phone=9812345678');
+  assert.equal(list.status, 200);
+  const order = list.json.orders.find((o) => o.receipt === created.json.receipt);
+  assert.ok(order, 'order should be listed');
+  assert.equal(order.itemCount, 2);
+  assert.equal(order.items.length, 1);
+  assert.equal(order.items[0].slug, 'drill-a');
+  assert.equal(order.items[0].name, 'Drill A', 'product name comes from the catalogue');
+  assert.equal(order.items[0].qty, 2);
+  assert.equal(order.payMode, 'online');
+
+  // phone formatting still matches
+  const formatted = await api('GET', '/store/service/orders?phone=%2B91%2098123%2045678');
+  assert.ok(formatted.json.orders.some((o) => o.receipt === created.json.receipt));
 });
 
 test('customers can check their own return status, not anyone else s', async () => {

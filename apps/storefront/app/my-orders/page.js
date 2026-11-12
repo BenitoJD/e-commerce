@@ -122,6 +122,12 @@ export default function MyOrdersPage() {
                   <div className="text-sm text-gray-500 mt-0.5">
                     {fmtDate(o.created_at || o.createdAt || o.date)} • {inr(o.amount_paise ?? o.amountPaise ?? (o.amount != null ? Number(o.amount) * 100 : 0))} • {count} item{Number(count) === 1 ? '' : 's'}
                   </div>
+                  {Array.isArray(o.items) && o.items.length ? (
+                    <div className="text-xs text-gray-600 mt-1">
+                      {o.items.map((it) => `${it.name || it.slug}${Number(it.qty) > 1 ? ` ×${it.qty}` : ''}`).join(', ')}
+                      {Number(count) > o.items.reduce((s2, it) => s2 + (Number(it.qty) || 0), 0) ? ' …' : ''}
+                    </div>
+                  ) : null}
                 </div>
                 <span className={`badge ${statusBadge(o.status)}`}>{String(o.status || 'placed').toUpperCase()}</span>
                 <div className="flex gap-2 text-sm font-semibold">

@@ -1,18 +1,17 @@
 const express = require('express');
-const Razorpay = require('razorpay');
 const db = require('../db');
 const { applyCoupon } = require('../lib/pricing');
 const { withTransaction, reserveItems } = require('../lib/stock');
+const { keysConfigured } = require('../lib/refunds');
 
 const router = express.Router();
 
 function razorpayClient() {
-  const keyId = process.env.RAZORPAY_KEY_ID || '';
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
-  if (!keyId || !keySecret || keyId.includes('placeholder') || keySecret.includes('placeholder')) {
-    return null; // local dev: use mock
-  }
-  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+  if (!keysConfigured()) return null; // local dev / placeholder keys: use mock
+  return new (require('razorpay'))({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
 }
 
 // POST /store/checkout/create

@@ -72,8 +72,12 @@ function TrackInner() {
     setErr('');
     setNotice('');
     try {
+      const wasPaid = String(data?.status || '').toLowerCase() === 'paid';
       const r = await cancelOrder(String(data?.receipt || receipt).trim(), phone.trim());
-      setNotice(`Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`);
+      let msg = `Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`;
+      if (r.refund === 'auto') msg += ' Refund initiated to source (3–5 working days).';
+      else if (wasPaid) msg += ` Our team will process your refund; contact ${STORE.email} with your receipt.`;
+      setNotice(msg);
       await lookup(data?.receipt || receipt, phone);
     } catch (e2) {
       setErr(e2.message || `Could not cancel this order. Contact ${STORE.email}.`);

@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { releaseItems } = require('../lib/stock');
+const { refundPayment } = require('../lib/refunds');
 
 const router = express.Router();
 
@@ -168,7 +169,7 @@ router.post('/cancel', async (req, res) => {
       return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
     }
     const { rows } = await db.query(
-      'SELECT receipt, status, items, customer FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -192,7 +193,12 @@ router.post('/cancel', async (req, res) => {
     );
     // Reservation was taken at checkout for pending/paid/cod_pending — put it back.
     await releaseItems(db, Array.isArray(order.items) ? order.items : []);
-    res.json({ ok: true, receipt: updated[0].receipt, status: updated[0].status });
+    // Paid online orders get an automatic gateway refund when possible; otherwise manual.
+    let refund = { mode: 'none' };
+    if (order.status === 'paid') {
+      refund = await refundPayment(order);
+    }
+    res.json({ ok: true, receipt: updated[0].receipt, status: updated[0].status, refund: refund.mode });
   } catch (err) {
     console.error('[service] cancel error:', err.message);
     res.status(500).json({ error: 'Cancel failed' });

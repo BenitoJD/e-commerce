@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
+const { refundPayment } = require('../lib/refunds');
 
 const router = express.Router();
 
@@ -89,7 +90,7 @@ router.patch('/orders/:id', async (req, res) => {
     if (!ORDER_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
     }
-    const { rows: current } = await db.query('SELECT status, items FROM orders WHERE id = $1', [req.params.id]);
+    const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id = $1', [req.params.id]);
     if (!current.length) return res.status(404).json({ error: 'Order not found' });
     const guard = canTransition(current[0].status, status);
     if (!guard.ok) {
@@ -104,8 +105,13 @@ router.patch('/orders/:id', async (req, res) => {
       await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
       console.log(`[admin] stock released for ${rows[0].receipt}`);
     }
-    console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status}`);
-    res.json({ order: rows[0] });
+    // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.
+    let refund = { mode: 'none' };
+    if ((status === 'cancelled' || status === 'refunded') && current[0].status === 'paid') {
+      refund = await refundPayment({ ...current[0] });
+    }
+    console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status} refund=${refund.mode}`);
+    res.json({ order: rows[0], refund: refund.mode });
   } catch (err) {
     console.error('[admin] order update error:', err.message);
     res.status(500).json({ error: 'Failed to update order' });

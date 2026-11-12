@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 45 (post-change regression build green).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 46 (env cleanup, 42/42 tests).
 
 ## Storefront
 

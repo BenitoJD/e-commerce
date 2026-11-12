@@ -38,7 +38,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | VPS + domain | Any Mumbai/Bangalore 4vCPU/8GB → `docs/VPS-DEPLOY.md` |
 | Razorpay live keys | Dashboard → backend `.env`, webhook URL |
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
-| Product videos | MP4 URLs → extend gallery |
+| Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 
 ## Tests
@@ -48,7 +48,8 @@ webhook state machine + signature, LIKE escaping, status transitions, refunds, p
 route-level integration tests against an in-memory DB: checkout/stock, coupons, cancel,
 webhooks, quote conversion, admin guard, invoice balance).
 
-Storefront: `cd apps/storefront && npm test` — 13 tests (cart add/merge/clamp, NaN-proof
-self-healing storage, wishlist dedupe + stock, store contact config + wa.me links).
+Storefront: `cd apps/storefront && npm test` — 23 tests (cart add/merge/clamp, NaN-proof
+self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
+paise→rupee normalisation, readable API errors, video embed allowlist).
 
 Build: `cd apps/storefront && npm run build` must compile all 23 routes.

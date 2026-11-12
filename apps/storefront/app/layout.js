@@ -4,7 +4,11 @@ import SearchBox from '../components/SearchBox';
 import { STORE, waLink } from '../lib/store';
 
 export const metadata = {
-  title: 'ToolsKart — India\'s Machinery & Power Tools Store',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  title: {
+    default: 'ToolsKart — India\'s Machinery & Power Tools Store',
+    template: '%s'
+  },
   description: 'Buy power tools, motors, agriculture equipment, welding machines & cleaning equipment online in India. GST invoice, EMI, UPI & bulk quotes.'
 };
 

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 66 (price filters + tested catalog logic, 68 backend / 28 frontend).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 67 (per-product SEO + JSON-LD, verified in production HTML).
 
 ## Storefront
 
@@ -31,7 +31,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Newsletter | ✅ `/store/service/subscribe` + footer form |
 | XML sitemap | ✅ `/sitemap.xml` served by backend, rewritten onto the storefront origin |
 | robots.txt | ✅ `apps/storefront/public/robots.txt` (private paths disallowed, sitemap link) |
-| SEO metadata | ✅ per-page metadata in layout/pages |
+| SEO metadata | ✅ per-product/category/brand titles+descriptions+canonical+OG via server layouts; Product JSON-LD (price, availability, HSN); `NEXT_PUBLIC_SITE_URL` sets the base |
 
 ## Needs your inputs (code slots ready)
 

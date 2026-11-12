@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 109 (request IDs end to end, 132 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 110 (branded 404 + error boundary; smoke 29/29).
 
 ## Storefront
 
@@ -29,6 +29,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout**, item lines with HSN, **shipping line**, coupon line, and totals that reconcile (`items − discount + shipping = total`) |
+| 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) returns real 404 status; `error.js` boundary offers retry/home/browse instead of a blank app-error screen |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow; **customers can check their return status** by receipt + phone |
@@ -75,7 +76,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (28/28)
+node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
 Backend: `cd apps/backend && npm test` — 132 tests (pricing math, GST, EMI, catalog validity,

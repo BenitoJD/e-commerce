@@ -43,6 +43,11 @@ const ROUTES = [
   '/sitemap.xml',
 ];
 
+// Routes that must NOT return 200, with the marker proving the right page rendered.
+const EXPECTED_STATUS = {
+  '/definitely-not-a-page': { status: 404, marker: "couldn't find that page" },
+};
+
 // Content markers that prove the page actually rendered (not just a shell).
 const MARKERS = {
   '/': ['Bestsellers'],
@@ -59,16 +64,24 @@ const MARKERS = {
 
 async function check(route) {
   const url = BASE + route;
+  const expected = EXPECTED_STATUS[route];
   try {
     const res = await fetch(url, { redirect: 'manual' });
     const body = await res.text();
     const problems = [];
-    if (res.status !== 200) problems.push(`status ${res.status}`);
-    for (const marker of MARKERS[route] || []) {
-      if (!body.toLowerCase().includes(marker.toLowerCase())) problems.push(`missing "${marker}"`);
-    }
-    if (route === '/sitemap.xml' && res.status === 200 && !body.includes('<urlset')) {
-      problems.push('sitemap is not XML (is the backend reachable?)');
+    if (expected) {
+      if (res.status !== expected.status) problems.push(`expected ${expected.status}, got ${res.status}`);
+      if (expected.marker && !body.toLowerCase().includes(expected.marker.toLowerCase())) {
+        problems.push(`missing "${expected.marker}"`);
+      }
+    } else {
+      if (res.status !== 200) problems.push(`status ${res.status}`);
+      for (const marker of MARKERS[route] || []) {
+        if (!body.toLowerCase().includes(marker.toLowerCase())) problems.push(`missing "${marker}"`);
+      }
+      if (route === '/sitemap.xml' && res.status === 200 && !body.includes('<urlset')) {
+        problems.push('sitemap is not XML (is the backend reachable?)');
+      }
     }
     return { route, status: res.status, bytes: body.length, problems };
   } catch (err) {
@@ -77,7 +90,7 @@ async function check(route) {
 }
 
 const results = [];
-for (const route of ROUTES) {
+for (const route of [...ROUTES, ...Object.keys(EXPECTED_STATUS)]) {
   // Sequential on purpose: keeps output readable and avoids hammering a small VPS.
   results.push(await check(route));
 }

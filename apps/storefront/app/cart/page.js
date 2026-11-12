@@ -56,6 +56,30 @@ export default function CartPage() {
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const payable = Math.max(0, subtotal - discount);
 
+  // A coupon saved earlier can expire, get disabled, hit its usage cap, or stop
+  // qualifying after the cart shrinks. Re-validate it whenever the cart total
+  // changes instead of carrying a stale discount into checkout.
+  useEffect(() => {
+    if (!coupon || !coupon.code || subtotal <= 0) return undefined;
+    let alive = true;
+    validateCoupon(coupon.code, Math.round(subtotal * 100))
+      .then((r) => {
+        if (!alive) return;
+        if (r && r.valid === false) {
+          setCoupon(null);
+          try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
+          setCouponMsg(`Coupon ${coupon.code} removed: ${r.reason || 'no longer valid'}.`);
+        } else if (r && Number(r.discount_paise) !== Number(coupon.discountPaise)) {
+          const fresh = { code: coupon.code, discountPaise: Number(r.discount_paise) || 0 };
+          setCoupon(fresh);
+          try { localStorage.setItem('tw_coupon', JSON.stringify(fresh)); } catch { /* ignore */ }
+        }
+      })
+      .catch(() => { /* keep the stored value if the API is unreachable */ });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, coupon && coupon.code]);
+
   const applyCoupon = async () => {
     setCouponMsg('');
     if (!code.trim()) { setCouponMsg('Enter a coupon code.'); return; }

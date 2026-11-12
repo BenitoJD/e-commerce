@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
-import { createCheckout } from '../../lib/api';
+import { createCheckout, validateCoupon } from '../../lib/api';
 
 function loadRazorpay() {
   return new Promise((resolve, reject) => {
@@ -44,6 +44,26 @@ export default function CheckoutPage() {
   const total = Math.max(0, subtotal - discount);
   // Server is authoritative: if backend repriced (stale cart prices), show its total.
   const shown = serverTotal != null ? serverTotal : total;
+
+  // Last line of defence: never let a stale coupon reach the payment step.
+  // Re-validate once the cart is known and drop it with a visible notice.
+  const [couponNotice, setCouponNotice] = useState('');
+  useEffect(() => {
+    if (!coupon || !coupon.code || subtotal <= 0) return undefined;
+    let alive = true;
+    validateCoupon(coupon.code, Math.round(subtotal * 100))
+      .then((r) => {
+        if (!alive) return;
+        if (r && r.valid === false) {
+          setCoupon(null);
+          try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
+          setCouponNotice(`Coupon ${coupon.code} is no longer valid (${r.reason || 'expired or used up'}) — it was removed.`);
+        }
+      })
+      .catch(() => { /* network blip: let the server decide at order creation */ });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, coupon && coupon.code]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -125,6 +145,9 @@ export default function CheckoutPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Checkout</h1>
       <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${shown.toLocaleString('en-IN')}` : ` • Total ₹${shown.toLocaleString('en-IN')}`}{serverTotal != null ? ' (updated live)' : ''}</p>
+      {couponNotice && (
+        <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800">{couponNotice}</div>
+      )}
       {coupon && (
         <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm flex justify-between items-center">
           <span><b>{coupon.code}</b> applied — you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>

@@ -17,8 +17,8 @@ const db = require('../../db');
 
 function makeFakeDb() {
   const products = new Map([
-    ['drill-a', { slug: 'drill-a', name: 'Drill A', price_paise: 100000, mrp_paise: 120000, stock: 100 }],
-    ['motor-b', { slug: 'motor-b', name: 'Motor B', price_paise: 500000, mrp_paise: 600000, stock: 1 }], // keep at 1: oversell test needs qty 2 to fail
+    ['drill-a', { slug: 'drill-a', name: 'Drill A', brand: 'DrillCo', price_paise: 100000, mrp_paise: 120000, stock: 100 }],
+    ['motor-b', { slug: 'motor-b', name: 'Motor B', brand: 'MotorCo', price_paise: 500000, mrp_paise: 600000, stock: 1 }], // keep at 1: oversell test needs qty 2 to fail
   ]);
   const coupons = new Map([
     ['SAVE10', { code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000, active: true }],
@@ -32,6 +32,13 @@ function makeFakeDb() {
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
+    if (t.startsWith('SELECT slug FROM products ORDER BY slug')) {
+      return { rows: [...products.keys()].sort().map((slug) => ({ slug })) };
+    }
+    if (t.startsWith('SELECT DISTINCT brand FROM products')) {
+      const brands = [...new Set([...products.values()].map((p) => p.brand).filter(Boolean))].sort();
+      return { rows: brands.map((brand) => ({ brand })) };
+    }
     if (t.startsWith('SELECT slug, name, price_paise, stock FROM products WHERE slug = ANY')) {
       return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name, price_paise: p.price_paise, stock: p.stock })) };
     }
@@ -259,6 +266,7 @@ app.use('/store/engage', require('../../routes/engagement'));
 app.use('/store/service', require('../../routes/service'));
 app.use('/store/invoice', require('../../routes/invoice'));
 app.use('/admin', require('../../routes/admin'));
+app.get('/sitemap.xml', require('../../routes/sitemap'));
 
 let server;
 let base;
@@ -532,6 +540,18 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('sitemap lists products and brand pages, not just static URLs', async () => {
+  process.env.FRONTEND_URL = 'https://shop.test';
+  const res = await fetch(`${base}/sitemap.xml`);
+  const xml = await res.text();
+  assert.equal(res.status, 200);
+  assert.ok(xml.includes('<urlset'));
+  assert.ok(xml.includes('<loc>https://shop.test/product/drill-a</loc>'));
+  assert.ok(xml.includes('<loc>https://shop.test/brand/DrillCo</loc>'));
+  assert.ok(xml.includes('<loc>https://shop.test/brand/MotorCo</loc>'));
+  assert.ok(xml.includes('<loc>https://shop.test/returns</loc>'));
 });
 
 test('stock endpoint returns live availability for cart slugs', async () => {

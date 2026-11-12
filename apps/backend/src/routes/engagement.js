@@ -32,6 +32,8 @@ router.post('/reviews/:slug', async (req, res) => {
     if (!Number.isInteger(r) || r < 1 || r > 5) {
       return res.status(400).json({ error: 'rating must be an integer 1-5' });
     }
+    const { rows: p } = await db.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+    if (!p.length) return res.status(404).json({ error: 'Product not found' });
     const { rows } = await db.query(
       `INSERT INTO reviews (product_slug, name, rating, title, body, verified)
        VALUES ($1, $2, $3, $4, $5, false)
@@ -71,6 +73,8 @@ router.post('/questions/:slug', async (req, res) => {
     if (!question || !String(question).trim()) {
       return res.status(400).json({ error: 'question required' });
     }
+    const { rows: p } = await db.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+    if (!p.length) return res.status(404).json({ error: 'Product not found' });
     const { rows } = await db.query(
       `INSERT INTO questions (product_slug, name, question, answer)
        VALUES ($1, $2, $3, '')

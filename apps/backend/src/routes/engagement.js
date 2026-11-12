@@ -84,14 +84,16 @@ router.post('/questions/:slug', async (req, res) => {
   }
 });
 
-// POST /store/engage/answers/:id { answer, adminToken } (open route, body token check)
+// POST /store/engage/answers/:id { answer, adminToken? } (open route, owner-only action)
 router.post('/answers/:id', async (req, res) => {
   try {
     const { answer, adminToken } = req.body || {};
+    // Accept the token via x-admin-token header (preferred) or legacy body field.
+    const presented = req.headers['x-admin-token'] || adminToken;
     if (!process.env.ADMIN_TOKEN) {
       return res.status(503).json({ error: 'admin disabled' });
     }
-    if (adminToken !== process.env.ADMIN_TOKEN) {
+    if (presented !== process.env.ADMIN_TOKEN) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     if (answer === undefined || answer === null || !String(answer).trim()) {

@@ -28,6 +28,7 @@ router.get('/stats', async (req, res) => {
     );
     const ordersByStatus = {};
     for (const r of statusRows) ordersByStatus[r.status] = r.count;
+    const totalOrders = Object.values(ordersByStatus).reduce((s, n) => s + n, 0);
 
     const { rows: revRows } = await db.query(
       `SELECT COALESCE(SUM(amount_paise), 0)::int AS total FROM orders WHERE status IN ('paid', 'delivered')`
@@ -43,7 +44,7 @@ router.get('/stats', async (req, res) => {
     );
     const quotesNew = quoteRows[0] ? quoteRows[0].count : 0;
 
-    res.json({ ordersByStatus, revenuePaise, lowStock, quotesNew });
+    res.json({ ordersByStatus, totalOrders, revenuePaise, lowStock, quotesNew });
   } catch (err) {
     console.error('[admin] stats error:', err.message);
     res.status(500).json({ error: 'Failed to load stats' });

@@ -300,6 +300,16 @@ export async function deleteQuestion(token, id) {
   return handle(res);
 }
 
+export async function answerQuestion(token, id, answer) {
+  const res = await fetch(`${BASE}/store/engage/answers/${encodeURIComponent(id)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ answer }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function subscribe(email) {
   const res = await fetch(`${BASE}/store/service/subscribe`, {
     method: 'POST',

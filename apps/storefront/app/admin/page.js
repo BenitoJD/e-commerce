@@ -18,6 +18,7 @@ import {
   deleteReview,
   listAdminQuestions,
   deleteQuestion,
+  answerQuestion,
   updateStock
 } from '../../lib/api';
 
@@ -269,6 +270,20 @@ export default function AdminPage() {
     try {
       if (typeof window !== 'undefined' && !window.confirm('Delete this question permanently?')) return;
       await deleteQuestion(token, id);
+      await loadModReviews();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function onQuestionAnswer(id, existing) {
+    setError('');
+    try {
+      if (typeof window === 'undefined') return;
+      const text = window.prompt('Answer to publish under this question:', existing || '');
+      if (text == null) return;
+      if (!text.trim()) { setError('Answer cannot be empty.'); return; }
+      await answerQuestion(token, id, text.trim());
       await loadModReviews();
     } catch (e) {
       setError(e.message);
@@ -712,6 +727,7 @@ export default function AdminPage() {
                         <td className="p-2 text-xs">{q.question || ''}</td>
                         <td className="p-2 text-xs">{q.answer ? <span className="text-green-700">Yes</span> : <span className="text-gray-400">No</span>}</td>
                         <td className="p-2">
+                          <button onClick={() => onQuestionAnswer(q.id, q.answer)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{q.answer ? 'Edit answer' : 'Answer'}</button>
                           <button onClick={() => onQuestionDelete(q.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1 !text-red-600">Delete</button>
                         </td>
                       </tr>

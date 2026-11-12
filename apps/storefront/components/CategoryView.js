@@ -30,11 +30,16 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
   const [priceMax, setPriceMax] = useState('');
 
   const filtersActive = brand !== 'All' || q.trim() !== '' || sort !== 'pop' || priceMin !== '' || priceMax !== '';
+  const hasQuery = String(initialQ || '').trim() !== '' || q.trim() !== '';
+
+  // Filters that differ from what the server already rendered for this URL.
+  const filtersDirty =
+    brand !== 'All' || sort !== 'pop' || priceMin !== '' || priceMax !== '' || q.trim() !== String(initialQ || '').trim();
 
   useEffect(() => {
     let alive = true;
-    // Server already delivered the first page — don't refetch until a filter is used.
-    if (!filtersActive && initialItems && initialItems.length) {
+    // Server rendered exactly these filters (including ?q=), so don't refetch on mount.
+    if (!filtersDirty && initialItems && initialItems.length) {
       setLoading(false);
       return () => { alive = false; };
     }
@@ -216,7 +221,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
           })}
         </div>
       )}
-      {!loading && !filtersActive && hasMore ? (
+      {!loading && (!filtersActive || hasQuery) && hasMore ? (
         <div className="mt-8 text-center">
           <button onClick={loadMore} disabled={loadingMore} className="btn-outline disabled:opacity-60">
             {loadingMore ? 'Loading...' : 'Load more products'}

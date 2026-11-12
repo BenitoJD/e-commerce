@@ -51,7 +51,8 @@ export async function generateMetadata({ params, searchParams }) {
 export default async function CategoryPage({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
   const initialQ = (searchParams && searchParams.q) || '';
-  const { items, total } = await getProductsPage(slug, PAGE_SIZE);
+  // Pass the query so a search URL server-renders its actual results, not the category.
+  const { items, total } = await getProductsPage(slug, PAGE_SIZE, initialQ);
   return (
     <>
       <script

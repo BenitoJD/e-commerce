@@ -37,9 +37,11 @@ export async function getProductsForMeta(category, limit = 8) {
 }
 
 // First page + the true match count, for pages that render a result total.
-export async function getProductsPage(category, limit = 40) {
-  const budget = category && category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
-  const data = await cachedJson(`${BASE}/store/products?limit=${limit}${budget}`);
+export async function getProductsPage(category, limit = 40, search = '') {
+  const parts = [`limit=${limit}`];
+  if (category && category !== 'all') parts.push(`category=${encodeURIComponent(category)}`);
+  if (search) parts.push(`q=${encodeURIComponent(search)}`);
+  const data = await cachedJson(`${BASE}/store/products?${parts.join('&')}`);
   if (!data) return { items: [], total: null };
   const items = Array.isArray(data) ? data : data.products || [];
   const total = !Array.isArray(data) && Number.isFinite(Number(data.total)) ? Number(data.total) : null;

@@ -36,8 +36,8 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 
 ## Option B — Coolify (Vercel-like on VPS)
 1. Install: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash` → open http://VPS_IP:8000
-2. Add Project → Postgres + Redis plugins (note URLs).
-3. Service 1 Backend: repo `BenitoJD/toolsvilla-clone`, base dir `apps/backend`, Dockerfile, port 9000, envs DATABASE_URL/REDIS_URL/RAZORPAY_*/FRONTEND_URL.
+2. Add Project → Postgres plugin (note the connection URL).
+3. Service 1 Backend: repo `BenitoJD/toolsvilla-clone`, base dir `apps/backend`, Dockerfile, port 9000, envs DATABASE_URL/RAZORPAY_*/FRONTEND_URL/ADMIN_TOKEN.
 4. Service 2 Storefront: base dir `apps/storefront`, port 3000, envs NEXT_PUBLIC_*,
    PLUS the same three values as Docker build args (Coolify → Service → Build → Build Arguments):
    `NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com` etc. Without them the bundle bakes in localhost.

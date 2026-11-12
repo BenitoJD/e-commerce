@@ -3,26 +3,19 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tools
-      POSTGRES_PASSWORD: tools123
-      POSTGRES_DB: toolsvilla
+      POSTGRES_USER: ${POSTGRES_USER:-tools}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-toolsvilla}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Not published to the host: only other services on this network can reach it.
+    expose:
+      - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tools"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tools} -d ${POSTGRES_DB:-toolsvilla}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - redisdata:/data
-    ports:
-      - "6379:6379"
 
   backend:
     build: ./apps/backend
@@ -31,16 +24,16 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://tools:tools123@postgres:5432/toolsvilla
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://${POSTGRES_USER:-tools}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-toolsvilla}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_xxxx}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-xxxx}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-whsec_xxxx}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me-long-random-string}
       PORT: 9000
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    # Loopback only: reachable by nginx/Cloudflare Tunnel on the host, not the internet.
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
 
   storefront:
     build:
@@ -64,10 +57,10 @@ services:
       NEXT_PUBLIC_STORE_EMAIL: ${NEXT_PUBLIC_STORE_EMAIL:-care@toolskart.in}
       NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-00AAAAA0000A1Z5}
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
-  # Single-domain reverse proxy. Comment this block out if you prefer Cloudflare
-  # Tunnel or two subdomains pointing straight at :3000 / :9000.
+  # Single-domain reverse proxy (public entrypoint). Comment this block out if you
+  # prefer Cloudflare Tunnel or two subdomains pointing at 127.0.0.1:3000/9000.
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -81,4 +74,3 @@ services:
 
 volumes:
   pgdata:
-  redisdata:

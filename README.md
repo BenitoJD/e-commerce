@@ -23,7 +23,7 @@ toolsvilla-clone/
     test/             23 client-logic tests (no install needed)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
-  docker-compose.yml  postgres + redis + backend + storefront
+  docker-compose.yml  postgres + backend + storefront + nginx
   docs/               SETUP, RAZORPAY, VPS-DEPLOY, PARITY
 ```
 
@@ -57,7 +57,7 @@ docker compose exec backend npm run seed
 # store: http://YOUR_IP  (nginx :80)   api: http://YOUR_IP/api/health
 ```
 
-Compose runs postgres + redis + backend + storefront + nginx (single domain: store at `/`,
+Compose runs postgres + backend + storefront + nginx + nginx (single domain: store at `/`,
 API at `/api/*`). Drop the `nginx:` block for a two-subdomain Cloudflare Tunnel setup.
 Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.

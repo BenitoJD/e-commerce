@@ -23,7 +23,7 @@ docker compose exec backend npm run seed
 ## 3. Without Docker
 Backend needs `DATABASE_URL` reachable. Easiest: keep postgres in Docker only:
 ```bash
-docker compose up -d postgres redis
+docker compose up -d postgres
 cd apps/backend && npm install && npm run seed && npm run dev
 cd ../storefront && npm install && npm run dev
 ```

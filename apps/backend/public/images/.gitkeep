@@ -1,0 +1,1 @@
+# keeps empty images dir tracked (backend serves /images from apps/backend/public/images)

@@ -13,6 +13,10 @@ const PATTERNS = [
   /will be (?:e-?mailed|mailed)/i,
   /(?:e-?mail|sms|text)(?:ed)? (?:to you|will be sent)/i,
   /invoice will be (?:e-?mailed|sent)/i,
+  // Automated-sounding promises the store cannot keep without a mailer.
+  /(?:we'?ll|we will) e-?mail you/i,
+  /e-?mail you (?:the moment|as soon as|when)/i,
+  /the moment it'?s (?:back|available)/i,
 ];
 
 function collectFiles(dir, out) {

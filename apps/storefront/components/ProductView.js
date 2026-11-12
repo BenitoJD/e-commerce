@@ -150,7 +150,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
     setAlertBusy(true);
     try {
       await stockAlert(p.slug || slug, email);
-      setAlertMsg(`Saved — we'll email ${email} as soon as it's back.`);
+      setAlertMsg(`Saved — our team will contact ${email} as soon as it's back in stock.`);
       setAlertEmail('');
     } catch (err) {
       setAlertMsg(err.message || 'Could not save. Try again.');
@@ -322,7 +322,9 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           {outOfStock && (
             <div className="mt-3 card p-4">
               <b className="text-sm">Notify me when back in stock</b>
-              <p className="text-xs text-gray-500 mt-1">We&apos;ll email you the moment this is available again.</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Leave your email and our team will contact you when this is available again.
+              </p>
               <div className="mt-2 flex gap-2">
                 <input
                   value={alertEmail}

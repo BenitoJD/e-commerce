@@ -9,6 +9,9 @@ const PATTERNS = [
   /email(?:ed)? to you/i,
   /SMS(?:ed)? to you/i,
   /we will (?:call|email|text)/i,
+  // Automated-sounding promises that need a mailer/SMS gateway to be true.
+  /(?:we'?ll|we will) e-?mail you/i,
+  /e-?mail you (?:the moment|as soon as|when)/i,
 ];
 
 const hits = [];

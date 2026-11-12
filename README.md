@@ -89,7 +89,8 @@ Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter
 Hardening: security headers (nosniff, frame-deny, referrer, permissions, HSTS over
 HTTPS), `x-powered-by` off, CORS allowlist via `FRONTEND_URL`, per-IP limits on public
 writes (`RATE_LIMIT_*`), separate admin throttle (`ADMIN_RATE_LIMIT_*`), constant-time
-admin token compare, parameterised SQL everywhere.
+admin token compare, parameterised SQL everywhere, short-TTL SSR cache
+(`SSR_CACHE_TTL_MS`) so traffic bursts don't hammer Postgres.
 
 SEO: server-rendered homepage, product, category and brand pages; Product JSON-LD;
 per-page titles/descriptions/canonical/OG; generated `robots.txt` from
@@ -112,7 +113,7 @@ cd apps/backend && npm test        # 106 tests: pricing/GST/EMI, catalog, coupon
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 37 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 40 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 25 routes

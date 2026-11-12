@@ -1,8 +1,14 @@
-// Server-side data helpers (used by metadata/layouts). Never throws: metadata must not
-// break a page when the API is briefly unavailable.
+// Server-side data helpers (used by SSR pages and metadata). Never throws: metadata must
+// not break a page when the API is briefly unavailable.
+//
+// A short TTL cache absorbs bursts (a WhatsApp share, a crawl) so Postgres isn't hit once
+// per request. Ten seconds keeps prices/stock effectively live while cutting load.
 import { serverApiBase } from './serverApiBase';
+import { createTtlCache } from './ttlCache';
 
 const BASE = serverApiBase();
+const TTL_MS = Number(process.env.SSR_CACHE_TTL_MS) || 10000;
+const cache = createTtlCache({ ttlMs: TTL_MS, max: 500 });
 
 async function safeJson(url) {
   try {
@@ -14,8 +20,12 @@ async function safeJson(url) {
   }
 }
 
+async function cachedJson(url) {
+  return cache.wrap(url, () => safeJson(url));
+}
+
 export async function getProductForMeta(slug) {
-  const data = await safeJson(`${BASE}/store/products/${encodeURIComponent(slug)}`);
+  const data = await cachedJson(`${BASE}/store/products/${encodeURIComponent(slug)}`);
   if (!data) return null;
   const p = data.product || data;
   return p && p.name ? p : null;
@@ -23,7 +33,7 @@ export async function getProductForMeta(slug) {
 
 export async function getProductsForMeta(category, limit = 8) {
   const budget = category && category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
-  const data = await safeJson(`${BASE}/store/products?limit=${limit}${budget}`);
+  const data = await cachedJson(`${BASE}/store/products?limit=${limit}${budget}`);
   if (!data) return [];
   return Array.isArray(data) ? data : data.products || [];
 }
@@ -36,3 +46,6 @@ export function absoluteUrl(path) {
   const base = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
   return `${base}${path}`;
 }
+
+// Exposed for tests / operational resets.
+export const __cache = cache;

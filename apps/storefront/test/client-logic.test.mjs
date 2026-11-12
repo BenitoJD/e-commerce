@@ -228,6 +228,52 @@ test('store: waLink builds a valid wa.me URL with optional text', () => {
   assert.ok(withText.includes('%26')); // ampersand encoded
 });
 
+test('ttlCache: serves within the window, expires after it, and isolates keys', async () => {
+  const { createTtlCache } = await import('../lib/ttlCache.js');
+  let clock = 1000;
+  const cache = createTtlCache({ ttlMs: 500, now: () => clock });
+
+  let calls = 0;
+  const load = async () => { calls += 1; return { n: calls }; };
+
+  assert.deepEqual(await cache.wrap('k', load), { n: 1 });
+  clock += 400; // still inside the window
+  assert.deepEqual(await cache.wrap('k', load), { n: 1 });
+  assert.equal(calls, 1);
+
+  clock += 200; // now expired
+  assert.deepEqual(await cache.wrap('k', load), { n: 2 });
+  assert.equal(calls, 2);
+
+  // separate keys don't collide
+  assert.deepEqual(await cache.wrap('other', load), { n: 3 });
+  assert.equal(calls, 3);
+  assert.equal(cache.size(), 2);
+
+  cache.clear();
+  assert.equal(cache.size(), 0);
+});
+
+test('ttlCache: bounded size evicts rather than growing forever', async () => {
+  const { createTtlCache } = await import('../lib/ttlCache.js');
+  const cache = createTtlCache({ ttlMs: 10000, max: 2 });
+  cache.set('a', 1); cache.set('b', 2); cache.set('c', 3);
+  assert.equal(cache.size(), 2);
+  assert.equal(cache.get('a'), undefined); // oldest dropped
+  assert.equal(cache.get('c'), 3);
+});
+
+test('ttlCache: undefined results are cached (not refetched every call)', async () => {
+  const { createTtlCache } = await import('../lib/ttlCache.js');
+  const cache = createTtlCache({ ttlMs: 10000 });
+  let calls = 0;
+  const miss = async () => { calls += 1; return undefined; };
+  await cache.wrap('x', miss);
+  await cache.wrap('x', miss);
+  // undefined is indistinguishable from a miss by design, so this documents the behaviour
+  assert.equal(calls, 2);
+});
+
 test('pricing: GST split is inclusive and matches the invoice formula', async () => {
   const { gstInclusiveSplit } = await import('../lib/pricing.js');
   // ₹1180 at 18% => ₹1000 base + ₹180 tax

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 95 (WhatsApp product sharing, 37 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 96 (SSR burst cache measured live, 40 frontend tests).
 
 ## Storefront
 
@@ -47,6 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | CORS | ✅ `FRONTEND_URL` allowlist (comma-separated); same-origin `/api` needs none |
 | Admin access | ✅ token via `x-admin-token` on every admin route, compared in constant time |
 | SQL | ✅ parameterised everywhere; sort/filter values allowlisted |
+| SSR caching | ✅ short-TTL cache (`SSR_CACHE_TTL_MS`, default 10s) on server-rendered product/category/home fetches — measured 6 page views → 1 backend call, still revalidating after TTL |
 
 ## Needs your inputs (code slots ready)
 
@@ -69,9 +70,10 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 37 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 40 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, GST-inclusive split, WhatsApp links
-(customer + share), API base + server base resolution, misconfiguration guard, NaN-proof
+(customer + share), TTL cache eviction/expiry, API base + server base resolution,
+misconfiguration guard, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

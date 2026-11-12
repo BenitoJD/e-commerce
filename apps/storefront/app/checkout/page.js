@@ -77,6 +77,7 @@ export default function CheckoutPage() {
       const res = await createCheckout(payload);
       const receipt = res.receipt || res.receiptId || res.orderId || Date.now().toString();
       const razorpayOrderId = res.razorpayOrderId || res.razorpay_order_id || res.order_id;
+      try { if (typeof window !== 'undefined') window.localStorage.setItem('tw_phone', form.phone.trim()); } catch { /* ignore */ }
 
       if (form.payMode === 'COD' || !razorpayOrderId) {
         clearCart();

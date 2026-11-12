@@ -39,6 +39,9 @@ export default function InvoicePage({ params }) {
 
   const items = Array.isArray(inv?.items) ? inv.items : [];
   const customer = inv?.customer || {};
+  const payMode = inv?.mode || inv?.paymentMode
+    || (String(inv?.status || '').toLowerCase() === 'cod_pending' ? 'COD'
+      : (inv?.razorpayPaymentId || inv?.razorpay_payment_id) ? 'Online (Razorpay)' : '—');
   const gstRate = inv?.gst?.rate ?? 18;
   const discountPaise = Number(inv?.discountPaise ?? inv?.discount_paise ?? 0) || 0;
   const couponCode = inv?.couponCode ?? inv?.coupon_code ?? null;
@@ -86,7 +89,7 @@ export default function InvoicePage({ params }) {
             <div className="sm:text-right">
               <div className="font-bold mb-1">Payment</div>
               <div className="text-gray-600">Payment ID: <b className="text-gray-800">{inv.razorpayPaymentId || inv.razorpay_payment_id || '—'}</b></div>
-              <div className="text-gray-600">Mode: {inv.mode || inv.paymentMode || '—'}</div>
+              <div className="text-gray-600">Mode: {payMode}</div>
             </div>
           </div>
 

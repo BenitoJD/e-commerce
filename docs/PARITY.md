@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 30 (Q&A moderation queue).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 31 (checkout saves phone; invoice payment mode).
 
 ## Storefront
 

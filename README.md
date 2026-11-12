@@ -16,7 +16,7 @@ toolsvilla-clone/
                       service, invoice, admin, sitemap
     src/lib/          pricing, stock reservation, order state machine, refunds,
                       rate limiting, security helpers, text helpers
-    src/lib/__tests__ 99 tests (unit + route-level integration with in-memory DB)
+    src/lib/__tests__ unit + route-level integration suites (in-memory DB)
   apps/storefront/    Next.js 14 App Router (25 routes)
     app/              homepage, category, product, cart, checkout, orders,
                       tracking, invoice, returns, admin, policies…

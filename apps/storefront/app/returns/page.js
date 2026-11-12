@@ -1,8 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { requestReturn } from '../../lib/api';
+import { requestReturn, getReturnStatus } from '../../lib/api';
 import { STORE } from '../../lib/store';
+
+const RETURN_STATUS_LABEL = {
+  requested: 'Received',
+  approved: 'Approved — pickup will be arranged',
+  rejected: 'Rejected',
+  picked_up: 'Picked up',
+  refunded: 'Refunded',
+  closed: 'Closed',
+};
 
 const REASONS = [
   { value: 'damaged', label: 'Arrived damaged' },
@@ -20,7 +29,30 @@ export default function ReturnsPage() {
     details: '',
   });
   const [state, setState] = useState({ busy: false, ok: '', err: '', id: null });
+  const [lookup, setLookup] = useState({ receipt: '', phone: '', busy: false, err: '', info: null });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function checkStatus(e) {
+    if (e) e.preventDefault();
+    setLookup((l) => ({ ...l, busy: true, err: '', info: null }));
+    const receipt = lookup.receipt.trim();
+    const phone = lookup.phone.trim();
+    if (!receipt || !phone) {
+      setLookup((l) => ({ ...l, busy: false, err: 'Enter both receipt ID and phone number.' }));
+      return;
+    }
+    try {
+      const r = await getReturnStatus(receipt, phone);
+      const found = r.return || r;
+      if (!found) {
+        setLookup((l) => ({ ...l, busy: false, err: 'No return request found for that order yet.' }));
+      } else {
+        setLookup((l) => ({ ...l, busy: false, info: found }));
+      }
+    } catch (err) {
+      setLookup((l) => ({ ...l, busy: false, err: err.message || 'Could not check the status.' }));
+    }
+  }
 
   // Read ?receipt= after mount so the server can render the real form (no SSR bailout,
   // no "Loading..." flash, usable for crawlers and slow connections).
@@ -100,6 +132,28 @@ export default function ReturnsPage() {
           {state.busy ? 'Submitting...' : 'File Return Request'}
         </button>
       </form>
+
+      <div className="card p-5 mt-5">
+        <h2 className="font-extrabold">Check a return&apos;s status</h2>
+        <p className="text-xs text-gray-500 mt-1">Use the same receipt and phone you filed with.</p>
+        <form onSubmit={checkStatus} className="mt-3 grid sm:grid-cols-[1fr_1fr_auto] gap-2">
+          <input className="input" value={lookup.receipt} onChange={(e) => setLookup((l) => ({ ...l, receipt: e.target.value }))} placeholder="Receipt / Order ID" />
+          <input className="input" value={lookup.phone} onChange={(e) => setLookup((l) => ({ ...l, phone: e.target.value }))} placeholder="Phone" inputMode="numeric" />
+          <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
+            {lookup.busy ? 'Checking...' : 'Check'}
+          </button>
+        </form>
+        {lookup.err ? <p className="text-xs text-gray-600 font-semibold mt-2">{lookup.err}</p> : null}
+        {lookup.info ? (
+          <div className="mt-3 text-sm bg-gray-50 rounded-lg px-3 py-2">
+            <div className="flex justify-between"><span className="text-gray-500">Return #{lookup.info.id}</span>
+              <span className="badge bg-gray-100">{RETURN_STATUS_LABEL[String(lookup.info.status)] || lookup.info.status}</span>
+            </div>
+            <div className="text-gray-600 mt-1">Reason: {lookup.info.reason || '—'}</div>
+            {lookup.info.details ? <div className="text-gray-500 text-xs mt-1">{lookup.info.details}</div> : null}
+          </div>
+        ) : null}
+      </div>
 
       <p className="text-sm text-gray-500 mt-5">
         Need help instead? WhatsApp <a className="text-[#F97316] font-bold" href={`https://wa.me/${STORE.phoneDigits}`}>{STORE.phoneDisplay}</a> or email {STORE.email}.

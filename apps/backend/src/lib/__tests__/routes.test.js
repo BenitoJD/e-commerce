@@ -256,6 +256,14 @@ function makeFakeDb() {
       ret.push(row);
       return { rows: [{ id: row.id, status: row.status, created_at: row.created_at }] };
     }
+    if (t.startsWith('SELECT id, receipt, reason, details, status, created_at')) {
+      const rows = (ret || []).filter((r) => r.receipt === params[0]).sort((a, b) => b.id - a.id).slice(0, 1);
+      return { rows };
+    }
+    if (t.startsWith('SELECT receipt, customer FROM orders WHERE receipt')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return { rows: o ? [{ receipt: o.receipt, customer: o.customer }] : [] };
+    }
     if (t.startsWith('SELECT * FROM return_requests')) {
       return { rows: (ret || []).slice() };
     }
@@ -892,6 +900,38 @@ test('admin product routes require the token', async () => {
   assert.equal(noToken.status, 401);
 });
 
+test('customers can check their own return status, not anyone else s', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+  });
+  const receipt = created.json.receipt;
+  const order = fake.orders.find((o) => o.receipt === receipt);
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'shipped' }, adminHeaders);
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'delivered' }, adminHeaders);
+
+  const filed = await api('POST', '/store/service/returns', { receipt, phone: '9876543210', reason: 'damaged' });
+  assert.equal(filed.status, 201);
+
+  const mine = await api('GET', `/store/service/returns?receipt=${receipt}&phone=%2B91%2098765%2043210`);
+  assert.equal(mine.status, 200);
+  assert.equal(mine.json.return.status, 'requested');
+  assert.equal(mine.json.return.reason, 'damaged');
+
+  // once admin progresses it, the customer sees the new state
+  await api('PATCH', `/admin/returns/${filed.json.id}`, { status: 'approved' }, adminHeaders);
+  const updated = await api('GET', `/store/service/returns?receipt=${receipt}&phone=9876543210`);
+  assert.equal(updated.json.return.status, 'approved');
+
+  // another phone number cannot read it
+  const other = await api('GET', `/store/service/returns?receipt=${receipt}&phone=9000000000`);
+  assert.equal(other.status, 404);
+
+  const noPhone = await api('GET', `/store/service/returns?receipt=${receipt}`);
+  assert.equal(noPhone.status, 400);
+});
+
 test('returns: delivered order files a request; admin can progress it', async () => {
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],
@@ -918,7 +958,9 @@ test('returns: delivered order files a request; admin can progress it', async ()
 
   const listed = await api('GET', '/admin/returns', undefined, adminHeaders);
   assert.equal(listed.status, 200);
-  assert.equal(listed.json.returns.length, 1);
+  // fixtures are shared across this file's tests, so assert this receipt is present
+  // rather than that it is the only row.
+  assert.ok(listed.json.returns.some((r) => r.receipt === receipt));
 
   const upd = await api('PATCH', `/admin/returns/${ok.json.id}`, { status: 'approved' }, adminHeaders);
   assert.equal(upd.status, 200);

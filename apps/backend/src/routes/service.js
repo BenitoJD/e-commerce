@@ -279,6 +279,34 @@ router.post('/returns', async (req, res) => {
   }
 });
 
+// GET /store/service/returns?receipt=&phone= — customer-visible return status.
+// Same receipt+phone guard as tracking, so one customer can't read another's RMA.
+router.get('/returns', async (req, res) => {
+  try {
+    const receipt = String(req.query.receipt || '').trim();
+    const phone = digits(req.query.phone);
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    if (phone.length < 10) return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
+
+    const { rows: orders } = await db.query('SELECT receipt, customer FROM orders WHERE receipt = $1', [receipt]);
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const customerPhone = digits(orders[0].customer && orders[0].customer.phone);
+    const match = customerPhone === phone
+      || (customerPhone.length >= 10 && customerPhone.slice(-10) === phone.slice(-10));
+    if (!match) return res.status(404).json({ error: 'Phone does not match order' });
+
+    const { rows } = await db.query(
+      `SELECT id, receipt, reason, details, status, created_at
+         FROM return_requests WHERE receipt = $1 ORDER BY id DESC LIMIT 1`,
+      [receipt]
+    );
+    res.json({ return: rows[0] || null });
+  } catch (err) {
+    console.error('[service] return lookup error:', err.message);
+    res.status(500).json({ error: 'Failed to look up return' });
+  }
+});
+
 // POST /store/service/stock-alert { slug, email } — notify me when back in stock
 router.post('/stock-alert', async (req, res) => {
   try {

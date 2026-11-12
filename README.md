@@ -81,7 +81,7 @@ business invoices · server-authoritative totals.
 
 After the sale: order success with live status polling · track order + customer cancel ·
 my orders by phone with **reorder** and per-order WhatsApp help · printable GST invoice
-(buyer GSTIN, coupon line, payment mode) · returns/exchange form · back-in-stock alerts.
+(buyer GSTIN, coupon line, payment mode) · returns/exchange form with **status lookup** · back-in-stock alerts.
 
 Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter
 (admin can list subscribers and export CSV).
@@ -115,7 +115,7 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 121 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 122 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

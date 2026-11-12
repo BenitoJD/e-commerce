@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 124 (amount-aware COD in pincode checks, TDZ crash avoided).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 125 (wishlist refreshes live stock; sold-out guarded).
 
 ## Storefront
 
@@ -19,7 +19,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "notify me when back in stock" (`/store/service/stock-alert`); admin Stock tab lists pending restock requests (filter by slug) |
-| Wishlist | ✅ localStorage + `/wishlist`, move-one / **move-all to cart** (skips out-of-stock), clear all |
+| Wishlist | ✅ localStorage + `/wishlist` with **live stock refresh** (stale saved stock corrected on load), move-one / move-all (skips sold-out), sold-out button disabled, clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
 | Deals of the day + countdown | ✅ `/deals` — **server-rendered** 20%+ list (`lib/deals.js`), ItemList + breadcrumb JSON-LD, dynamic title, client countdown only |
 | Brand pages | ✅ `/brands` **server-rendered directory** (every brand link in initial HTML, counts per brand) and `/brand/[name]` server-rendered with breadcrumbs |

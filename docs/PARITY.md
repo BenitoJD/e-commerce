@@ -29,7 +29,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow |
 | Newsletter | ✅ `/store/service/subscribe` + footer form |
-| XML sitemap | ✅ `/sitemap.xml` (backend) |
+| XML sitemap | ✅ `/sitemap.xml` served by backend, rewritten onto the storefront origin |
+| robots.txt | ✅ `apps/storefront/public/robots.txt` (private paths disallowed, sitemap link) |
 | SEO metadata | ✅ per-page metadata in layout/pages |
 
 ## Needs your inputs (code slots ready)

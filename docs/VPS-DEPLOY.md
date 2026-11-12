@@ -48,5 +48,7 @@ Important: `NEXT_PUBLIC_*` values are baked into the storefront JS bundle at **b
 - Liveness: `GET /health` — process is up (always 200 while Node runs).
 - Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
   Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.
+- Both containers ship a Docker `HEALTHCHECK` (backend hits `/ready`, storefront hits `/`)
+  and run as the unprivileged `node` user.
 - Verified behaviour with the database unreachable: process stays up, API returns clean
   JSON 500s, `/sitemap.xml` still serves valid XML.

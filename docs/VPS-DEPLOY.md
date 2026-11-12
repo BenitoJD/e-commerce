@@ -19,6 +19,7 @@ docker compose exec backend npm run seed
 ufw allow 22,80,443/tcp && ufw enable
 
 # verify before announcing the site
+node scripts/validate-compose.cjs      # duplicate/misplaced compose keys
 BASE_URL=https://yourdomain.com PRODUCT_SLUG=<a real slug> BRAND=<a real brand> \
   node scripts/smoke.mjs
 ```

@@ -26,7 +26,7 @@ toolsvilla-clone/
     test/             35 client-logic tests (no install needed)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
-  scripts/            smoke.mjs, gen-product-images.mjs
+  scripts/            smoke.mjs, validate-compose.cjs, gen-product-images.mjs
   docker-compose.yml  postgres + backend + storefront + nginx
   docs/               SETUP, RAZORPAY, VPS-DEPLOY, PARITY
 ```
@@ -109,7 +109,7 @@ an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · 
 ## Tests
 
 ```bash
-cd apps/backend && npm test        # 109 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 111 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

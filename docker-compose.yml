@@ -30,7 +30,14 @@ services:
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-whsec_xxxx}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me-long-random-string}
       PORT: 9000
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # CORS allowlist for the storefront origin(s); comma-separated for www + apex.
+      FRONTEND_URL: ${FRONTEND_URL:-${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}}
+      STOREFRONT_URL: ${STOREFRONT_URL:-${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}}
+      # Abuse protection / policy knobs (safe defaults live in the code too).
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-30}
+      ADMIN_RATE_LIMIT_MAX: ${ADMIN_RATE_LIMIT_MAX:-120}
+      LOOKUP_RATE_LIMIT_MAX: ${LOOKUP_RATE_LIMIT_MAX:-60}
+      COD_MAX_PAISE: ${COD_MAX_PAISE:-2000000}
     # Loopback only: reachable by nginx/Cloudflare Tunnel on the host, not the internet.
     ports:
       - "127.0.0.1:9000:9000"
@@ -47,8 +54,7 @@ services:
         NEXT_PUBLIC_STORE_EMAIL: ${NEXT_PUBLIC_STORE_EMAIL:-care@toolskart.in}
         NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-00AAAAA0000A1Z5}
         BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}
-        BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     restart: unless-stopped
     depends_on:
       - backend

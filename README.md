@@ -100,6 +100,13 @@ every route (home, product, returns, admin, robots.txt, sitemap rewrite).
 Fresh-clone check before trusting a deploy: clone into an empty directory and run the
 suites there — that is how the missing-catalog-files bug was caught.
 
+Route smoke test (needs the site running):
+
+```bash
+BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
+  node scripts/smoke.mjs        # 28/28 routes must return 200 with real content
+```
+
 ## Razorpay
 
 Test keys work out of the box (mock order fallback when keys are placeholders).

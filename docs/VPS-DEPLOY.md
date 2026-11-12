@@ -16,6 +16,10 @@ nano .env
 docker compose up -d --build
 docker compose exec backend npm run seed
 ufw allow 22,80,443/tcp && ufw enable
+
+# verify before announcing the site
+BASE_URL=https://yourdomain.com PRODUCT_SLUG=<a real slug> BRAND=<a real brand> \
+  node scripts/smoke.mjs
 ```
 Compose includes an `nginx` service (port 80) that serves the storefront at `/` and the
 API at `/api/*` (see `infra/nginx.conf`). Razorpay webhook →

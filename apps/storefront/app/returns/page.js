@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { requestReturn } from '../../lib/api';
 import { STORE } from '../../lib/store';
 
@@ -13,16 +12,24 @@ const REASONS = [
   { value: 'other', label: 'Other' },
 ];
 
-function ReturnInner() {
-  const sp = useSearchParams();
+export default function ReturnsPage() {
   const [form, setForm] = useState({
-    receipt: sp.get('receipt') || '',
+    receipt: '',
     phone: '',
     reason: 'damaged',
     details: '',
   });
   const [state, setState] = useState({ busy: false, ok: '', err: '', id: null });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Read ?receipt= after mount so the server can render the real form (no SSR bailout,
+  // no "Loading..." flash, usable for crawlers and slow connections).
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get('receipt');
+      if (p) setForm((f) => (f.receipt ? f : { ...f, receipt: p }));
+    } catch { /* ignore */ }
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -98,13 +105,5 @@ function ReturnInner() {
         Need help instead? WhatsApp <a className="text-[#F97316] font-bold" href={`https://wa.me/${STORE.phoneDigits}`}>{STORE.phoneDisplay}</a> or email {STORE.email}.
       </p>
     </div>
-  );
-}
-
-export default function ReturnsPage() {
-  return (
-    <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading...</div>}>
-      <ReturnInner />
-    </Suspense>
   );
 }

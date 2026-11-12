@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { cancelOrder, trackOrder } from '../../lib/api';
 import { STORE } from '../../lib/store';
 
@@ -9,12 +8,9 @@ const STEPS = ['placed', 'paid', 'shipped', 'delivered'];
 // Must stay in sync with backend cancellable statuses (pending, paid, cod_pending).
 const CANCELLABLE = ['pending', 'paid', 'cod_pending', 'cod', 'payment pending', 'payment_pending', 'payment-pending', 'paymentpending', 'placed', 'unpaid'];
 
-function TrackInner() {
-  const sp = useSearchParams();
-  const paramReceipt = sp.get('receipt') || '';
-  const paramPhone = sp.get('phone') || '';
-  const [receipt, setReceipt] = useState(paramReceipt);
-  const [phone, setPhone] = useState(paramPhone);
+export default function TrackOrderPage() {
+  const [receipt, setReceipt] = useState('');
+  const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [data, setData] = useState(null);
@@ -41,16 +37,22 @@ function TrackInner() {
     }
   };
 
-  // Prefill from ?receipt= (and ?phone= when present) and auto-lookup when both are known.
+  // Prefill from the URL after mount (keeps the page server-renderable) and
+  // auto-lookup when both receipt and phone were supplied.
   useEffect(() => {
-    if (paramReceipt) setReceipt(paramReceipt);
-    if (paramPhone) setPhone(paramPhone);
-    if (paramReceipt && paramPhone && !autoRan.current) {
-      autoRan.current = true;
-      lookup(paramReceipt, paramPhone);
-    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const r = params.get('receipt') || '';
+      const p = params.get('phone') || '';
+      if (r) setReceipt(r);
+      if (p) setPhone(p);
+      if (r && p && !autoRan.current) {
+        autoRan.current = true;
+        lookup(r, p);
+      }
+    } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramReceipt, paramPhone]);
+  }, []);
 
   const go = async (e) => {
     e.preventDefault();
@@ -164,13 +166,5 @@ function TrackInner() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function TrackOrderPage() {
-  return (
-    <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading...</div>}>
-      <TrackInner />
-    </Suspense>
   );
 }

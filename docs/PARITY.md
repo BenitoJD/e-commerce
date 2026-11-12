@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 70 (homepage server-rendered with ItemList schema).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 71 (28/28 route smoke test, reproducible script).
 
 ## Storefront
 
@@ -58,6 +58,7 @@ self-healing storage, wishlist dedupe + stock, store contact config + wa.me link
 paiseâ†’rupee normalisation, readable API errors, video embed allowlist).
 
 Build: `cd apps/storefront && npm run build` must compile all 24 routes.
+Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.

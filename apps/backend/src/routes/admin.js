@@ -284,6 +284,19 @@ router.post('/quotes/:id/convert', async (req, res) => {
   }
 });
 
+// GET /admin/subscribers — newsletter list (marketing needs the raw emails)
+router.get('/subscribers', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT email, created_at FROM subscribers ORDER BY created_at DESC, email ASC LIMIT 2000'
+    );
+    res.json({ subscribers: rows, count: rows.length });
+  } catch (err) {
+    console.error('[admin] subscribers error:', err.message);
+    res.status(500).json({ error: 'Failed to list subscribers' });
+  }
+});
+
 // GET /admin/contact?status= — list enquiries
 router.get('/contact', async (req, res) => {
   try {

@@ -29,6 +29,7 @@ function makeFakeDb() {
   let quoteSeq = 1;
   let ret = [];
   let alerts = [];
+  const subscribers = [];
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
@@ -150,6 +151,16 @@ function makeFakeDb() {
     if (t.startsWith('SELECT slug, price_paise FROM products WHERE slug =')) {
       const p = products.get(params[0]);
       return { rows: p ? [{ slug: p.slug, price_paise: p.price_paise }] : [] };
+    }
+    if (t.startsWith('INSERT INTO subscribers')) {
+      const email = params[0];
+      if (!subscribers.some((s) => s.email === email)) {
+        subscribers.push({ email, created_at: new Date().toISOString() });
+      }
+      return { rows: [] };
+    }
+    if (t.startsWith('SELECT email, created_at FROM subscribers')) {
+      return { rows: subscribers.slice() };
     }
     if (t.startsWith('INSERT INTO bulk_quotes')) {
       const [name, phone, slug, productName, qty, message] = params;
@@ -408,6 +419,22 @@ test('webhooks: bad signature rejected, unknown order acked', async () => {
   const good = signedWebhook('payment.captured', { id: 'pay_x', order_id: 'order_unknown', amount: 100 });
   const r2 = await fetch(`${base}/webhooks/razorpay`, { method: 'POST', headers: { 'x-razorpay-signature': good.sig }, body: good.payload });
   assert.equal(r2.status, 200);
+});
+
+test('newsletter subscribers are listed for the admin only', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const sub = await api('POST', '/store/service/subscribe', { email: 'Buyer@Example.com' });
+  assert.equal(sub.status, 200);
+  // stored lower-cased, deduplicated
+  await api('POST', '/store/service/subscribe', { email: 'buyer@example.com' });
+
+  const list = await api('GET', '/admin/subscribers', undefined, adminHeaders);
+  assert.equal(list.status, 200);
+  assert.equal(list.json.count, 1);
+  assert.equal(list.json.subscribers[0].email, 'buyer@example.com');
+
+  const noToken = await api('GET', '/admin/subscribers');
+  assert.equal(noToken.status, 401);
 });
 
 test('bulk quote lookup is scoped to the caller phone (no PII leak)', async () => {

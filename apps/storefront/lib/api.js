@@ -469,6 +469,11 @@ export async function deleteAdminProduct(token, slug) {
   return handle(res);
 }
 
+export async function getAdminSubscribers(token) {
+  const res = await fetch(`${BASE}/admin/subscribers`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
 export async function getAdminReturns(token, status = '') {
   const q = status ? `?status=${encodeURIComponent(status)}` : '';
   const res = await fetch(`${BASE}/admin/returns${q}`, { headers: adminHeaders(token), cache: 'no-store' });

@@ -17,6 +17,7 @@ import {
   updateMessageStatus,
   getAdminReturns,
   updateReturnStatus,
+  getAdminSubscribers,
   saveAdminProduct,
   deleteAdminProduct,
   getAdminReviews,
@@ -72,6 +73,7 @@ export default function AdminPage() {
 
   const [messages, setMessages] = useState([]);
   const [msgFilter, setMsgFilter] = useState('');
+  const [subscribers, setSubscribers] = useState([]);
   const [modReviews, setModReviews] = useState([]);
   const [modVerified, setModVerified] = useState('false');
   const [modQuestions, setModQuestions] = useState([]);
@@ -296,17 +298,36 @@ export default function AdminPage() {
     }
   }
 
-  async function loadMessages() {    if (!token) return;
+  async function loadMessages() {
+    if (!token) return;
     setLoading(true);
     setError('');
     try {
-      const data = await getAdminMessages(token, msgFilter);
-      setMessages(Array.isArray(data) ? data : data.messages || data.items || []);
+      const [md, sd] = await Promise.all([
+        getAdminMessages(token, msgFilter),
+        getAdminSubscribers(token).catch(() => null),
+      ]);
+      setMessages(Array.isArray(md) ? md : md.messages || md.items || []);
+      const subs = sd ? (sd.subscribers || sd.items || (Array.isArray(sd) ? sd : [])) : [];
+      setSubscribers(Array.isArray(subs) ? subs : []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  function downloadSubscribersCsv() {
+    if (!subscribers.length) return;
+    const rows = [['email', 'subscribed_on'], ...subscribers.map((s) => [s.email, s.created_at || ''])];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'newsletter-subscribers.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function loadModReviews() {
@@ -974,6 +995,30 @@ export default function AdminPage() {
                     {messages.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No messages.</td></tr> : null}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="card p-4 mt-4">
+                <div className="flex flex-wrap items-center gap-2 justify-between">
+                  <div>
+                    <b>Newsletter subscribers</b>
+                    <span className="text-xs text-gray-500 ml-2">{subscribers.length} email(s)</span>
+                  </div>
+                  <button onClick={downloadSubscribersCsv} disabled={!subscribers.length} className="btn-outline !py-1.5 disabled:opacity-50">
+                    Download CSV
+                  </button>
+                </div>
+                {subscribers.length ? (
+                  <ul className="mt-3 text-xs text-gray-700 max-h-48 overflow-y-auto space-y-1">
+                    {subscribers.slice(0, 100).map((s, i) => (
+                      <li key={s.email || i} className="flex justify-between border-b last:border-0 py-0.5">
+                        <span>{s.email}</span>
+                        <span className="text-gray-400">{s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : ''}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-2">No subscribers yet — the footer form feeds this list.</p>
+                )}
               </div>
             </div>
           )}

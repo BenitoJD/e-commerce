@@ -65,7 +65,7 @@ router.get('/orders', async (req, res) => {
     params.push(limit);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(
-      `SELECT id, receipt, status, amount_paise, customer, razorpay_payment_id, created_at
+      `SELECT id, receipt, status, amount_paise, coupon_code, COALESCE(discount_paise, 0) AS discount_paise, customer, razorpay_payment_id, created_at
        FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
       params
     );

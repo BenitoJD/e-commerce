@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 4.
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 5 (server-side coupons).
 
 ## Storefront
 
@@ -19,7 +19,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` |
-| Cart + coupons + GST note | ✅ coupon validate + breakdown |
+| Cart + coupons + GST note | ✅ validate + breakdown; discount applied **server-side**, stored as `coupon_code`/`discount_paise` |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |

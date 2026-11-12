@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400" role="img" aria-label="Bosch GHP 5-13 C High Pressure Washer 2100W">
+  <rect width="600" height="400" fill="#F3F4F6"/>
+  <rect x="0" y="0" width="600" height="150" fill="#F97316"/>
+  <circle cx="300" cy="150" r="62" fill="#ffffff" opacity="0.95"/>
+  <text x="300" y="168" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="800" fill="#F97316">BO</text>
+  <text x="40" y="200" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="#6B7280">Bosch</text>
+  <text x="40" y="232" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#111827">Bosch GHP 5-13 C High</text><text x="40" y="262" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#111827">Pressure Washer 2100W</text>
+  <text x="40" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">Placeholder image — replace with real product photography</text>
+</svg>

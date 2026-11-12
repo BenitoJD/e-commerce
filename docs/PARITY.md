@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 29 (server safety nets).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 30 (Q&A moderation queue).
 
 ## Storefront
 

@@ -16,6 +16,8 @@ import {
   getAdminReviews,
   setReviewVerified,
   deleteReview,
+  listAdminQuestions,
+  deleteQuestion,
   updateStock
 } from '../../lib/api';
 
@@ -62,6 +64,8 @@ export default function AdminPage() {
   const [msgFilter, setMsgFilter] = useState('');
   const [modReviews, setModReviews] = useState([]);
   const [modVerified, setModVerified] = useState('false');
+  const [modQuestions, setModQuestions] = useState([]);
+  const [modAnswered, setModAnswered] = useState('false');
 
   useEffect(() => {
     try {
@@ -216,8 +220,12 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await getAdminReviews(token, modVerified, 100);
-      setModReviews(Array.isArray(data) ? data : data.reviews || data.items || []);
+      const [rd, qd] = await Promise.all([
+        getAdminReviews(token, modVerified, 100),
+        listAdminQuestions(token, modAnswered, 100),
+      ]);
+      setModReviews(Array.isArray(rd) ? rd : rd.reviews || rd.items || []);
+      setModQuestions(Array.isArray(qd) ? qd : qd.questions || qd.items || []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -250,6 +258,17 @@ export default function AdminPage() {
     try {
       if (typeof window !== 'undefined' && !window.confirm('Delete this review permanently?')) return;
       await deleteReview(token, id);
+      await loadModReviews();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function onQuestionDelete(id) {
+    setError('');
+    try {
+      if (typeof window !== 'undefined' && !window.confirm('Delete this question permanently?')) return;
+      await deleteQuestion(token, id);
       await loadModReviews();
     } catch (e) {
       setError(e.message);
@@ -661,6 +680,43 @@ export default function AdminPage() {
                       </tr>
                     ))}
                     {modReviews.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">Queue clear.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex gap-2 items-center flex-wrap">
+                <label className="text-sm font-semibold">Questions:</label>
+                <select value={modAnswered} onChange={(e) => { setModAnswered(e.target.value); }} className="input !w-auto">
+                  <option value="">All</option>
+                  <option value="false">Unanswered</option>
+                  <option value="true">Answered</option>
+                </select>
+                <button onClick={loadModReviews} className="btn-outline !py-1 !px-2 text-xs">Reload</button>
+                <span className="text-xs text-gray-500">{modQuestions.length} question(s) — reply via API (POST /store/engage/answers/:id with x-admin-token); delete spam here.</span>
+              </div>
+              <div className="overflow-x-auto card mt-2">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">ID</th>
+                      <th className="p-2">Product / By</th>
+                      <th className="p-2">Question</th>
+                      <th className="p-2">Answer</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modQuestions.map((q, i) => (
+                      <tr key={q.id || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono text-xs">{q.id || '—'}</td>
+                        <td className="p-2 text-xs">{q.product_slug || ''}<br />{q.name || '—'}</td>
+                        <td className="p-2 text-xs">{q.question || ''}</td>
+                        <td className="p-2 text-xs">{q.answer ? <span className="text-green-700">Yes</span> : <span className="text-gray-400">No</span>}</td>
+                        <td className="p-2">
+                          <button onClick={() => onQuestionDelete(q.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1 !text-red-600">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {modQuestions.length === 0 ? <tr><td colSpan={5} className="p-4 text-center text-gray-500">No questions in this view.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

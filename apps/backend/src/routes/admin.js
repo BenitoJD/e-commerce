@@ -255,6 +255,40 @@ router.patch('/contact/:id', async (req, res) => {
   }
 });
 
+// GET /admin/questions?answered=&limit= — moderation queue (latest first)
+router.get('/questions', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 200);
+    const conds = [];
+    const params = [];
+    if (req.query.answered === 'true') conds.push(`answer <> ''`);
+    else if (req.query.answered === 'false') conds.push(`COALESCE(answer, '') = ''`);
+    params.push(limit);
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM questions ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
+      params
+    );
+    res.json({ questions: rows });
+  } catch (err) {
+    console.error('[admin] questions list error:', err.message);
+    res.status(500).json({ error: 'Failed to list questions' });
+  }
+});
+
+// DELETE /admin/questions/:id — remove spam/abuse
+router.delete('/questions/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query('DELETE FROM questions WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Question not found' });
+    console.log(`[admin] question #${req.params.id} deleted`);
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    console.error('[admin] question delete error:', err.message);
+    res.status(500).json({ error: 'Failed to delete question' });
+  }
+});
+
 // GET /admin/reviews?verified=&limit= — moderation queue (latest first)
 router.get('/reviews', async (req, res) => {
   try {

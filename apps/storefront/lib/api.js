@@ -283,6 +283,23 @@ export async function deleteReview(token, id) {
   return handle(res);
 }
 
+export async function listAdminQuestions(token, answered = '', limit = 100) {
+  const q = new URLSearchParams();
+  if (answered) q.set('answered', answered);
+  if (limit) q.set('limit', String(limit));
+  const res = await fetch(`${BASE}/admin/questions?${q.toString()}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function deleteQuestion(token, id) {
+  const res = await fetch(`${BASE}/admin/questions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: adminHeaders(token),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
 export async function subscribe(email) {
   const res = await fetch(`${BASE}/store/service/subscribe`, {
     method: 'POST',

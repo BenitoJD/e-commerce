@@ -10,7 +10,7 @@ toolsvilla-clone/
   apps/storefront/  Next.js 14 App Router (SEO, cart, Razorpay checkout.js, EMI, bulk quote)
   packages/shared/  INR/GST/EMI helpers
   infra/nginx.conf  VPS reverse-proxy (storefront + backend + webhooks)
-  docker-compose.yml  postgres + redis + meilisearch + backend + storefront
+  docker-compose.yml  postgres + redis + backend + storefront (SQL search, no extra search engine needed)
   docs/             SETUP, RAZORPAY, VPS-DEPLOY guides
 ```
 

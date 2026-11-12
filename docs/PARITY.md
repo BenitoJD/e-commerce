@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 26 (admin totalOrders + answers header auth).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 27 (dropped unused Meilisearch, validated).
 
 ## Storefront
 

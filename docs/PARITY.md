@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 83 (buyer GSTIN on invoices, 89 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 84 (WhatsApp deep links for support, 33 frontend tests).
 
 ## Storefront
 
@@ -28,6 +28,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout** and printed |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
+| Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow |
 | Newsletter | ✅ `/store/service/subscribe` + footer form |
 | XML sitemap | ✅ `/sitemap.xml` includes home, policies, categories, every product **and every brand**; served from the backend, rewritten onto the storefront origin |
@@ -54,8 +55,8 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 32 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 33 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, WhatsApp link normalisation, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

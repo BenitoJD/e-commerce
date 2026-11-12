@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getMyOrders, trackOrder } from '../../lib/api';
 import { addToCart, orderItemsToCartLines } from '../../lib/cart';
+import { waLink } from '../../lib/store';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
@@ -146,6 +147,16 @@ export default function MyOrdersPage() {
                     <button onClick={() => reorder(receipt)} disabled={busy} className="btn-primary !py-1.5 disabled:opacity-60">
                       Reorder
                     </button>
+                  )}
+                  {receipt && (
+                    <a
+                      href={waLink(`Hi ToolsKart, I need help with order ${receipt}`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-outline !py-1.5 !text-green-700"
+                    >
+                      Help
+                    </a>
                   )}
                 </div>
               </div>

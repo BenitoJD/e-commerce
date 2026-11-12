@@ -25,3 +25,17 @@ export function waLink(text) {
   const t = text ? `?text=${encodeURIComponent(text)}` : '';
   return `https://wa.me/${STORE.phoneDigits}${t}`;
 }
+
+// Deep link to a *customer's* WhatsApp (admin/support use). Accepts local 10-digit
+// numbers, +91-prefixed numbers, and numbers with spaces or dashes.
+export function waLinkTo(phone, text) {
+  const digits = String(phone == null ? '' : phone).replace(/\D/g, '');
+  if (!digits) return null;
+  let intl = digits;
+  if (intl.length === 10) intl = `91${intl}`;
+  else if (intl.length === 11 && intl.startsWith('0')) intl = `91${intl.slice(1)}`;
+  else if (intl.length === 12 && intl.startsWith('91')) intl = intl;
+  else if (intl.length < 10) return null;
+  else if (intl.length > 12) intl = intl.slice(-12);
+  return `https://wa.me/${intl}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}

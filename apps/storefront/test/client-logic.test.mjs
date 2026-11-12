@@ -228,6 +228,18 @@ test('store: waLink builds a valid wa.me URL with optional text', () => {
   assert.ok(withText.includes('%26')); // ampersand encoded
 });
 
+test('store: waLinkTo normalises Indian numbers for customer chats', () => {
+  assert.equal(storeLib.waLinkTo('9876543210'), 'https://wa.me/919876543210');
+  assert.equal(storeLib.waLinkTo('+91 98765 43210'), 'https://wa.me/919876543210');
+  assert.equal(storeLib.waLinkTo('098765 43210'), 'https://wa.me/919876543210');
+  assert.equal(storeLib.waLinkTo('919876543210'), 'https://wa.me/919876543210');
+  assert.equal(storeLib.waLinkTo('98765-43210', 'hi there'), 'https://wa.me/919876543210?text=hi%20there');
+  // nothing usable -> no link (so the UI can hide the button)
+  assert.equal(storeLib.waLinkTo(''), null);
+  assert.equal(storeLib.waLinkTo(null), null);
+  assert.equal(storeLib.waLinkTo('12345'), null);
+});
+
 test('store: phone display is formatted +91 XXXXX XXXXX', () => {
   assert.match(storeLib.STORE.phoneDisplay, /^\+91 \d{5} \d{5}$/);
 });

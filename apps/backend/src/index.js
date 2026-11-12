@@ -62,6 +62,15 @@ const adminLimit = createRateLimiter({
 });
 app.use('/admin', adminLimit);
 
+// Receipt-scoped reads (invoice/track/verify) expose customer details. Receipts are
+// cryptographically random now, but a limiter still blocks brute-force enumeration.
+const lookupLimit = createRateLimiter({
+  windowMs: 60000,
+  max: Number(process.env.LOOKUP_RATE_LIMIT_MAX) || 60,
+  message: 'Too many lookups, please wait a moment.',
+});
+app.use(['/store/invoice', '/store/service/track', '/store/checkout/verify'], lookupLimit);
+
 app.use('/store/products', productsRouter);
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);

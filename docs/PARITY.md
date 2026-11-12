@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 92 (orders CSV export for accounting, 102 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 93 (unguessable receipt IDs + lookup limits, 105 backend tests).
 
 ## Storefront
 
@@ -42,7 +42,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 |---|---|
 | Response headers | ✅ `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, HSTS when served over https |
 | Server fingerprint | ✅ `x-powered-by` disabled |
-| Abuse limits | ✅ per-IP limit on public writes (`RATE_LIMIT_*`), separate admin throttle against token guessing (`ADMIN_RATE_LIMIT_*`) |
+| Abuse limits | ✅ per-IP limit on public writes (`RATE_LIMIT_*`), separate admin throttle against token guessing (`ADMIN_RATE_LIMIT_*`), receipt-lookup limit (`LOOKUP_RATE_LIMIT_MAX`) |
+| Receipt privacy | ✅ invoice/track links use 64-bit random receipt IDs; guessable timestamps + 6 digits replaced |
 | CORS | ✅ `FRONTEND_URL` allowlist (comma-separated); same-origin `/api` needs none |
 | Admin access | ✅ token via `x-admin-token` on every admin route, compared in constant time |
 | SQL | ✅ parameterised everywhere; sort/filter values allowlisted |
@@ -60,7 +61,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 102 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 105 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

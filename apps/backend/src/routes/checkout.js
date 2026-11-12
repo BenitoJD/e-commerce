@@ -3,6 +3,7 @@ const db = require('../db');
 const { applyCoupon } = require('../lib/pricing');
 const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
+const { makeReceipt } = require('../lib/receipt');
 
 const router = express.Router();
 
@@ -81,7 +82,7 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+    const receipt = makeReceipt();
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
     const orderStatus = payMode === 'cod' ? 'cod_pending' : 'pending';
 

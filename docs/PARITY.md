@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 56 (frontend↔backend contract test, 58/58).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 57 (returns/RMA workflow, 60/60).
 
 ## Storefront
 
@@ -26,6 +26,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | My orders by phone | ✅ `/my-orders` |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
+| Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow |
 | Newsletter | ✅ `/store/service/subscribe` + footer form |
 | XML sitemap | ✅ `/sitemap.xml` (backend) |
 | SEO metadata | ✅ per-page metadata in layout/pages |
@@ -43,17 +44,17 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 58 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 60 tests (pricing math, GST, EMI, catalog validity,
 webhook state machine + signature, LIKE escaping, status transitions, refunds,
 frontend↔backend API contract (every storefront call resolves to a mounted route),
 plus route-level integration tests against an in-memory DB: checkout/stock, coupons,
-cancel, webhooks, quote conversion, admin guard, invoice balance).
+cancel, webhooks, quote conversion, admin guard, invoice balance, returns workflow).
 
 Storefront: `cd apps/storefront && npm test` — 23 tests (cart add/merge/clamp, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 23 routes.
+Build: `cd apps/storefront && npm run build` must compile all 24 routes.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.

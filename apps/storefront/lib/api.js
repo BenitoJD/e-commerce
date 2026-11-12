@@ -396,7 +396,32 @@ export async function cancelOrder(receipt, phone) {
   return handle(res);
 }
 
-export async function getInvoice(receipt) {
-  const res = await fetch(`${BASE}/store/invoice/${encodeURIComponent(receipt)}`, { cache: 'no-store' });
+export async function requestReturn(payload) {
+  const res = await fetch(`${BASE}/store/service/returns`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store'
+  });
   return handle(res);
 }
+
+export async function getAdminReturns(token, status = '') {
+  const q = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/returns${q}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function updateReturnStatus(token, id, status) {
+  const res = await fetch(`${BASE}/admin/returns/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify({ status }),
+    cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function getInvoice(receipt) {
+  const res = await fetch(`${BASE}/store/invoice/${encodeURIComponent(receipt)}`, { cache: 'no-store' });
+  return handle(res);}

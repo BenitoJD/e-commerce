@@ -300,6 +300,50 @@ router.delete('/questions/:id', async (req, res) => {
   }
 });
 
+const RETURN_STATUSES = ['requested', 'approved', 'rejected', 'picked_up', 'refunded', 'closed'];
+
+// GET /admin/returns?status=
+router.get('/returns', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const conds = [];
+    const params = [];
+    if (status) {
+      params.push(status);
+      conds.push(`status = $${params.length}`);
+    }
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT * FROM return_requests ${where} ORDER BY created_at DESC, id DESC LIMIT 200`,
+      params
+    );
+    res.json({ returns: rows });
+  } catch (err) {
+    console.error('[admin] returns list error:', err.message);
+    res.status(500).json({ error: 'Failed to list returns' });
+  }
+});
+
+// PATCH /admin/returns/:id {status}
+router.patch('/returns/:id', async (req, res) => {
+  try {
+    const status = String((req.body && req.body.status) || '');
+    if (!RETURN_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${RETURN_STATUSES.join(', ')}` });
+    }
+    const { rows } = await db.query(
+      'UPDATE return_requests SET status = $1 WHERE id = $2 RETURNING *',
+      [status, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Return request not found' });
+    console.log(`[admin] return #${rows[0].id} (${rows[0].receipt}) -> ${status}`);
+    res.json({ return: rows[0] });
+  } catch (err) {
+    console.error('[admin] return update error:', err.message);
+    res.status(500).json({ error: 'Failed to update return' });
+  }
+});
+
 // GET /admin/reviews?verified=&limit= — moderation queue (latest first)
 router.get('/reviews', async (req, res) => {
   try {

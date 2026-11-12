@@ -93,6 +93,19 @@ ALTER TABLE bulk_quotes ADD COLUMN IF NOT EXISTS product_name TEXT NOT NULL DEFA
 -- Wave 54: product videos (embed URLs), optional per SKU
 ALTER TABLE products ADD COLUMN IF NOT EXISTS videos TEXT[] NOT NULL DEFAULT '{}';
 
+-- Wave 57: return / exchange requests (RMA)
+CREATE TABLE IF NOT EXISTS return_requests (
+  id SERIAL PRIMARY KEY,
+  receipt TEXT NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  reason TEXT NOT NULL DEFAULT '',
+  details TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'requested',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_returns_status ON return_requests(status);
+CREATE INDEX IF NOT EXISTS idx_returns_receipt ON return_requests(receipt);
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

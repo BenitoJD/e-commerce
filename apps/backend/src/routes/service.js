@@ -228,4 +228,47 @@ router.post('/contact', async (req, res) => {
   }
 });
 
+// POST /store/service/returns { receipt, phone, reason, details } — file a return/exchange
+const RETURN_REASONS = ['damaged', 'wrong-item', 'defective', 'not-needed', 'other'];
+const RETURNABLE = ['delivered', 'paid', 'shipped'];
+
+router.post('/returns', async (req, res) => {
+  try {
+    const receipt = String((req.body && req.body.receipt) || '').trim();
+    const phone = digits(req.body && req.body.phone);
+    const reason = String((req.body && req.body.reason) || '').trim().toLowerCase();
+    const details = String((req.body && req.body.details) || '').trim().slice(0, 1000);
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
+    }
+    if (!RETURN_REASONS.includes(reason)) {
+      return res.status(400).json({ error: `reason must be one of: ${RETURN_REASONS.join(', ')}` });
+    }
+    const { rows } = await db.query(
+      'SELECT receipt, status, customer FROM orders WHERE receipt = $1',
+      [receipt]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    const order = rows[0];
+    const customerPhone = digits(order.customer && order.customer.phone);
+    const match = customerPhone === phone
+      || (customerPhone.length >= 10 && phone.length >= 10 && customerPhone.slice(-10) === phone.slice(-10));
+    if (!match) return res.status(404).json({ error: 'Phone does not match order' });
+    if (!RETURNABLE.includes(String(order.status))) {
+      return res.status(409).json({ error: `Orders with status '${order.status}' are not returnable` });
+    }
+    const ins = await db.query(
+      `INSERT INTO return_requests (receipt, phone, reason, details)
+       VALUES ($1, $2, $3, $4) RETURNING id, status, created_at`,
+      [receipt, phone, reason, details]
+    );
+    console.log(`[service] return #${ins.rows[0].id} for ${receipt} (${reason})`);
+    res.status(201).json({ ok: true, id: ins.rows[0].id, status: ins.rows[0].status, receipt });
+  } catch (err) {
+    console.error('[service] return error:', err.message);
+    res.status(500).json({ error: 'Failed to file return' });
+  }
+});
+
 module.exports = router;

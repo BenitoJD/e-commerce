@@ -13,6 +13,8 @@ import {
   toggleCoupon,
   getAdminMessages,
   updateMessageStatus,
+  getAdminReturns,
+  updateReturnStatus,
   getAdminReviews,
   setReviewVerified,
   deleteReview,
@@ -68,6 +70,8 @@ export default function AdminPage() {
   const [modVerified, setModVerified] = useState('false');
   const [modQuestions, setModQuestions] = useState([]);
   const [modAnswered, setModAnswered] = useState('false');
+  const [returns, setReturns] = useState([]);
+  const [returnFilter, setReturnFilter] = useState('');
 
   useEffect(() => {
     try {
@@ -144,6 +148,7 @@ export default function AdminPage() {
     if (tab === 'quotes') loadQuotes();
     if (tab === 'coupons') loadCoupons();
     if (tab === 'messages') loadMessages();
+    if (tab === 'returns') loadReturns();
     if (tab === 'reviews') loadModReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
@@ -203,8 +208,31 @@ export default function AdminPage() {
     }
   }
 
-  async function loadMessages() {
+  async function loadReturns() {
     if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getAdminReturns(token, returnFilter);
+      setReturns(Array.isArray(data) ? data : data.returns || data.items || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onReturnStatus(id, status) {
+    setError('');
+    try {
+      await updateReturnStatus(token, id, status);
+      await loadReturns();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function loadMessages() {    if (!token) return;
     setLoading(true);
     setError('');
     try {
@@ -376,6 +404,7 @@ export default function AdminPage() {
   const tabs = [
     ['overview', 'Overview'],
     ['orders', 'Orders'],
+    ['returns', 'Returns'],
     ['quotes', 'Quotes'],
     ['coupons', 'Coupons'],
     ['messages', 'Messages'],
@@ -416,7 +445,7 @@ export default function AdminPage() {
                 {label}
               </button>
             ))}
-            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); }} className="btn-outline !py-2 ml-auto">
+            <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); if (tab === 'returns') loadReturns(); }} className="btn-outline !py-2 ml-auto">
               Refresh
             </button>
           </div>
@@ -620,6 +649,50 @@ export default function AdminPage() {
                       </tr>
                     ))}
                     {coupons.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-gray-500">No coupons. Seed provides WELCOME10 + TOOLS15.</td></tr> : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'returns' && (
+            <div className="mt-4">
+              <div className="flex gap-2 items-center mb-3 flex-wrap">
+                <label className="text-sm font-semibold">Status:</label>
+                <select value={returnFilter} onChange={(e) => setReturnFilter(e.target.value)} className="input !w-auto">
+                  <option value="">All</option>
+                  {['requested', 'approved', 'rejected', 'picked_up', 'refunded', 'closed'].map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <span className="text-xs text-gray-500">{returns.length} request(s)</span>
+              </div>
+              <div className="overflow-x-auto card">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">ID</th>
+                      <th className="p-2">Receipt / Phone</th>
+                      <th className="p-2">Reason</th>
+                      <th className="p-2">Details</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {returns.map((r, i) => (
+                      <tr key={r.id || i} className="border-b last:border-0">
+                        <td className="p-2 font-mono text-xs">{r.id || '—'}</td>
+                        <td className="p-2 text-xs">{r.receipt || '—'}<br />{r.phone || ''}</td>
+                        <td className="p-2 text-xs">{r.reason || '—'}</td>
+                        <td className="p-2 text-xs max-w-[240px]">{r.details || '—'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{r.status || '—'}</span></td>
+                        <td className="p-2">
+                          {['approved', 'rejected', 'picked_up', 'refunded', 'closed'].map((s) => (
+                            <button key={s} onClick={() => onReturnStatus(r.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
+                    {returns.length === 0 ? <tr><td colSpan={6} className="p-4 text-center text-gray-500">No return requests.</td></tr> : null}
                   </tbody>
                 </table>
               </div>

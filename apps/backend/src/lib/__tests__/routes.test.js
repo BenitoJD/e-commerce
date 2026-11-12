@@ -27,6 +27,7 @@ function makeFakeDb() {
   let seq = 1;
   const quotes = [];
   let quoteSeq = 1;
+  let ret = [];
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
@@ -85,6 +86,10 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id }] : [] };
     }
+    if (t.startsWith('SELECT receipt, status, customer FROM orders WHERE receipt')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return { rows: o ? [{ receipt: o.receipt, status: o.status, customer: o.customer }] : [] };
+    }
     if (t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer FROM orders WHERE receipt')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ ...o }] : [] };
@@ -133,6 +138,21 @@ function makeFakeDb() {
         q.order_receipt = params[0];
       }
       return { rows: [] };
+    }
+    if (t.startsWith('INSERT INTO return_requests')) {
+      const [receipt, phone, reason, details] = params;
+      if (!ret) ret = [];
+      const row = { id: ret.length + 1, receipt, phone, reason, details, status: 'requested', created_at: new Date().toISOString() };
+      ret.push(row);
+      return { rows: [{ id: row.id, status: row.status, created_at: row.created_at }] };
+    }
+    if (t.startsWith('SELECT * FROM return_requests')) {
+      return { rows: (ret || []).slice() };
+    }
+    if (t.startsWith('UPDATE return_requests SET status')) {
+      const row = (ret || []).find((r) => r.id === Number(params[1]));
+      if (row) row.status = params[0];
+      return { rows: row ? [row] : [] };
     }
     if (t.startsWith('SELECT status, items FROM orders WHERE id')) {
       const o = orders.find((x) => x.id === Number(params[0]));
@@ -348,6 +368,55 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
 test('invoice 404s unknown receipts', async () => {
   const r = await api('GET', '/store/invoice/rcpt_nope_123');
   assert.equal(r.status, 404);
+});
+
+test('returns: delivered order files a request; admin can progress it', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'cod',
+  });
+  const receipt = created.json.receipt;
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+
+  // cod_pending is not returnable yet
+  const early = await api('POST', '/store/service/returns', { receipt, phone: '9876543210', reason: 'damaged' });
+  assert.equal(early.status, 409);
+
+  // move it to delivered, then file
+  const order = fake.orders.find((o) => o.receipt === receipt);
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'shipped' }, adminHeaders);
+  await api('PATCH', `/admin/orders/${order.id}`, { status: 'delivered' }, adminHeaders);
+
+  const ok = await api('POST', '/store/service/returns', {
+    receipt, phone: '9876543210', reason: 'damaged', details: 'Casing cracked in transit',
+  });
+  assert.equal(ok.status, 201);
+  assert.equal(ok.json.status, 'requested');
+
+  const listed = await api('GET', '/admin/returns', undefined, adminHeaders);
+  assert.equal(listed.status, 200);
+  assert.equal(listed.json.returns.length, 1);
+
+  const upd = await api('PATCH', `/admin/returns/${ok.json.id}`, { status: 'approved' }, adminHeaders);
+  assert.equal(upd.status, 200);
+  assert.equal(upd.json.return.status, 'approved');
+
+  const bad = await api('PATCH', `/admin/returns/${ok.json.id}`, { status: 'nonsense' }, adminHeaders);
+  assert.equal(bad.status, 400);
+});
+
+test('returns: rejects phone mismatch and unknown reasons', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+    payMode: 'cod',
+  });
+  const receipt = created.json.receipt;
+  const mismatch = await api('POST', '/store/service/returns', { receipt, phone: '9000000000', reason: 'damaged' });
+  assert.equal(mismatch.status, 404);
+  const badReason = await api('POST', '/store/service/returns', { receipt, phone: '9876543210', reason: 'bored' });
+  assert.equal(badReason.status, 400);
 });
 test('admin: transition guard blocks nonsense moves, allows real ones', async () => {
   const created = await api('POST', '/store/checkout/create', {

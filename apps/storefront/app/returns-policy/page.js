@@ -11,6 +11,7 @@ export default function ReturnsPolicy() {
         <p><b>Refunds:</b> UPI/card/EMI refunds go to source in 3–5 working days after QC; COD refunds via bank transfer within 5–7 days.</p>
         <p><b>Shipping cost:</b> Return shipping is free for our error; ₹149 reverse-pickup otherwise, adjusted in refund.</p>
       </div>
+      <a href="/returns" className="btn-primary inline-block mt-4">File a return request →</a>
     </div>
   );
 }

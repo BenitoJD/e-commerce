@@ -13,6 +13,7 @@ const STATIC_PAGES = [
   '/about-us',
   '/shipping-policy',
   '/returns-policy',
+  '/returns',
   '/warranty-policy',
   '/privacy-policy',
   '/terms-conditions',

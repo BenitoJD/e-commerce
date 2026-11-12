@@ -111,6 +111,11 @@ export default function MyOrdersPage() {
                       Invoice
                     </a>
                   )}
+                  {receipt && ['delivered', 'shipped'].includes(String(o.status || '').toLowerCase()) && (
+                    <a href={`/returns?receipt=${encodeURIComponent(receipt)}`} className="btn-outline !py-1.5">
+                      Return
+                    </a>
+                  )}
                 </div>
               </div>
             );

@@ -1,3 +1,8 @@
+# Production image without Next's `standalone` output.
+# Rationale: in a pnpm monorepo the traced standalone tree mirrors the repo layout
+# (standalone/apps/storefront/server.js) and depends on symlinks that vary by
+# filesystem — a silent "works on my machine" trap. Running `next start` against a
+# regular build is the same server Next would run, just with node_modules present.
 FROM node:20-alpine AS base
 WORKDIR /app
 
@@ -9,8 +14,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_* are baked into the client bundle at build time, so they must be
-# build args (compose passes them via build.args) — not just runtime env.
+# NEXT_PUBLIC_* are baked into the client bundle at build time: they must be build
+# args (compose passes them via build.args), not just runtime env.
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:9000
 ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxx
 ARG NEXT_PUBLIC_STORE_NAME=ToolsKart
@@ -24,7 +29,6 @@ ENV NEXT_PUBLIC_STORE_PHONE=$NEXT_PUBLIC_STORE_PHONE
 ENV NEXT_PUBLIC_STORE_EMAIL=$NEXT_PUBLIC_STORE_EMAIL
 ENV NEXT_PUBLIC_STORE_GSTIN=$NEXT_PUBLIC_STORE_GSTIN
 ENV NEXT_TELEMETRY_DISABLED=1
-# Build fails loudly if a page doesn't compile — keep it that way.
 RUN npm run build
 
 FROM base AS runner
@@ -34,10 +38,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-COPY --chown=node:node --from=builder /app/.next/standalone ./
-COPY --chown=node:node --from=builder /app/.next/static ./.next/static
-# public/ must exist in the repo (robots.txt lives there); a missing dir fails COPY.
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/.next ./.next
 COPY --chown=node:node --from=builder /app/public ./public
+COPY --chown=node:node --from=builder /app/package.json ./package.json
+COPY --chown=node:node --from=builder /app/next.config.js ./next.config.js
 
 USER node
 EXPOSE 3000
@@ -45,4 +50,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1
 
-CMD ["node", "server.js"]
+CMD ["node", "node_modules/next/dist/bin/next", "start"]

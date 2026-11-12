@@ -89,7 +89,13 @@ cd apps/backend && npm test        # 64 tests: pricing/GST/EMI, catalog, webhook
 cd apps/storefront && npm test     # 23 tests: cart self-healing, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist
 cd apps/storefront && npm run build # must compile all 24 routes
+cd apps/storefront && npm start     # production server (same thing the image runs)
 ```
+
+The image runs a normal production build + `next start` (no Next `standalone` output):
+in a pnpm monorepo the traced standalone tree mirrors the repo layout and depends on
+symlinks, which is a silent deploy trap. Verified by booting `next start` and fetching
+every route (home, product, returns, admin, robots.txt, sitemap rewrite).
 
 Fresh-clone check before trusting a deploy: clone into an empty directory and run the
 suites there — that is how the missing-catalog-files bug was caught.

@@ -30,6 +30,10 @@ Important: `NEXT_PUBLIC_*` values are baked into the storefront JS bundle at **b
 `docker compose up -d --build storefront`. A wrong value here is the #1 cause of a
 "works locally, broken on VPS" storefront.
 
+The storefront image runs a full production build + `next start` (not Next's `standalone`
+output). That keeps the image honest with what `npm run build && npm start` does locally;
+the trade-off is a larger image (~hundreds of MB extra node_modules) for zero layout risk.
+
 ## Option B — Coolify (Vercel-like on VPS)
 1. Install: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash` → open http://VPS_IP:8000
 2. Add Project → Postgres + Redis plugins (note URLs).

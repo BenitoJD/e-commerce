@@ -16,7 +16,7 @@ toolsvilla-clone/
                       service, invoice, admin, sitemap
     src/lib/          pricing, stock reservation, order state machine, refunds, text helpers
     src/lib/__tests__ 62 tests (unit + route-level integration with in-memory DB)
-  apps/storefront/    Next.js 14 App Router (24 routes)
+  apps/storefront/    Next.js 14 App Router (25 routes)
     app/              homepage, category, product, cart, checkout, orders,
                       tracking, invoice, returns, admin, policies…
     lib/              api client, cart, wishlist, store config
@@ -90,9 +90,10 @@ delete) · Stock (update by slug).
 ```bash
 cd apps/backend && npm test        # 70 tests: pricing/GST/EMI, catalog, webhooks,
                                    # transitions, refunds, API contract, health, integration
-cd apps/storefront && npm test     # 28 tests: catalog filters, cart self-healing, wishlist, store config,
+cd apps/storefront && npm test     # 30 tests: catalog filters, cart self-healing +
+                                   # reorder mapping, wishlist, store config,
                                    # paise→rupee, error messages, video allowlist
-cd apps/storefront && npm run build # must compile all 24 routes
+cd apps/storefront && npm run build # must compile all 25 routes
 cd apps/storefront && npm start     # production server (same thing the image runs)
 ```
 

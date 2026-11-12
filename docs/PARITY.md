@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 75 (generated robots.txt, 28/28 smoke).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 76 (reorder from order history, 30 frontend tests).
 
 ## Storefront
 
@@ -25,7 +25,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |
-| My orders by phone | ✅ `/my-orders` |
+| My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow |
@@ -54,11 +54,12 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 28 tests (catalog filter/sort logic, cart add/merge/clamp, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 30 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 24 routes.
+Build: `cd apps/storefront && npm run build` must compile all 25 routes.
 Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then

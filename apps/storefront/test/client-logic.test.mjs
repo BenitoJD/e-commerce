@@ -88,6 +88,31 @@ test('cart: addToCart without a slug is a no-op', () => {
   assert.equal(cart.getCart().length, 0);
 });
 
+test('cart: reorder mapping handles rupees, paise, qty clamps and junk', () => {
+  const lines = cart.orderItemsToCartLines([
+    { slug: 'a', name: 'Drill', price: 3499, qty: 2 },
+    { slug: 'b', name: 'Motor', unit_price_paise: 2499900, qty: 0 }, // paise + bad qty
+    { name: 'no slug' },
+    null,
+  ]);
+  assert.equal(lines.length, 2);
+  assert.equal(lines[0].price, 3499);
+  assert.equal(lines[0].qty, 2);
+  assert.equal(lines[1].price, 24999); // paise → rupees
+  assert.equal(lines[1].qty, 1); // clamped to at least 1
+  assert.deepEqual(cart.orderItemsToCartLines(null), []);
+});
+
+test('cart: reorder lines flow into a real cart total', () => {
+  reset();
+  const lines = cart.orderItemsToCartLines([
+    { slug: 'a', name: 'Drill', price: 100, qty: 2 },
+    { slug: 'b', name: 'Bit set', price: 50, qty: 1 },
+  ]);
+  lines.forEach((l) => cart.addToCart(l, l.qty));
+  assert.equal(cart.cartTotal(), 250);
+});
+
 // ---------------- catalog filtering ----------------
 
 test('catalog: brand filter, "All" passthrough, missing input tolerated', () => {

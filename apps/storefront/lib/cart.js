@@ -83,3 +83,24 @@ export function cartTotal(items) {
     return s + p * q;
   }, 0);
 }
+
+// Map API order/track items into cart lines (used by "Reorder"). Tolerates either
+// rupee or paise pricing and clamps quantities to the cart's own limits.
+export function orderItemsToCartLines(items) {
+  const list = Array.isArray(items) ? items : [];
+  return list
+    .map((i) => {
+      if (!i || typeof i !== 'object') return null;
+      const slug = i.slug || i.id;
+      if (!slug) return null;
+      const rupees = i.price != null ? Number(i.price) : Number(i.unit_price_paise || 0) / 100;
+      return {
+        slug,
+        name: i.name || slug,
+        price: Number.isFinite(rupees) && rupees >= 0 ? Math.round(rupees * 100) / 100 : 0,
+        image: i.image || '',
+        qty: Math.max(1, Math.min(99, parseInt(i.qty, 10) || 1)),
+      };
+    })
+    .filter(Boolean);
+}

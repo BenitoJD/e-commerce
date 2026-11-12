@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getMyOrders } from '../../lib/api';
+import { getMyOrders, trackOrder } from '../../lib/api';
+import { addToCart, orderItemsToCartLines } from '../../lib/cart';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
@@ -54,6 +55,31 @@ export default function MyOrdersPage() {
       if (!list.length) setErr('No orders found for this phone number.');
     } catch (e2) {
       setErr(e2.message || 'Could not load orders. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Rebuild the cart from a past order using the tracking endpoint, which is the only
+  // place line items are exposed to a customer (guarded by receipt + phone).
+  const reorder = async (receipt) => {
+    setErr('');
+    setBusy(true);
+    try {
+      const r = await trackOrder(receipt, phone.trim());
+      const order = r.order || r;
+      const lines = orderItemsToCartLines(order.items);
+      if (!lines.length) { setErr('Could not load items for that order.'); return; }
+      let added = 0;
+      for (const line of lines) {
+        if (line.price <= 0) continue; // unknown price: never add a free item
+        addToCart(line, line.qty);
+        added += 1;
+      }
+      if (!added) { setErr('Those items are not available to reorder right now.'); return; }
+      window.location.href = '/cart';
+    } catch (e2) {
+      setErr(e2.message || 'Could not reorder. Try again.');
     } finally {
       setBusy(false);
     }
@@ -115,6 +141,11 @@ export default function MyOrdersPage() {
                     <a href={`/returns?receipt=${encodeURIComponent(receipt)}`} className="btn-outline !py-1.5">
                       Return
                     </a>
+                  )}
+                  {receipt && !['cancelled', 'refunded', 'failed'].includes(String(o.status || '').toLowerCase()) && (
+                    <button onClick={() => reorder(receipt)} disabled={busy} className="btn-primary !py-1.5 disabled:opacity-60">
+                      Reorder
+                    </button>
                   )}
                 </div>
               </div>

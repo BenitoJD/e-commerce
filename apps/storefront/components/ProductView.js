@@ -332,8 +332,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                   placeholder="you@example.com"
                   className="input"
                   inputMode="email"
-                  type="email"
-                />
+                  type="email" aria-label="Email address" />
                 <button onClick={doStockAlert} disabled={alertBusy} className="btn-primary whitespace-nowrap disabled:opacity-60">
                   {alertBusy ? 'Saving...' : 'Notify me'}
                 </button>
@@ -374,7 +373,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           <div className="mt-5 card p-4 text-sm">
             <b>Delivery check</b>
             <div className="mt-2 flex gap-2">
-              <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Pincode e.g. 110001" className="input" inputMode="numeric" />
+              <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Pincode e.g. 110001" className="input" inputMode="numeric" aria-label="Pincode for delivery check" />
               <button onClick={checkPin} disabled={pinState.loading} className="btn-primary whitespace-nowrap disabled:opacity-60">Check</button>
             </div>
             {pinState.msg && <p className={`text-xs font-semibold mt-2 ${pinState.ok ? 'text-green-700' : 'text-gray-600'}`}>{pinState.msg}</p>}
@@ -426,14 +425,14 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             <span className="text-sm text-gray-500">({count} reviews)</span>
           </div>
           <form onSubmit={submitReview} className="mt-4 space-y-3">
-            <div><label className="label">Your name</label><input className="input" value={rForm.name} onChange={(e) => setRForm({ ...rForm, name: e.target.value })} placeholder="Ravi Kumar" /></div>
+            <div><label className="label">Your name</label><input className="input" value={rForm.name} onChange={(e) => setRForm({ ...rForm, name: e.target.value })} placeholder="Ravi Kumar" aria-label="Full name" /></div>
             <div>
               <label className="label">Rating</label>
               <select className="input" value={rForm.rating} onChange={(e) => setRForm({ ...rForm, rating: Number(e.target.value) })}>
                 {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} star{n > 1 ? 's' : ''}</option>)}
               </select>
             </div>
-            <div><label className="label">Title</label><input className="input" value={rForm.title} onChange={(e) => setRForm({ ...rForm, title: e.target.value })} placeholder="Great drill for the price" /></div>
+            <div><label className="label">Title</label><input className="input" value={rForm.title} onChange={(e) => setRForm({ ...rForm, title: e.target.value })} placeholder="Great drill for the price" aria-label="Review title" /></div>
             <div><label className="label">Review</label><textarea className="input" rows={3} value={rForm.body} onChange={(e) => setRForm({ ...rForm, body: e.target.value })} placeholder="Build quality, performance..." /></div>
             {rMsg && <p className="text-xs font-semibold text-gray-700">{rMsg}</p>}
             <button disabled={rBusy} className="btn-primary w-full disabled:opacity-60">{rBusy ? 'Submitting...' : 'Submit Review'}</button>
@@ -466,7 +465,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           <h2 className="font-extrabold text-lg">Questions & Answers</h2>
           <p className="text-xs text-gray-500 mt-1">Ask about compatibility, warranty, installation.</p>
           <form onSubmit={submitQuestion} className="mt-3 space-y-3">
-            <div><label className="label">Your name</label><input className="input" value={qForm.name} onChange={(e) => setQForm({ ...qForm, name: e.target.value })} placeholder="Your name" /></div>
+            <div><label className="label">Your name</label><input className="input" value={qForm.name} onChange={(e) => setQForm({ ...qForm, name: e.target.value })} placeholder="Your name" aria-label="Your name" /></div>
             <div><label className="label">Question</label><textarea className="input" rows={3} value={qForm.question} onChange={(e) => setQForm({ ...qForm, question: e.target.value })} placeholder="Is this suitable for 8-hour daily workshop use?" /></div>
             {qMsg && <p className="text-xs font-semibold text-gray-700">{qMsg}</p>}
             <button disabled={qBusy} className="btn-outline w-full disabled:opacity-60">{qBusy ? 'Submitting...' : 'Ask Question'}</button>

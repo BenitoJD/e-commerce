@@ -564,8 +564,7 @@ export default function AdminPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Admin password / token"
-          className="input flex-1"
-        />
+          className="input flex-1" aria-label="Admin token" />
         <div className="flex gap-2">
           <button onClick={saveToken} className="btn-primary">Save &amp; Connect</button>
           {token ? <button onClick={clearToken} className="btn-outline">Clear</button> : null}
@@ -687,8 +686,7 @@ export default function AdminPage() {
                   onChange={(e) => setOrderSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') loadOrders(); }}
                   placeholder="Search receipt / name / phone"
-                  className="input !w-auto flex-1 min-w-[200px]"
-                />
+                  className="input !w-auto flex-1 min-w-[200px]" aria-label="Search orders by receipt, name or phone" />
                 <input
                   type="date"
                   value={orderFrom}
@@ -881,12 +879,12 @@ export default function AdminPage() {
               <div className="card p-4 max-w-2xl">
                 <div className="font-bold mb-2">Create / update coupon (code saved UPPERCASE)</div>
                 <form onSubmit={onCouponSave} className="grid sm:grid-cols-4 gap-2">
-                  <input value={couponForm.code} onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })} placeholder="CODE e.g. DIWALI10" className="input uppercase" />
-                  <input value={couponForm.pct} onChange={(e) => setCouponForm({ ...couponForm, pct: e.target.value })} placeholder="% off 1-90" type="number" min="1" max="90" className="input" />
-                  <input value={couponForm.maxRs} onChange={(e) => setCouponForm({ ...couponForm, maxRs: e.target.value })} placeholder="Max discount ₹ (blank=none)" type="number" min="0" className="input" />
-                  <input value={couponForm.minRs} onChange={(e) => setCouponForm({ ...couponForm, minRs: e.target.value })} placeholder="Min order ₹ (blank=none)" type="number" min="0" className="input" />
-                  <input value={couponForm.expires} onChange={(e) => setCouponForm({ ...couponForm, expires: e.target.value })} type="date" className="input" title="Expiry date (blank = never)" />
-                  <input value={couponForm.maxUses} onChange={(e) => setCouponForm({ ...couponForm, maxUses: e.target.value })} placeholder="Max uses (blank=unlimited)" type="number" min="1" className="input" />
+                  <input value={couponForm.code} onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })} placeholder="CODE e.g. DIWALI10" className="input uppercase" aria-label="Coupon code" />
+                  <input value={couponForm.pct} onChange={(e) => setCouponForm({ ...couponForm, pct: e.target.value })} placeholder="% off 1-90" type="number" min="1" max="90" className="input" aria-label="Discount percentage" />
+                  <input value={couponForm.maxRs} onChange={(e) => setCouponForm({ ...couponForm, maxRs: e.target.value })} placeholder="Max discount ₹ (blank=none)" type="number" min="0" className="input" aria-label="Maximum discount in rupees" />
+                  <input value={couponForm.minRs} onChange={(e) => setCouponForm({ ...couponForm, minRs: e.target.value })} placeholder="Min order ₹ (blank=none)" type="number" min="0" className="input" aria-label="Minimum order value in rupees" />
+                  <input value={couponForm.expires} onChange={(e) => setCouponForm({ ...couponForm, expires: e.target.value })} type="date" className="input" title="Expiry date (blank = never)" aria-label="Coupon expiry date" />
+                  <input value={couponForm.maxUses} onChange={(e) => setCouponForm({ ...couponForm, maxUses: e.target.value })} placeholder="Max uses (blank=unlimited)" type="number" min="1" className="input" aria-label="Maximum number of uses" />
                 </form>
                 <button onClick={onCouponSave} className="btn-primary mt-3">Save coupon</button>
                 {couponMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{couponMsg}</p> : null}
@@ -932,15 +930,15 @@ export default function AdminPage() {
               <div className="card p-4 max-w-3xl">
                 <div className="font-bold mb-2">Add or update a product (same slug = update)</div>
                 <form onSubmit={onProductSave} className="grid sm:grid-cols-2 gap-2">
-                  <input value={prodForm.slug} onChange={(e) => setProdForm({ ...prodForm, slug: e.target.value })} placeholder="slug e.g. bosch-gsb-13-re-drill" className="input" />
-                  <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} placeholder="Product name" className="input" />
-                  <input value={prodForm.brand} onChange={(e) => setProdForm({ ...prodForm, brand: e.target.value })} placeholder="Brand" className="input" />
-                  <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} placeholder="Category (power-tools)" className="input" />
-                  <input value={prodForm.priceRs} onChange={(e) => setProdForm({ ...prodForm, priceRs: e.target.value })} placeholder="Price ₹" type="number" min="1" className="input" />
-                  <input value={prodForm.mrpRs} onChange={(e) => setProdForm({ ...prodForm, mrpRs: e.target.value })} placeholder="MRP ₹ (optional)" type="number" min="0" className="input" />
-                  <input value={prodForm.hsn} onChange={(e) => setProdForm({ ...prodForm, hsn: e.target.value })} placeholder="HSN code" className="input" />
-                  <input value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} placeholder="Stock qty" type="number" min="0" className="input" />
-                  <input value={prodForm.images} onChange={(e) => setProdForm({ ...prodForm, images: e.target.value })} placeholder="Image paths, comma separated" className="input sm:col-span-2" />
+                  <input value={prodForm.slug} onChange={(e) => setProdForm({ ...prodForm, slug: e.target.value })} placeholder="slug e.g. bosch-gsb-13-re-drill" className="input" aria-label="Product slug" />
+                  <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} placeholder="Product name" className="input" aria-label="Product name" />
+                  <input value={prodForm.brand} onChange={(e) => setProdForm({ ...prodForm, brand: e.target.value })} placeholder="Brand" className="input" aria-label="Brand name" />
+                  <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} placeholder="Category (power-tools)" className="input" aria-label="Category slug" />
+                  <input value={prodForm.priceRs} onChange={(e) => setProdForm({ ...prodForm, priceRs: e.target.value })} placeholder="Price ₹" type="number" min="1" className="input" aria-label="Selling price in rupees" />
+                  <input value={prodForm.mrpRs} onChange={(e) => setProdForm({ ...prodForm, mrpRs: e.target.value })} placeholder="MRP ₹ (optional)" type="number" min="0" className="input" aria-label="MRP in rupees" />
+                  <input value={prodForm.hsn} onChange={(e) => setProdForm({ ...prodForm, hsn: e.target.value })} placeholder="HSN code" className="input" aria-label="HSN code" />
+                  <input value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} placeholder="Stock qty" type="number" min="0" className="input" aria-label="Stock quantity" />
+                  <input value={prodForm.images} onChange={(e) => setProdForm({ ...prodForm, images: e.target.value })} placeholder="Image paths, comma separated" className="input sm:col-span-2" aria-label="Image paths" />
                 </form>
                 <button onClick={onProductSave} className="btn-primary mt-3">Save product</button>
                 {prodMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{prodMsg}</p> : null}
@@ -952,8 +950,7 @@ export default function AdminPage() {
                   onChange={(e) => setCatalogQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') loadCatalog({ query: e.target.value }); }}
                   placeholder="Search catalogue by name / brand / slug"
-                  className="input !w-auto flex-1 min-w-[200px]"
-                />
+                  className="input !w-auto flex-1 min-w-[200px]" aria-label="Search catalogue" />
                 <button onClick={() => loadCatalog({ query: catalogQuery })} className="btn-outline !py-2">Search</button>
                 <span className="text-xs text-gray-500">{catalog.length} shown</span>
               </div>
@@ -1215,8 +1212,8 @@ export default function AdminPage() {
             <div className="mt-4 card p-4 max-w-lg">
               <div className="font-bold mb-2">Update stock</div>
               <form onSubmit={onStockUpdate} className="space-y-2">
-                <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Product slug" className="input" />
-                <input value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Stock qty" type="number" className="input" />
+                <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Product slug" className="input" aria-label="Product slug for stock update" />
+                <input value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Stock qty" type="number" className="input" aria-label="Stock quantity" />
                 <button type="submit" className="btn-primary">Update stock</button>
               </form>
               {stockResult ? <pre className="mt-3 text-xs bg-gray-50 border rounded-lg p-3 overflow-x-auto">{JSON.stringify(stockResult, null, 2)}</pre> : null}
@@ -1233,8 +1230,7 @@ export default function AdminPage() {
                     value={alertSlug}
                     onChange={(e) => setAlertSlug(e.target.value)}
                     placeholder="Filter by slug"
-                    className="input !w-auto"
-                  />
+                    className="input !w-auto" aria-label="Filter restock requests by product slug" />
                   <button onClick={() => loadStockAlerts()} className="btn-outline !py-2">Load</button>
                 </div>
               </div>

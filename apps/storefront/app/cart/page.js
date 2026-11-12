@@ -201,7 +201,7 @@ export default function CartPage() {
               </div>
             ) : (
               <div className="flex gap-2">
-                <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="e.g. DIWALI10" className="input uppercase" />
+                <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="e.g. DIWALI10" className="input uppercase" aria-label="Coupon code" />
                 <button onClick={applyCoupon} disabled={couponBusy} className="btn-outline !px-4 whitespace-nowrap disabled:opacity-60">Apply</button>
               </div>
             )}
@@ -209,7 +209,7 @@ export default function CartPage() {
             <div className="border-t mt-4 pt-4">
               <label className="label">Delivery pincode</label>
               <div className="flex gap-2">
-                <input value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="e.g. 110001" className="input" />
+                <input value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="e.g. 110001" className="input" aria-label="Pincode" />
               </div>
               {pincode.length === 6 ? (
                 <p className="text-xs text-green-700 font-semibold mt-2">{pinMsg || `Delivery to ${pincode} in 3–7 days.`}</p>

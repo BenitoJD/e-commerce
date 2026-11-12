@@ -190,15 +190,15 @@ export default function CheckoutPage() {
       )}
       <form onSubmit={placeOrder} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" /></div>
-          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" /></div>
+          <div><label className="label">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" aria-label="Full name" /></div>
+          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
         </div>
         <div><label className="label">Full address</label><textarea className="input" rows={3} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="House no, street, city, state" /></div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Pincode</label><input className="input" value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="110001" inputMode="numeric" /></div>
+          <div><label className="label">Pincode</label><input className="input" value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="110001" inputMode="numeric" aria-label="Pincode" /></div>
           <div>
             <label className="label">GSTIN <span className="text-gray-400 font-normal">(optional, for business invoices)</span></label>
-            <input className="input uppercase" value={form.gstin} onChange={(e) => set('gstin', e.target.value.toUpperCase())} placeholder="27AABCU9603R1ZM" maxLength={20} />
+            <input className="input uppercase" value={form.gstin} onChange={(e) => set('gstin', e.target.value.toUpperCase())} placeholder="27AABCU9603R1ZM" maxLength={20} aria-label="GSTIN for business invoice" />
           </div>
         </div>
         <div>

@@ -105,11 +105,11 @@ export default function ReturnsPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Receipt / Order ID</label>
-            <input className="input" value={form.receipt} onChange={(e) => set('receipt', e.target.value)} placeholder="rcpt_1755…" />
+            <input className="input" value={form.receipt} onChange={(e) => set('receipt', e.target.value)} placeholder="rcpt_1755…" aria-label="Receipt or order ID" />
           </div>
           <div>
             <label className="label">Phone used at checkout</label>
-            <input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" />
+            <input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" />
           </div>
         </div>
 
@@ -137,8 +137,8 @@ export default function ReturnsPage() {
         <h2 className="font-extrabold">Check a return&apos;s status</h2>
         <p className="text-xs text-gray-500 mt-1">Use the same receipt and phone you filed with.</p>
         <form onSubmit={checkStatus} className="mt-3 grid sm:grid-cols-[1fr_1fr_auto] gap-2">
-          <input className="input" value={lookup.receipt} onChange={(e) => setLookup((l) => ({ ...l, receipt: e.target.value }))} placeholder="Receipt / Order ID" />
-          <input className="input" value={lookup.phone} onChange={(e) => setLookup((l) => ({ ...l, phone: e.target.value }))} placeholder="Phone" inputMode="numeric" />
+          <input className="input" value={lookup.receipt} onChange={(e) => setLookup((l) => ({ ...l, receipt: e.target.value }))} placeholder="Receipt / Order ID" aria-label="Receipt or order ID" />
+          <input className="input" value={lookup.phone} onChange={(e) => setLookup((l) => ({ ...l, phone: e.target.value }))} placeholder="Phone" inputMode="numeric" aria-label="Phone number" />
           <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
             {lookup.busy ? 'Checking...' : 'Check'}
           </button>

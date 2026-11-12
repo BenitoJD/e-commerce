@@ -93,8 +93,8 @@ export default function TrackOrderPage() {
       <h1 className="text-3xl font-extrabold">Track Your Order</h1>
       <p className="text-sm text-gray-500 mt-1">Enter the receipt ID from your confirmation page and your order phone number.</p>
       <form onSubmit={go} className="card p-5 mt-5 grid sm:grid-cols-2 gap-4">
-        <div><label className="label">Receipt ID</label><input className="input" value={receipt} onChange={(e) => setReceipt(e.target.value)} placeholder="e.g. TK123456" /></div>
-        <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" /></div>
+        <div><label className="label">Receipt ID</label><input className="input" value={receipt} onChange={(e) => setReceipt(e.target.value)} placeholder="e.g. TK123456" aria-label="Receipt or order ID" /></div>
+        <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
         <div className="sm:col-span-2">
           {err && <p className="text-sm text-red-600 font-semibold mb-2">{err}</p>}
           {notice && <p className="text-sm text-green-700 font-semibold mb-2">{notice}</p>}

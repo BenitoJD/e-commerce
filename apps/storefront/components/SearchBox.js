@@ -89,6 +89,7 @@ export default function SearchBox({ compact = false }) {
       <div className="flex">
         <input
           name="q"
+          aria-label="Search products"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => { if (hasAny) setOpen(true); }}

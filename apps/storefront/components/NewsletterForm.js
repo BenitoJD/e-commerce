@@ -27,7 +27,7 @@ export default function NewsletterForm() {
   return (
     <form onSubmit={go} className="mt-3">
       <div className="flex gap-2">
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for deals & offers" className="input !bg-white/10 !border-white/20 !text-white placeholder:text-gray-400" />
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email for deals & offers" className="input !bg-white/10 !border-white/20 !text-white placeholder:text-gray-400" aria-label="Email address for the newsletter" />
         <button disabled={busy} className="bg-[#F97316] text-white font-bold px-4 rounded-lg text-sm disabled:opacity-60">Join</button>
       </div>
       {msg && <p className="text-xs mt-2 text-orange-200">{msg}</p>}

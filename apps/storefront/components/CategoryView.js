@@ -158,7 +158,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
       </p>
 
       <div className="mt-4 flex flex-wrap gap-3 items-center">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" aria-label="Filter products in this category" />
         <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input max-w-[180px]">
           {brands.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
@@ -169,9 +169,9 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
           <option value="off">Discount</option>
         </select>
         <div className="flex items-center gap-1">
-          <input value={priceMin} onChange={(e) => setPriceMin(e.target.value.replace(/[^\d]/g, ''))} placeholder="Min ₹" inputMode="numeric" className="input max-w-[100px]" />
+          <input value={priceMin} onChange={(e) => setPriceMin(e.target.value.replace(/[^\d]/g, ''))} placeholder="Min ₹" inputMode="numeric" className="input max-w-[100px]" aria-label="Minimum price in rupees" />
           <span className="text-gray-400">–</span>
-          <input value={priceMax} onChange={(e) => setPriceMax(e.target.value.replace(/[^\d]/g, ''))} placeholder="Max ₹" inputMode="numeric" className="input max-w-[100px]" />
+          <input value={priceMax} onChange={(e) => setPriceMax(e.target.value.replace(/[^\d]/g, ''))} placeholder="Max ₹" inputMode="numeric" className="input max-w-[100px]" aria-label="Maximum price in rupees" />
         </div>
         {(brand !== 'All' || sort !== 'pop' || q.trim() !== '' || priceMin !== '' || priceMax !== '') && (
           <button onClick={clearFilters} className="text-xs font-bold text-[#F97316] underline">Clear filters</button>

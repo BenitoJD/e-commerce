@@ -53,11 +53,11 @@ function QuoteInner() {
       <p className="text-sm text-gray-500 mt-1">Wholesale pricing on 5+ units • GST invoice • freight support across India.</p>
       <form onSubmit={submit} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required /></div>
-          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required /></div>
+          <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required aria-label="Your name" /></div>
+          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required aria-label="Phone number" /></div>
         </div>
-        <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required /></div>
-        <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required /></div>
+        <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required aria-label="Product you need a quote for" /></div>
+        <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required aria-label="Quantity needed" /></div>
         <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Delivery city, GST number, timeline..." /></div>
         {status.ok && <p className="text-sm text-green-700 font-semibold">{status.ok}</p>}
         {status.err && <p className="text-sm text-red-600 font-semibold">{status.err}</p>}
@@ -68,7 +68,7 @@ function QuoteInner() {
         <h2 className="font-extrabold">Already asked for a quote?</h2>
         <p className="text-xs text-gray-500 mt-1">Enter the phone number you used and we&apos;ll show its status.</p>
         <form onSubmit={findQuotes} className="mt-3 flex gap-2">
-          <input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" className="input" />
+          <input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" className="input" aria-label="Phone number" />
           <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
             {lookup.busy ? 'Checking...' : 'Check status'}
           </button>

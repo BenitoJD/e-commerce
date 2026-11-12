@@ -99,8 +99,7 @@ export default function MyOrdersPage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="98765 43210"
-            inputMode="numeric"
-          />
+            inputMode="numeric" aria-label="Phone number" />
         </div>
         <div className="flex items-end">
           <button disabled={busy} className="btn-primary w-full sm:w-auto disabled:opacity-60">

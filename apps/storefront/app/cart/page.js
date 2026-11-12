@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCart, updateQty, removeItem, cartTotal } from '../../lib/cart';
-import { validateCoupon, checkPincode } from '../../lib/api';
+import { getCart, updateQty, removeItem, cartTotal, cartStockStatus } from '../../lib/cart';
+import { validateCoupon, checkPincode, fetchStock } from '../../lib/api';
 
 function readCoupon() {
   if (typeof window === 'undefined') return null;
@@ -21,6 +21,7 @@ export default function CartPage() {
   const [couponMsg, setCouponMsg] = useState('');
   const [couponBusy, setCouponBusy] = useState(false);
   const [pinMsg, setPinMsg] = useState('');
+  const [stockMap, setStockMap] = useState(null);
 
   useEffect(() => {
     setItems(getCart());
@@ -55,6 +56,20 @@ export default function CartPage() {
   const subtotal = cartTotal(items);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const payable = Math.max(0, subtotal - discount);
+
+  // Live stock check: the cart is local storage and can be days old, so verify
+  // availability before the shopper reaches the payment step.
+  useEffect(() => {
+    const slugs = items.map((i) => i.slug).filter(Boolean);
+    if (!slugs.length) { setStockMap(null); return undefined; }
+    let alive = true;
+    fetchStock(slugs)
+      .then((r) => { if (alive) setStockMap((r && r.stock) || {}); })
+      .catch(() => { if (alive) setStockMap(null); }); // API down: don't block the cart
+    return () => { alive = false; };
+  }, [items.map((i) => i.slug).join(','), items.map((i) => i.qty).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const stockStatus = cartStockStatus(items, stockMap || {});
 
   // A coupon saved earlier can expire, get disabled, hit its usage cap, or stop
   // qualifying after the cart shrinks. Re-validate it whenever the cart total
@@ -123,22 +138,39 @@ export default function CartPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2 space-y-3">
-            {items.map((i) => (
-              <div key={i.slug} className="card p-3 flex gap-3 items-center">
-                {i.image && <img src={i.image} alt={i.name} className="w-20 h-20 object-cover rounded-lg border" />}
-                <div className="flex-1">
-                  <div className="font-bold text-sm">{i.name}</div>
-                  <div className="text-sm text-gray-600">₹{Number(i.price).toLocaleString('en-IN')} each</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <button onClick={() => setItems(updateQty(i.slug, i.qty - 1))} className="border rounded px-2.5 py-1 font-bold">−</button>
-                    <span className="font-bold">{i.qty}</span>
-                    <button onClick={() => setItems(updateQty(i.slug, i.qty + 1))} className="border rounded px-2.5 py-1 font-bold">+</button>
-                    <button onClick={() => setItems(removeItem(i.slug))} className="ml-2 text-xs text-red-600 font-bold">Remove</button>
+            {items.map((i) => {
+              const info = (stockMap || {})[i.slug];
+              const available = info ? Math.max(0, Number(info.stock) || 0) : null;
+              const soldOut = available === 0;
+              const short = available != null && available > 0 && Number(i.qty) > available;
+              return (
+                <div key={i.slug} className={`card p-3 flex gap-3 items-center ${soldOut ? 'border-red-200 bg-red-50/40' : ''}`}>
+                  {i.image && <img src={i.image} alt={i.name} className="w-20 h-20 object-cover rounded-lg border" />}
+                  <div className="flex-1">
+                    <div className="font-bold text-sm">{i.name}</div>
+                    <div className="text-sm text-gray-600">₹{Number(i.price).toLocaleString('en-IN')} each</div>
+                    {soldOut ? (
+                      <div className="text-xs font-bold text-red-600 mt-1">Out of stock — remove to continue</div>
+                    ) : short ? (
+                      <div className="text-xs font-bold text-amber-700 mt-1">
+                        Only {available} left — reduce quantity to continue
+                      </div>
+                    ) : null}
+                    <div className="mt-2 flex items-center gap-2">
+                      <button onClick={() => setItems(updateQty(i.slug, i.qty - 1))} className="border rounded px-2.5 py-1 font-bold">−</button>
+                      <span className="font-bold">{i.qty}</span>
+                      <button
+                        onClick={() => setItems(updateQty(i.slug, i.qty + 1))}
+                        disabled={available != null && Number(i.qty) >= available}
+                        className="border rounded px-2.5 py-1 font-bold disabled:opacity-40"
+                      >+</button>
+                      <button onClick={() => setItems(removeItem(i.slug))} className="ml-2 text-xs text-red-600 font-bold">Remove</button>
+                    </div>
                   </div>
+                  <div className="font-extrabold">₹{(Number(i.price) * Number(i.qty)).toLocaleString('en-IN')}</div>
                 </div>
-                <div className="font-extrabold">₹{(Number(i.price) * Number(i.qty)).toLocaleString('en-IN')}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="card p-5 h-fit">
             <label className="label">Coupon code</label>
@@ -171,7 +203,18 @@ export default function CartPage() {
               <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{payable.toLocaleString('en-IN')}</span></div>
             </div>
             <p className="text-xs text-gray-500 mt-1">Shipping + GST calculated at checkout.</p>
-            <a href="/checkout" className="btn-primary block text-center mt-4">Proceed to Checkout</a>
+            {!stockStatus.ok ? (
+              <>
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700 font-semibold">
+                  Some items are unavailable in the requested quantity. Fix your cart to continue.
+                </div>
+                <span className="btn-primary block text-center mt-4 opacity-50 cursor-not-allowed" aria-disabled="true">
+                  Proceed to Checkout
+                </span>
+              </>
+            ) : (
+              <a href="/checkout" className="btn-primary block text-center mt-4">Proceed to Checkout</a>
+            )}
             <a href="/category/all" className="block text-center text-sm text-[#F97316] font-bold mt-3">Continue shopping</a>
           </div>
         </div>

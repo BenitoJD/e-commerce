@@ -49,6 +49,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /store/products/stock?slugs=a,b,c — live availability for the cart.
+// Must be declared before '/:slug' or Express would treat "stock" as a slug.
+router.get('/stock', async (req, res) => {
+  try {
+    const slugs = String(req.query.slugs || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 50);
+    if (!slugs.length) return res.json({ stock: {} });
+    const { rows } = await db.query(
+      'SELECT slug, name, price_paise, stock FROM products WHERE slug = ANY($1)',
+      [slugs]
+    );
+    const stock = {};
+    for (const r of rows) stock[r.slug] = { name: r.name, pricePaise: r.price_paise, stock: r.stock };
+    res.json({ stock });
+  } catch (err) {
+    console.error('[products] stock error:', err.message);
+    res.status(500).json({ error: 'Failed to check stock' });
+  }
+});
+
 // GET /store/products/:slug
 router.get('/:slug', async (req, res) => {
   try {

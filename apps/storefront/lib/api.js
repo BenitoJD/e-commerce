@@ -80,6 +80,14 @@ export async function suggestSearch(q, signal) {
   return handle(res);
 }
 
+export async function fetchStock(slugs) {
+  const list = (Array.isArray(slugs) ? slugs : []).filter(Boolean);
+  if (!list.length) return { stock: {} };
+  const q = new URLSearchParams({ slugs: list.join(',') });
+  const res = await fetch(`${BASE}/store/products/stock?${q.toString()}`, { cache: 'no-store' });
+  return handle(res);
+}
+
 export async function fetchProduct(slug) {
   const res = await fetch(`${BASE}/store/products/${encodeURIComponent(slug)}`, { cache: 'no-store' });
   const data = await handle(res);

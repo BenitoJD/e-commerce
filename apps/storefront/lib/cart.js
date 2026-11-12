@@ -84,6 +84,24 @@ export function cartTotal(items) {
   }, 0);
 }
 
+// Compare cart lines against live stock. Returns what's unavailable and what exceeds
+// availability so the cart can warn before checkout instead of failing with a 409.
+export function cartStockStatus(items, stockMap) {
+  const list = Array.isArray(items) ? items : [];
+  const map = stockMap && typeof stockMap === 'object' ? stockMap : {};
+  const unavailable = [];
+  const overQty = [];
+  for (const line of list) {
+    if (!line || !line.slug) continue;
+    const info = map[line.slug];
+    if (!info) continue; // unknown to the API: don't block on missing data
+    const available = Math.max(0, Number(info.stock) || 0);
+    if (available <= 0) unavailable.push(line.slug);
+    else if (Number(line.qty) > available) overQty.push({ slug: line.slug, available });
+  }
+  return { unavailable, overQty, ok: unavailable.length === 0 && overQty.length === 0 };
+}
+
 // Map API order/track items into cart lines (used by "Reorder"). Tolerates either
 // rupee or paise pricing and clamps quantities to the cart's own limits.
 export function orderItemsToCartLines(items) {

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 77 (COD cap enforced server + client, 77 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 78 (live cart stock validation, 78 backend / 32 frontend).
 
 ## Storefront
 
@@ -21,7 +21,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` — **server-rendered** first page |
-| Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown; expiry dates + usage caps enforced atomically; admin Coupons tab; seeded WELCOME10/TOOLS15 |
+| Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; COD capped at `COD_MAX_PAISE` (₹20k default) server-side, UI disables it above the cap |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |
@@ -47,15 +47,15 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 77 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 78 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 30 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping, NaN-proof
+Storefront: `cd apps/storefront && npm test` — 32 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, NaN-proof
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 

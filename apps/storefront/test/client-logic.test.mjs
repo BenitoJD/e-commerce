@@ -88,6 +88,32 @@ test('cart: addToCart without a slug is a no-op', () => {
   assert.equal(cart.getCart().length, 0);
 });
 
+test('cart: stock status flags sold-out and over-quantity lines', () => {
+  const items = [
+    { slug: 'a', qty: 2 },
+    { slug: 'b', qty: 5 },
+    { slug: 'c', qty: 1 },
+    { slug: 'unknown', qty: 3 },
+  ];
+  const status = cart.cartStockStatus(items, {
+    a: { stock: 10 },
+    b: { stock: 2 },
+    c: { stock: 0 },
+  });
+  assert.equal(status.ok, false);
+  assert.deepEqual(status.unavailable, ['c']);
+  assert.deepEqual(status.overQty, [{ slug: 'b', available: 2 }]);
+  // a line the API doesn't know about must not block checkout
+  assert.equal(status.unavailable.includes('unknown'), false);
+});
+
+test('cart: stock status is ok with enough stock or missing data', () => {
+  assert.equal(cart.cartStockStatus([{ slug: 'a', qty: 1 }], { a: { stock: 3 } }).ok, true);
+  assert.equal(cart.cartStockStatus([{ slug: 'a', qty: 1 }], {}).ok, true);
+  assert.equal(cart.cartStockStatus([], null).ok, true);
+  assert.equal(cart.cartStockStatus([{ slug: 'a', qty: 2 }], { a: { stock: '2' } }).ok, true);
+});
+
 test('cart: reorder mapping handles rupees, paise, qty clamps and junk', () => {
   const lines = cart.orderItemsToCartLines([
     { slug: 'a', name: 'Drill', price: 3499, qty: 2 },

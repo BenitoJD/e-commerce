@@ -32,6 +32,9 @@ function makeFakeDb() {
 
   async function query(text, params = []) {
     const t = String(text).replace(/\s+/g, ' ').trim();
+    if (t.startsWith('SELECT slug, name, price_paise, stock FROM products WHERE slug = ANY')) {
+      return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name, price_paise: p.price_paise, stock: p.stock })) };
+    }
     if (t.startsWith('SELECT slug, price_paise, stock FROM products')) {
       return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, price_paise: p.price_paise, stock: p.stock })) };
     }
@@ -454,6 +457,18 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
     code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
     active: true, max_uses: null, used_count: 0, expires_at: null,
   });
+});
+
+test('stock endpoint returns live availability for cart slugs', async () => {
+  const r = await api('GET', '/store/products/stock?slugs=drill-a,motor-b,ghost');
+  assert.equal(r.status, 200);
+  assert.equal(r.json.stock['drill-a'].stock, fake.products.get('drill-a').stock);
+  assert.equal(r.json.stock['motor-b'].pricePaise, 500000);
+  assert.equal(r.json.stock.ghost, undefined); // unknown slugs are simply omitted
+
+  const empty = await api('GET', '/store/products/stock');
+  assert.equal(empty.status, 200);
+  assert.deepEqual(empty.json.stock, {});
 });
 
 test('COD is refused above the configured cap, and allowed just below it', async () => {

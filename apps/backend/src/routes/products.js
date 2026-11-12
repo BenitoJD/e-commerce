@@ -1,13 +1,13 @@
 const express = require('express');
 const db = require('../db');
-const { escapeLike, clampInt } = require('../lib/text');
+const { escapeLike, clampInt, sortClause } = require('../lib/text');
 
 const router = express.Router();
 
 // GET /store/products?q=&brand=&category=&maxPrice=&limit=&offset=
 router.get('/', async (req, res) => {
   try {
-    const { q, brand, category, maxPrice } = req.query;
+    const { q, brand, category, maxPrice, minPrice, sort } = req.query;
     const limit = clampInt(req.query.limit, 50, 1, 100);
     const offset = clampInt(req.query.offset, 0, 0, 10000);
 
@@ -34,12 +34,19 @@ router.get('/', async (req, res) => {
         conds.push(`price_paise <= $${params.length}`);
       }
     }
+    if (minPrice) {
+      const paise = Math.round(parseFloat(minPrice) * 100);
+      if (!Number.isNaN(paise)) {
+        params.push(paise);
+        conds.push(`price_paise >= $${params.length}`);
+      }
+    }
 
     params.push(limit);
     params.push(offset);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(
-      `SELECT * FROM products ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT * FROM products ${where} ORDER BY ${sortClause(sort)} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
     res.json({ products: rows, limit, offset });

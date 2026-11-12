@@ -13,6 +13,8 @@ const searchRouter = require('./routes/search');
 const engagementRouter = require('./routes/engagement');
 const serviceRouter = require('./routes/service');
 const invoiceRouter = require('./routes/invoice');
+const brandsRouter = require('./routes/brands');
+const dealsRouter = require('./routes/deals');
 const sitemapHandler = require('./routes/sitemap');
 const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
@@ -74,8 +76,8 @@ const lookupLimit = createRateLimiter({
 app.use(['/store/invoice', '/store/service/track', '/store/checkout/verify'], lookupLimit);
 
 app.use('/store/products', productsRouter);
-app.use('/store/brands', require('./routes/brands'));
-app.use('/store/deals', require('./routes/deals'));
+app.use('/store/brands', brandsRouter);
+app.use('/store/deals', dealsRouter);
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);
 app.use('/store/search', searchRouter);

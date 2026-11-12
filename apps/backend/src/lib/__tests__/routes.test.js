@@ -76,17 +76,37 @@ function makeFakeDb() {
       return { rows: [...products.values()].filter((p) => params[0].includes(p.slug)) };
     }
     if (t.startsWith('SELECT * FROM products') && t.includes('LIMIT $')) {
-      // Admin catalogue paging relies on q + limit + offset working together.
+      // Mirrors the server's list endpoint: filters in code order, then limit/offset.
       const limit = Number(params[params.length - 2]) || 50;
       const offset = Number(params[params.length - 1]) || 0;
       const args = params.slice(0, -2);
-      let term = null;
+      let idx = 0;
+      const conds = [];
       if (t.includes('name ILIKE $')) {
-        term = String(args[0] || '').replace(/%/g, '').toLowerCase();
+        const term = String(args[idx++] || '').replace(/%/g, '').toLowerCase();
+        conds.push((p) => `${p.slug} ${p.name} ${p.brand || ''}`.toLowerCase().includes(term));
       }
-      const rows = [...products.values()]
-        .filter((p) => !term || `${p.slug} ${p.name} ${p.brand || ''}`.toLowerCase().includes(term))
-        .slice(offset, offset + limit);
+      if (/(?:AND|WHERE) brand ILIKE \$/.test(t)) {
+        const brand = String(args[idx++] || '').toLowerCase();
+        conds.push((p) => String(p.brand || '').toLowerCase() === brand);
+      }
+      if (/(?:AND|WHERE) category ILIKE \$/.test(t)) {
+        const cat = String(args[idx++] || '').toLowerCase();
+        conds.push((p) => String(p.category || '').toLowerCase() === cat);
+      }
+      if (t.includes('price_paise <= $')) {
+        const max = Number(args[idx++]);
+        conds.push((p) => p.price_paise <= max);
+      }
+      if (t.includes('price_paise >= $')) {
+        const min = Number(args[idx++]);
+        conds.push((p) => p.price_paise >= min);
+      }
+      let rows = [...products.values()].filter((p) => conds.every((fn) => fn(p)));
+      // ORDER BY is inlined (allowlisted) — apply the same intent here.
+      if (t.includes('price_paise ASC')) rows.sort((a, b) => a.price_paise - b.price_paise);
+      else if (t.includes('price_paise DESC')) rows.sort((a, b) => b.price_paise - a.price_paise);
+      rows = rows.slice(offset, offset + limit);
       return { rows };
     }
     if (t.startsWith('SELECT * FROM products WHERE slug =')) {
@@ -858,6 +878,27 @@ test('online orders still show the payment step', async () => {
 
   const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9876543210`);
   assert.deepEqual(tracked.json.timeline.map((t) => t.status), ['placed', 'paid']);
+});
+
+test('product list filters by price band and sorts server-side', async () => {
+  const cheap = await api('GET', '/store/products?maxPrice=2000&limit=10');
+  assert.equal(cheap.status, 200);
+  assert.ok(cheap.json.products.every((p) => p.price_paise <= 200000));
+
+  const band = await api('GET', '/store/products?minPrice=1000&maxPrice=2000&limit=10');
+  assert.ok(band.json.products.every((p) => p.price_paise >= 100000 && p.price_paise <= 200000));
+
+  const asc = await api('GET', '/store/products?sort=low&limit=10');
+  const prices = asc.json.products.map((p) => p.price_paise);
+  assert.deepEqual(prices, [...prices].sort((a, b) => a - b), 'sort=low is ascending');
+
+  const desc = await api('GET', '/store/products?sort=high&limit=10');
+  const dprices = desc.json.products.map((p) => p.price_paise);
+  assert.deepEqual(dprices, [...dprices].sort((a, b) => b - a), 'sort=high is descending');
+
+  // injection attempt falls back to the default order instead of reaching SQL
+  const evil = await api('GET', '/store/products?sort=price_paise%20ASC;DROP%20TABLE%20products&limit=5');
+  assert.equal(evil.status, 200);
 });
 
 test('product list supports search + paging (admin catalogue)', async () => {

@@ -29,6 +29,7 @@ test('clampInt defaults and clamps', () => {
 test('sortClause only ever returns allowlisted fragments', () => {
   assert.equal(sortClause('low'), 'price_paise ASC, id DESC');
   assert.equal(sortClause('high'), 'price_paise DESC, id DESC');
+  assert.match(sortClause('off'), /NULLIF\(mrp_paise, 0\)/); // discount ordering
   assert.equal(sortClause('new'), 'created_at DESC, id DESC');
   assert.equal(sortClause('popular'), 'created_at DESC, id DESC');
   assert.equal(sortClause('price_paise ASC; DROP TABLE products; --'), 'created_at DESC, id DESC');

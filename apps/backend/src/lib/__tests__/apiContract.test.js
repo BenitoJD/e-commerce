@@ -59,6 +59,8 @@ const ROUTER_FILES = {
   engagementRouter: 'engagement.js',
   serviceRouter: 'service.js',
   invoiceRouter: 'invoice.js',
+  brandsRouter: 'brands.js',
+  dealsRouter: 'deals.js',
 };
 
 function backendRoutes() {

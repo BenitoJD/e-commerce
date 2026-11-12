@@ -77,20 +77,27 @@ export function safeVideoUrls(list) {
     .map((v) => String(v).trim());
 }
 
-export async function fetchProducts({ category, limit = 20, search = '', brand = '', sort = '', offset = 0 } = {}) {
+export async function fetchProducts({ category, limit = 20, search = '', brand = '', sort = '', offset = 0, minPrice = '', maxPrice = '' } = {}) {
   const q = new URLSearchParams();
   if (limit) q.set('limit', String(limit));
   if (offset) q.set('offset', String(offset));
   if (category && category !== 'all') q.set('category', category);
   if (search) q.set('q', search);
-  if (brand) q.set('brand', brand);
-  if (sort) q.set('sort', sort);
+  if (brand && brand !== 'All') q.set('brand', brand);
+  if (sort && sort !== 'pop') q.set('sort', sort);
+  if (minPrice !== '' && minPrice != null) q.set('minPrice', String(minPrice));
+  if (maxPrice !== '' && maxPrice != null) q.set('maxPrice', String(maxPrice));
   const res = await fetch(`${BASE}/store/products?${q.toString()}`, { cache: 'no-store' });
   const data = await handle(res);
   if (Array.isArray(data)) return normalizeList(data);
   if (data && Array.isArray(data.products)) return { ...data, products: normalizeList(data.products) };
   if (data && Array.isArray(data.items)) return { ...data, items: normalizeList(data.items) };
   return data;
+}
+
+export async function fetchBrands() {
+  const res = await fetch(`${BASE}/store/brands`, { cache: 'no-store' });
+  return handle(res);
 }
 
 export async function suggestSearch(q, signal) {

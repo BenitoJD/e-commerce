@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { fetchProducts } from '../lib/api';
-import { filterProducts } from '../lib/catalog';
+import { fetchProducts, fetchBrands } from '../lib/api';
 import { STORE } from '../lib/store';
 
 const FALLBACK = [
@@ -41,17 +40,22 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
       setLoading(true);
       setHasMore(false);
       try {
-        // Filters run client-side, so pull a wide set when they are active; otherwise paginate.
+        // Filters are applied by the API now, so results stay correct past the first
+        // page instead of filtering a truncated slice client-side.
         const data = await fetchProducts({
           category: slug,
-          limit: filtersActive ? 200 : PAGE_SIZE,
+          limit: PAGE_SIZE,
           offset: 0,
-          search: initialQ
+          search: q.trim() || initialQ,
+          brand,
+          sort,
+          minPrice: priceMin,
+          maxPrice: priceMax,
         });
         const list = Array.isArray(data) ? data : data.products || data.items || [];
         if (!alive) return;
-        setItems(list.length ? list : FALLBACK.filter((p) => slug === 'all' || p.category === slug));
-        setHasMore(!filtersActive && list.length === PAGE_SIZE);
+        setItems(list.length ? list : (filtersActive ? [] : FALLBACK.filter((p) => slug === 'all' || p.category === slug)));
+        setHasMore(list.length === PAGE_SIZE);
       } catch {
         if (alive) {
           setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
@@ -63,16 +67,24 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
     }
     load();
     return () => { alive = false; };
-    // Turning filters on/off changes how much we need to fetch (wide set vs paged),
-    // so refetch rather than filtering a single page of 40.
+    // Any filter change re-queries the API (server-side filtering + paging).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, initialQ, filtersActive]);
+  }, [slug, initialQ, brand, sort, q, priceMin, priceMax]);
 
   async function loadMore() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const data = await fetchProducts({ category: slug, limit: PAGE_SIZE, offset: items.length, search: initialQ });
+      const data = await fetchProducts({
+        category: slug,
+        limit: PAGE_SIZE,
+        offset: items.length,
+        search: q.trim() || initialQ,
+        brand,
+        sort,
+        minPrice: priceMin,
+        maxPrice: priceMax,
+      });
       const list = Array.isArray(data) ? data : data.products || data.items || [];
       setItems((prev) => [...prev, ...list]);
       setHasMore(list.length === PAGE_SIZE);
@@ -83,12 +95,28 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '' })
     }
   }
 
-  const brands = useMemo(() => ['All', ...new Set(items.map((p) => p.brand).filter(Boolean))], [items]);
+  // Brand options come from the catalogue itself, not from the filtered results — otherwise
+  // choosing one brand would remove every other option from the dropdown.
+  const [brandOptions, setBrandOptions] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetchBrands()
+      .then((r) => {
+        if (!alive) return;
+        const rows = Array.isArray(r) ? r : (r && r.brands) || [];
+        setBrandOptions(rows.map((b) => b.name).filter(Boolean));
+      })
+      .catch(() => { /* dropdown falls back to what we have */ });
+    return () => { alive = false; };
+  }, []);
 
-  const filtered = useMemo(
-    () => filterProducts(items, { brand, q, priceMin, priceMax, sort }),
-    [items, brand, q, priceMin, priceMax, sort]
-  );
+  const brands = useMemo(() => {
+    const fromItems = items.map((p) => p.brand).filter(Boolean);
+    return ['All', ...new Set([...brandOptions, ...fromItems])];
+  }, [items, brandOptions]);
+
+  // The API already applied brand/text/price/sort, so render its rows as-is.
+  const filtered = items;
 
   const clearFilters = () => {
     setBrand('All');

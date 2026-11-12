@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 121 (dashboard today/7-day metrics + action counts, 146 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 122 (rating summary beside the product title).
 
 ## Storefront
 
@@ -12,7 +12,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
-| Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
+| Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab + `POST/DELETE /admin/products` |
 | Accounting export | ✅ `GET /admin/orders/export.csv` with **status + date-range (from/to)** filters, RFC-style quoting, shipping column; Orders tab has from/to date pickers for both the list and the export |
 | Dashboard metrics | ✅ Overview shows **orders today, revenue today, 7-day revenue**, unpaid/COD-pending count and **manual refunds needing action** (computed by a tested summariser) |

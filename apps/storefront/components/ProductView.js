@@ -291,6 +291,16 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
         <div>
           <div className="text-sm font-bold text-[#F97316]">{p.brand || ''}</div>
           <h1 className="text-2xl md:text-3xl font-extrabold mt-1">{p.name}</h1>
+          {/* Rating summary next to the title: shoppers decide here, not 400px lower. */}
+          {count > 0 ? (
+            <a href="#reviews" className="mt-2 inline-flex items-center gap-2 text-sm">
+              <Stars value={avg} size="text-base" />
+              <span className="font-bold">{Number(avg).toFixed(1)}</span>
+              <span className="text-gray-500">({count} review{Number(count) === 1 ? '' : 's'})</span>
+            </a>
+          ) : (
+            <a href="#reviews" className="mt-2 inline-block text-sm text-gray-500 underline">Be the first to review</a>
+          )}
           <div className="mt-3 flex items-baseline gap-3">
             <span className="text-3xl font-black">₹{Number(p.price).toLocaleString('en-IN')}</span>
             {p.mrp && <span className="text-gray-400 line-through">₹{Number(p.mrp).toLocaleString('en-IN')}</span>}
@@ -398,7 +408,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
 
       {/* Reviews */}
       <div className="mt-12 grid md:grid-cols-3 gap-6">
-        <div className="card p-5 h-fit">
+        <div id="reviews" className="card p-5 h-fit scroll-mt-24">
           <h2 className="font-extrabold text-lg">Ratings & Reviews</h2>
           <div className="mt-2 flex items-center gap-2">
             <Stars value={avg} size="text-xl" />

@@ -481,6 +481,35 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
   assert.equal(inv.json.grandPaise, created.json.amount_paise);
 });
 
+test('buyer GSTIN is captured, validated and printed on the invoice', async () => {
+  const good = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi Kumar', phone: '9876543210', gstin: '27aabc u9603r1zm' },
+  });
+  assert.equal(good.status, 200);
+  const order = fake.orders.find((o) => o.receipt === good.json.receipt);
+  assert.equal(order.customer.gstin, '27AABCU9603R1ZM'); // normalised to upper case
+
+  const inv = await api('GET', `/store/invoice/${good.json.receipt}`);
+  assert.equal(inv.json.customer.gstin, '27AABCU9603R1ZM');
+
+  const bad = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi Kumar', phone: '9876543210', gstin: 'NOT-A-GSTIN' },
+  });
+  assert.equal(bad.status, 400);
+  assert.match(bad.json.error, /GSTIN/i);
+
+  // optional: a retail order without GSTIN still works
+  const none = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi Kumar', phone: '9876543210' },
+  });
+  assert.equal(none.status, 200);
+  const noneOrder = fake.orders.find((o) => o.receipt === none.json.receipt);
+  assert.equal(noneOrder.customer.gstin, null);
+});
+
 test('invoice 404s unknown receipts', async () => {
   const r = await api('GET', '/store/invoice/rcpt_nope_123');
   assert.equal(r.status, 404);

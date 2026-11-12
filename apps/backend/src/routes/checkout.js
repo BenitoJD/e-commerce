@@ -24,6 +24,12 @@ router.post('/create', async (req, res) => {
     if (!customer || !customer.name || !customer.phone) {
       return res.status(400).json({ error: 'customer {name, phone} required' });
     }
+    // Business buyers need their GSTIN on the tax invoice; validate when supplied.
+    const buyerGstin = String(customer.gstin || '').replace(/\s+/g, '').toUpperCase();
+    if (buyerGstin && !/^[0-9A-Z]{15}$/.test(buyerGstin)) {
+      return res.status(400).json({ error: 'GSTIN must be 15 letters/digits' });
+    }
+    const buyer = { ...customer, gstin: buyerGstin || null };
 
     // Lookup products
     const slugs = [...new Set(items.map((i) => i.slug))];
@@ -104,7 +110,7 @@ router.post('/create', async (req, res) => {
         const { rows } = await tx.query(
           `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise, pay_mode)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, receipt`,
-          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(customer), couponCode, discountPaise, payMode === 'cod' ? 'cod' : 'online']
+          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(buyer), couponCode, discountPaise, payMode === 'cod' ? 'cod' : 'online']
         );
         return rows[0];
       });

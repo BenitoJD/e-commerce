@@ -62,6 +62,7 @@ router.get('/:receipt', async (req, res) => {
         phone: customer.phone || '',
         address: customer.address || '',
         pincode: customer.pincode || '',
+        gstin: customer.gstin || '',
       },
       items,
       subtotalPaise: grandPaise,

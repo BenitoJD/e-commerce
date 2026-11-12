@@ -88,6 +88,9 @@ export default function InvoicePage({ params }) {
               <div className="text-gray-600">{customer.address || ''}</div>
               <div className="text-gray-600">{customer.pincode || ''}</div>
               <div className="text-gray-600">Phone: {customer.phone || '—'}</div>
+              {customer.gstin ? (
+                <div className="text-gray-600 font-semibold">GSTIN: {customer.gstin}</div>
+              ) : null}
             </div>
             <div className="sm:text-right">
               <div className="font-bold mb-1">Payment</div>

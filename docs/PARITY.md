@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 82 (quote lookup scoped by phone; PII leak fixed, 88 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 83 (buyer GSTIN on invoices, 89 backend tests).
 
 ## Storefront
 
@@ -26,7 +26,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
-| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF) |
+| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout** and printed |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow |
 | Newsletter | ✅ `/store/service/subscribe` + footer form |
@@ -47,7 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 88 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 89 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

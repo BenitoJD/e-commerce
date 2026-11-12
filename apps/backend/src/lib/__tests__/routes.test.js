@@ -173,9 +173,11 @@ function makeFakeDb() {
       return { rows: params[0].map((s) => products.get(s)).filter(Boolean).map((p) => ({ slug: p.slug, name: p.name })) };
     }
     if (t.startsWith('SELECT id, receipt, status, amount_paise, coupon_code')) {
-      const limit = Number(params[params.length - 1]) || 50;
+      // params = [...filters, limit, offset]
+      const offset = Number(params[params.length - 1]) || 0;
+      const limit = Number(params[params.length - 2]) || 50;
       const conds = [];
-      const args = params.slice(0, -1);
+      const args = params.slice(0, -2);
       // Mirror the server's filter builder closely enough to prove wiring: status, dates, text.
       let idx = 0;
       if (t.includes('status = $')) { conds.push((o) => o.status === args[idx++]); }
@@ -188,7 +190,7 @@ function makeFakeDb() {
       const rows = orders
         .filter((o) => conds.every((fn) => fn(o)))
         .sort((a, b) => b.id - a.id)
-        .slice(0, limit);
+        .slice(offset, offset + limit);
       return { rows };
     }
     if (t.startsWith('SELECT receipt, created_at, status, pay_mode, refund_mode, amount_paise')) {
@@ -1035,6 +1037,31 @@ test('COD is refused above the configured cap, and allowed just below it', async
   assert.equal(online.status, 200);
 
   weapon.stock = originalStock;
+});
+
+test('admin orders paging: offset moves the window and limit is respected', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  // Create three orders so paging has something to move past.
+  for (let i = 0; i < 3; i += 1) {
+    await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }],
+      customer: { name: `Pager ${i}`, phone: `981230010${i}` },
+    });
+  }
+
+  const first = await api('GET', '/admin/orders?limit=1&offset=0', undefined, adminHeaders);
+  const second = await api('GET', '/admin/orders?limit=1&offset=1', undefined, adminHeaders);
+  assert.equal(first.status, 200);
+  assert.equal(first.json.orders.length, 1);
+  assert.equal(first.json.limit, 1);
+  assert.equal(first.json.offset, 0);
+  assert.equal(second.json.offset, 1);
+  assert.notEqual(first.json.orders[0].receipt, second.json.orders[0].receipt, 'offset must advance');
+
+  // negative offsets clamp to zero rather than erroring
+  const clamped = await api('GET', '/admin/orders?limit=1&offset=-5', undefined, adminHeaders);
+  assert.equal(clamped.status, 200);
+  assert.equal(clamped.json.offset, 0);
 });
 
 test('admin orders can be filtered by status and date range (and flags bad dates)', async () => {

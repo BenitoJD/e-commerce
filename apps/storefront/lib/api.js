@@ -166,12 +166,14 @@ export async function getAdminStats(token) {
   return handle(res);
 }
 
-export async function getAdminOrders(token, status = '', search = '', { from = '', to = '' } = {}) {
+export async function getAdminOrders(token, status = '', search = '', { from = '', to = '', offset = 0, limit = 50 } = {}) {
   const params = new URLSearchParams();
   if (status) params.set('status', status);
   if (search) params.set('q', search);
   if (from) params.set('from', from);
   if (to) params.set('to', to);
+  if (offset) params.set('offset', String(offset));
+  if (limit) params.set('limit', String(limit));
   const qs = params.toString();
   const res = await fetch(`${BASE}/admin/orders${qs ? `?${qs}` : ''}`, {
     headers: adminHeaders(token),

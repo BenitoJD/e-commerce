@@ -67,20 +67,23 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-// GET /admin/orders?status=&from=&to=&q=&limit=50
+// GET /admin/orders?status=&from=&to=&q=&limit=50&offset=0
 router.get('/orders', async (req, res) => {
   try {
     let limit = parseInt(req.query.limit, 10) || 50;
     limit = Math.min(Math.max(limit, 1), 200);
+    let offset = parseInt(req.query.offset, 10) || 0;
+    offset = Math.min(Math.max(offset, 0), 100000);
     const filter = buildOrderFilter(req.query);
-    const params = [...filter.params, limit];
+    const params = [...filter.params, limit, offset];
     const { rows } = await db.query(
       `SELECT id, receipt, status, amount_paise, coupon_code, COALESCE(discount_paise, 0) AS discount_paise,
               customer, razorpay_payment_id, pay_mode, refund_mode, refunded_at, created_at
-       FROM orders ${filter.where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
+       FROM orders ${filter.where} ORDER BY created_at DESC, id DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
-    res.json({ orders: rows, ignored: filter.ignored });
+    res.json({ orders: rows, ignored: filter.ignored, limit, offset });
   } catch (err) {
     console.error('[admin] orders error:', err.message);
     res.status(500).json({ error: 'Failed to list orders' });

@@ -58,6 +58,7 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [ordersHasMore, setOrdersHasMore] = useState(false);
   const [orderFilter, setOrderFilter] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [orderDetail, setOrderDetail] = useState(null);
@@ -143,13 +144,17 @@ export default function AdminPage() {
     }
   }
 
-  async function loadOrders() {
+  async function loadOrders({ append = false } = {}) {
     if (!token) return;
     setLoading(true);
     setError('');
     try {
-      const data = await getAdminOrders(token, orderFilter, orderSearch.trim(), { from: orderFrom, to: orderTo });
-      setOrders(Array.isArray(data) ? data : data.orders || data.items || []);
+      // Older orders would otherwise be unreachable beyond the first page.
+      const offset = append ? orders.length : 0;
+      const data = await getAdminOrders(token, orderFilter, orderSearch.trim(), { from: orderFrom, to: orderTo, offset });
+      const list = Array.isArray(data) ? data : data.orders || data.items || [];
+      setOrders((prev) => (append ? [...prev, ...list] : list));
+      setOrdersHasMore(list.length === 50);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -738,6 +743,11 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+              {ordersHasMore ? (
+                <button onClick={() => loadOrders({ append: true })} disabled={loading} className="btn-outline !py-2 mt-3 disabled:opacity-50">
+                  {loading ? 'Loading...' : 'Load more orders'}
+                </button>
+              ) : null}
 
               {orderDetail ? (
                 <div className="card p-4 mt-4">

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { escapeLike, clampInt } = require('../text');
+const { escapeLike, clampInt, sortClause } = require('../text');
 
 test('escapeLike escapes %, _, backslash', () => {
   assert.equal(escapeLike('100%'), '100\\%');
@@ -24,4 +24,14 @@ test('clampInt defaults and clamps', () => {
   assert.equal(clampInt('abc', 20, 1, 50), 20);
   assert.equal(clampInt(undefined, 20, 1, 50), 20);
   assert.equal(clampInt('-5', 0, 0, 1000), 0);
+});
+
+test('sortClause only ever returns allowlisted fragments', () => {
+  assert.equal(sortClause('low'), 'price_paise ASC, id DESC');
+  assert.equal(sortClause('high'), 'price_paise DESC, id DESC');
+  assert.equal(sortClause('new'), 'created_at DESC, id DESC');
+  assert.equal(sortClause('popular'), 'created_at DESC, id DESC');
+  assert.equal(sortClause('price_paise ASC; DROP TABLE products; --'), 'created_at DESC, id DESC');
+  assert.equal(sortClause(''), 'created_at DESC, id DESC');
+  assert.equal(sortClause(undefined), 'created_at DESC, id DESC');
 });

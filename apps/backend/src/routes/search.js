@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../db');
-const { escapeLike, clampInt } = require('../lib/text');
+const { escapeLike, clampInt, sortClause } = require('../lib/text');
 
 const router = express.Router();
 
@@ -35,10 +35,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    let orderBy = 'created_at DESC, id DESC';
-    if (sort === 'low') orderBy = 'price_paise ASC, id DESC';
-    else if (sort === 'high') orderBy = 'price_paise DESC, id DESC';
-    else if (sort === 'new') orderBy = 'created_at DESC, id DESC';
+    const orderBy = sortClause(sort);
 
     params.push(limit);
     params.push(offset);

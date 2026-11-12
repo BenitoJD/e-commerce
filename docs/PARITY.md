@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 9 (stock badges, revenue incl. COD delivered).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 10 (coupon management, case-insensitive codes, live cart pincode).
 
 ## Storefront
 
@@ -19,7 +19,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Recently viewed | ✅ `tw_recent` strip on homepage |
 | Deals of the day + countdown | ✅ `/deals` |
 | Brand pages | ✅ `/brands`, `/brand/[name]` |
-| Cart + coupons + GST note | ✅ validate + breakdown; discount applied **server-side**, stored as `coupon_code`/`discount_paise` |
+| Cart + coupons + GST note | ✅ case-insensitive validate + server-side breakdown (`coupon_code`/`discount_paise`); admin Coupons tab; seeded WELCOME10/TOOLS15 |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel |

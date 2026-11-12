@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 33 (review/question product guards).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 34 (npm test works everywhere).
 
 ## Storefront
 
@@ -43,5 +43,5 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-`cd apps/backend && node --test <test files>` — 16/16 (pricing math, GST, EMI, catalog validity).
-Use explicit file args: directory-form `node --test <dir>` fails on the bundled Node 24 runtime.
+`cd apps/backend && npm test` — 35/35 (pricing math, GST, EMI, catalog validity,
+webhook state machine + signature, LIKE escaping, status transitions).

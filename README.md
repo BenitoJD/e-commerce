@@ -77,7 +77,7 @@ Put Cloudflare in front, point `yourdomain.com` → VPS, webhook URL:
 - Engagement: product reviews + ratings, Q&A with admin answers (`/store/engage/*`), wishlist (localStorage), recently-viewed strip.
 - Commerce: coupon codes (`/store/engage/coupons/validate`, cart input, checkout breakdown), pincode serviceability + ETA + COD check, live order tracking page (`/track-order` + `/store/service/track`), EMI plans on product pages, deals-of-the-day with countdown (`/deals`), brand directory + brand pages (`/brands`, `/brand/[name]`).
 - Trust: 9 policy/info pages (shipping, returns, warranty, privacy, terms, about, contact, EMI options, bulk orders), newsletter subscribe, expanded footer.
-- Tests: `cd apps/backend && npm test` (node --test: pricing math + catalog validity, 16 tests). Note: run with explicit file args or Node 20 — `node --test <dir>` directory scanning fails on the bundled Node 24 runtime.
+- Tests: `cd apps/backend && npm test` (node --test: 35 tests — pricing, GST, webhooks, transitions, catalog).
 - APIs: `GET /store/search?...`, `GET /store/checkout/verify?receipt=`, `GET /store/service/*` (pincode/track/subscribe).
 
 ## GitHub

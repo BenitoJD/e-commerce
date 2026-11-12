@@ -39,7 +39,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Razorpay live keys | Dashboard → backend `.env`, webhook URL |
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
 | Product videos | MP4 URLs → extend gallery |
-| Seller GSTIN | Replace `00AAAAA0000A1Z5` placeholder in invoice page + backend invoice route |
+| Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 
 ## Tests
 

@@ -7,14 +7,21 @@ export default function BrandPage({ params }) {
   const name = decodeURIComponent(params.name);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const PAGE = 40;
 
   useEffect(() => {
     let alive = true;
     async function load() {
       setLoading(true);
+      setHasMore(false);
       try {
-        const data = await searchProducts({ brand: name, limit: 40 });
-        if (alive) setItems(asList(data));
+        const data = await searchProducts({ brand: name, limit: PAGE, offset: 0 });
+        const list = asList(data);
+        if (!alive) return;
+        setItems(list);
+        setHasMore(list.length === PAGE);
       } catch {
         if (alive) setItems([]);
       } finally {
@@ -24,6 +31,21 @@ export default function BrandPage({ params }) {
     load();
     return () => { alive = false; };
   }, [name]);
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await searchProducts({ brand: name, limit: PAGE, offset: items.length });
+      const list = asList(data);
+      setItems((prev) => [...prev, ...list]);
+      setHasMore(list.length === PAGE);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -60,6 +82,13 @@ export default function BrandPage({ params }) {
           })}
         </div>
       )}
+      {!loading && hasMore ? (
+        <div className="mt-8 text-center">
+          <button onClick={loadMore} disabled={loadingMore} className="btn-outline disabled:opacity-60">
+            {loadingMore ? 'Loading...' : 'Load more products'}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

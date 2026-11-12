@@ -11,13 +11,18 @@ export default function BrandsPage() {
     let alive = true;
     async function load() {
       try {
-        const data = await fetchProducts({ limit: 100 });
-        const list = asList(data);
+        // Page through the whole catalog so no brand is missed past the first 100 products.
         const map = {};
-        list.forEach((p) => {
-          const b = (p.brand || '').trim();
-          if (b) map[b] = (map[b] || 0) + 1;
-        });
+        for (let page = 0; page < 10; page++) {
+          const data = await fetchProducts({ limit: 100, offset: page * 100 });
+          const list = asList(data);
+          if (!list.length) break;
+          list.forEach((p) => {
+            const b = (p.brand || '').trim();
+            if (b) map[b] = (map[b] || 0) + 1;
+          });
+          if (list.length < 100) break;
+        }
         const arr = Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
         if (alive) setBrands(arr);
       } catch {

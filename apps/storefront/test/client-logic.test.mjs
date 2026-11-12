@@ -189,3 +189,28 @@ test('api: friendly fallbacks by status when no body is usable', () => {
   assert.match(api.parseErrorMessage(503, ''), /our side/i);
   assert.match(api.parseErrorMessage(418, ''), /418/);
 });
+
+// ---------------- api: video embed safety ----------------
+
+test('api: only known embed hosts pass video validation', () => {
+  const ok = api.safeVideoUrls([
+    'https://www.youtube.com/embed/abc123',
+    'https://youtube-nocookie.com/embed/x',
+    'https://vimeo.com/12345',
+  ]);
+  assert.equal(ok.length, 3);
+});
+
+test('api: javascript/data/malformed URLs are stripped (iframe injection guard)', () => {
+  const bad = api.safeVideoUrls([
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'http://youtube.com/embed/abc',
+    'https://evil.com/embed/abc',
+    null,
+    '',
+  ]);
+  assert.deepEqual(bad, []);
+  assert.deepEqual(api.safeVideoUrls(undefined), []);
+  assert.deepEqual(api.safeVideoUrls('not-an-array'), []);
+});

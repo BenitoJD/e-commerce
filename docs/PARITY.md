@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 53 (readable API errors, 21/21 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 54 (product videos shipped).
 
 ## Storefront
 
@@ -11,7 +11,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Search with suggestions | ✅ `/store/search` + header search |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` (gallery + EMI 3/6/9/12) |
-| Product videos | ⚠️ schema supports `images[]`; no video player yet (add `videos[]` when you have MP4s) |
+| Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order (agreed price, stock reserved) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page checker |

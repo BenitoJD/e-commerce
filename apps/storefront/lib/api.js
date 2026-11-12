@@ -48,6 +48,16 @@ export function normalizeList(list) {
   return (Array.isArray(list) ? list : []).map(normalizeProduct);
 }
 
+// Only known embed hosts may reach an <iframe src>. Blocks javascript:/data: injection
+// from any untrusted product payload.
+const SAFE_EMBED = /^https:\/\/(www\.)?(youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/|vimeo\.com\/)/;
+
+export function safeVideoUrls(list) {
+  return (Array.isArray(list) ? list : [])
+    .filter((v) => SAFE_EMBED.test(String(v == null ? '' : v).trim()))
+    .map((v) => String(v).trim());
+}
+
 export async function fetchProducts({ category, limit = 20, search = '', brand = '', sort = '', offset = 0 } = {}) {
   const q = new URLSearchParams();
   if (limit) q.set('limit', String(limit));

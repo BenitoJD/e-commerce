@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestions, addQuestion, checkPincode } from '../../../lib/api';
+import { fetchProduct, searchProducts, asList, getReviews, addReview, getQuestions, addQuestion, checkPincode, safeVideoUrls } from '../../../lib/api';
 import { addToCart } from '../../../lib/cart';
 import { addToWishlist, removeFromWishlist, isWishlisted } from '../../../lib/wishlist';
 
@@ -119,6 +119,7 @@ export default function ProductPage({ params }) {
   if (!p) return <div className="max-w-7xl mx-auto px-4 py-10 text-gray-500">Loading product...</div>;
 
   const images = p.images && p.images.length ? p.images : [p.image || FALLBACK.image];
+  const videos = safeVideoUrls(p.videos);
   const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
   const emi = (m) => Math.round(Number(p.price) / m);
   const stockNum = p.stock == null ? null : Math.max(0, Number(p.stock) || 0);
@@ -224,6 +225,23 @@ export default function ProductPage({ params }) {
               {images.slice(0, 4).map((src, i) => (
                 <img key={i} src={src} alt="" className="h-20 w-full object-cover rounded-lg border" loading="lazy" />
               ))}
+            </div>
+          )}
+          {videos.length > 0 && (
+            <div className="mt-4">
+              <div className="text-sm font-bold mb-2">Product video</div>
+              <div className="aspect-video w-full rounded-xl overflow-hidden border bg-black">
+                <iframe
+                  src={videos[0]}
+                  title={`${p.name} video`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Demo/usage video. Actual unit may vary.</p>
             </div>
           )}
         </div>

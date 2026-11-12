@@ -24,6 +24,12 @@ describe('products catalog', () => {
       assert.ok(Number.isInteger(p.stock) && p.stock >= 0, `stock invalid: ${p.slug}`);
       assert.ok(p.specs && typeof p.specs === 'object', `specs missing: ${p.slug}`);
       assert.ok(Array.isArray(p.images) && p.images.length > 0, `images missing: ${p.slug}`);
+      if (p.videos !== undefined) {
+        assert.ok(Array.isArray(p.videos), `videos must be an array: ${p.slug}`);
+        for (const v of p.videos) {
+          assert.match(v, /^https:\/\/(www\.)?(youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/|vimeo\.com\/)/, `bad video url: ${p.slug}`);
+        }
+      }
     }
   });
 

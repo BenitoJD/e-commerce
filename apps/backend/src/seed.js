@@ -6,10 +6,10 @@ const coupons = require('../data/coupons');
 async function main() {
   for (const p of products) {
     await db.query(
-      `INSERT INTO products (slug, name, brand, category, price_paise, mrp_paise, hsn, stock, specs, images)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      `INSERT INTO products (slug, name, brand, category, price_paise, mrp_paise, hsn, stock, specs, images, videos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        ON CONFLICT (slug) DO NOTHING`,
-      [p.slug, p.name, p.brand, p.category, p.price_paise, p.mrp_paise, p.hsn, p.stock, JSON.stringify(p.specs), p.images]
+      [p.slug, p.name, p.brand, p.category, p.price_paise, p.mrp_paise, p.hsn, p.stock, JSON.stringify(p.specs), p.images, p.videos || []]
     );
   }
   const r = await db.query('SELECT COUNT(*)::int AS n FROM products');

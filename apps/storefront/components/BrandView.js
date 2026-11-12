@@ -54,6 +54,13 @@ export default function BrandView({ name, initialItems = [] }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-2">
+        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <span className="mx-1">/</span>
+        <a href="/brands" className="hover:text-[#F97316]">Brands</a>
+        <span className="mx-1">/</span>
+        <span className="text-gray-700">{name}</span>
+      </nav>
       <a href="/brands" className="text-sm text-[#F97316] font-bold">← All brands</a>
       <h1 className="text-3xl font-extrabold mt-1">{name}</h1>
       <p className="text-sm text-gray-500 mt-1">{items.length} products • GST invoice • EMI available</p>

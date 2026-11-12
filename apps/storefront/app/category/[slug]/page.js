@@ -1,5 +1,6 @@
 import CategoryView from '../../../components/CategoryView';
 import { getProductsForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
+import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
 const PAGE_SIZE = 40;
@@ -38,5 +39,18 @@ export default async function CategoryPage({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
   const initialQ = (searchParams && searchParams.q) || '';
   const items = await getProductsForMeta(slug, PAGE_SIZE);
-  return <CategoryView slug={slug} initialItems={items} initialQ={initialQ} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: breadcrumbJsonLd([
+            { name: 'Home', url: absoluteUrl('/') },
+            { name: slug === 'all' ? 'All Products' : humanize(slug), url: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+          ]),
+        }}
+      />
+      <CategoryView slug={slug} initialItems={items} initialQ={initialQ} />
+    </>
+  );
 }

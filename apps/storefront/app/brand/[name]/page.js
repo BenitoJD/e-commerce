@@ -1,5 +1,6 @@
 import BrandView from '../../../components/BrandView';
 import { getProductsForMeta, absoluteUrl } from '../../../lib/serverApi';
+import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
 // Brand pages are indexed ("Bosch tools price"), so the first page renders on the server.
@@ -21,5 +22,19 @@ export default async function BrandPage({ params }) {
   // getProductsForMeta takes a category; for brands we fetch the catalog and filter.
   const all = await getProductsForMeta('', 100);
   const items = all.filter((p) => String(p.brand || '').toLowerCase() === name.toLowerCase());
-  return <BrandView name={name} initialItems={items} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: breadcrumbJsonLd([
+            { name: 'Home', url: absoluteUrl('/') },
+            { name: 'Brands', url: absoluteUrl('/brands') },
+            { name, url: absoluteUrl(`/brand/${encodeURIComponent(name)}`) },
+          ]),
+        }}
+      />
+      <BrandView name={name} initialItems={items} />
+    </>
+  );
 }

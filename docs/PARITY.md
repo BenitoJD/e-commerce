@@ -1,12 +1,12 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 69 (product, category and brand pages all server-rendered).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 70 (homepage server-rendered with ItemList schema).
 
 ## Storefront
 
 | Live feature | Clone status |
 |---|---|
-| Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` + deals/brand/recently-viewed strips |
+| Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` — **server-rendered** catalogue strips + ItemList JSON-LD; client adds recently-viewed/wishlist |
 | Mega-menu / category nav | ✅ header category nav |
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit) |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page; brand, min/max price, text, sort, clear-all (logic in tested `lib/catalog.js`) |

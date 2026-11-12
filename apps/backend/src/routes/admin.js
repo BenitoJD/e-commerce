@@ -72,7 +72,8 @@ router.get('/orders', async (req, res) => {
     params.push(limit);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const { rows } = await db.query(
-      `SELECT id, receipt, status, amount_paise, coupon_code, COALESCE(discount_paise, 0) AS discount_paise, customer, razorpay_payment_id, created_at
+      `SELECT id, receipt, status, amount_paise, coupon_code, COALESCE(discount_paise, 0) AS discount_paise,
+              customer, razorpay_payment_id, pay_mode, refund_mode, refunded_at, created_at
        FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
       params
     );
@@ -108,7 +109,14 @@ router.patch('/orders/:id', async (req, res) => {
     // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.
     let refund = { mode: 'none' };
     if ((status === 'cancelled' || status === 'refunded') && current[0].status === 'paid') {
-      refund = await refundPayment({ ...current[0] });
+      refund = await refundPayment({ ...current[0], receipt: current[0].receipt });
+      // Persist the outcome: 'manual' in particular must survive a page refresh,
+      // otherwise the money is simply owed with nobody tracking it.
+      await db.query(
+        'UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE id = $2',
+        [refund.mode, req.params.id]
+      );
+      rows[0].refund_mode = refund.mode;
     }
     console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status} refund=${refund.mode}`);
     res.json({ order: rows[0], refund: refund.mode });
@@ -156,6 +164,8 @@ router.get('/orders/:id', async (req, res) => {
         razorpayOrderId: order.razorpay_order_id || null,
         razorpayPaymentId: order.razorpay_payment_id || null,
         payMode: order.pay_mode || (String(order.status) === 'cod_pending' ? 'cod' : 'online'),
+        refundMode: order.refund_mode || null,
+        refundedAt: order.refunded_at || null,
         customer: order.customer || {},
         items,
       },

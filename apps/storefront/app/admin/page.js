@@ -618,7 +618,13 @@ export default function AdminPage() {
                         <td className="p-2 font-mono text-xs">{o.receipt || o.id || o._id}<br /><span className="text-gray-400">{o.created_at || o.createdAt ? new Date(o.created_at || o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>{(o.razorpay_payment_id || o.razorpayPaymentId) ? <><br /><span className="text-gray-400" title="Razorpay payment ID">pay_{String(o.razorpay_payment_id || o.razorpayPaymentId).slice(-8)}</span></> : null}</td>
                         <td className="p-2">{o.amount_paise != null ? inrFromPaise(o.amount_paise) : (o.amount != null ? inrMaybe(o.amount) : '—')}{(o.coupon_code || o.couponCode) ? <div className="text-xs text-green-700 font-semibold">{o.coupon_code || o.couponCode}{o.discount_paise || o.discountPaise ? ` −₹${(Number(o.discount_paise ?? o.discountPaise) / 100).toLocaleString('en-IN')}` : ''}</div> : null}</td>
                         <td className="p-2 text-xs">{o.customer?.name || o.name || o.email || o.phone || '—'}</td>
-                        <td className="p-2"><span className="badge bg-gray-100">{o.status || '—'}</span></td>
+                        <td className="p-2"><span className="badge bg-gray-100">{o.status || '—'}</span>
+                          {o.refund_mode ? (
+                            <div className={`text-[11px] font-bold mt-1 ${o.refund_mode === 'manual' ? 'text-red-600' : 'text-green-700'}`}>
+                              refund: {o.refund_mode === 'manual' ? 'manual — action needed' : 'auto'}
+                            </div>
+                          ) : null}
+                        </td>
                         <td className="p-2">
                           <button onClick={() => onOrderDetail(o.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">View</button>
                           {orderActions(o)}
@@ -656,6 +662,11 @@ export default function AdminPage() {
                     </div>
                     <div className="sm:text-right text-gray-600">
                       <div>Pay mode: <b className="text-gray-800">{orderDetail.payMode === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}</b></div>
+                      {orderDetail.refundMode ? (
+                        <div className={orderDetail.refundMode === 'manual' ? 'text-red-600 font-bold' : 'text-green-700'}>
+                          Refund: {orderDetail.refundMode === 'manual' ? 'manual — not yet paid out' : 'auto (gateway)'}
+                        </div>
+                      ) : null}
                       <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
                       <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || '—'}</b></div>
                       <div className="mt-1">Total charged: <b>{inrFromPaise(orderDetail.amountPaise)}</b></div>

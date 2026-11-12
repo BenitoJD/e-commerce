@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 79 (orders record pay mode; COD timelines honest, 80 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 80 (refund outcomes persisted + flagged, 81 backend tests).
 
 ## Storefront
 
@@ -24,7 +24,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; COD capped at `COD_MAX_PAISE` (₹20k default) server-side, UI disables it above the cap |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
-| Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step |
+| Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` + **Reorder** (rebuilds cart from a past order) |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
@@ -47,7 +47,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 
 ## Tests
 
-Backend: `cd apps/backend && npm test` — 80 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 81 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

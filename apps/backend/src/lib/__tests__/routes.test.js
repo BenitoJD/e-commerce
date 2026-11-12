@@ -209,6 +209,16 @@ function makeFakeDb() {
       if (row) row.status = params[0];
       return { rows: row ? [row] : [] };
     }
+    if (t.startsWith('UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE id')) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) { o.refund_mode = params[0]; o.refunded_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE receipt')) {
+      const o = orders.find((x) => x.receipt === params[1]);
+      if (o) { o.refund_mode = params[0]; o.refunded_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
     if (t.startsWith('SELECT status, items FROM orders WHERE id')) {
       const o = orders.find((x) => x.id === Number(params[0]));
       return { rows: o ? [{ status: o.status, items: o.items }] : [] };
@@ -404,6 +414,9 @@ test('admin cancel of a paid order restocks and flags manual refund (no live key
   assert.equal(r.status, 200);
   assert.equal(r.json.refund, 'manual'); // placeholder keys: no gateway call, needs human follow-up
   assert.equal(fake.products.get('drill-a').stock, stockAfterBuy + 1);
+  // the owed refund must be recorded, not just returned once
+  assert.equal(order.refund_mode, 'manual');
+  assert.ok(order.refunded_at);
 });
 test('invoice balances: lines minus coupon equal grand total', async () => {
   const created = await api('POST', '/store/checkout/create', {
@@ -462,6 +475,23 @@ test('coupons: usage cap blocks the next redemption; expiry blocks too', async (
     code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
     active: true, max_uses: null, used_count: 0, expires_at: null,
   });
+});
+
+test('customer cancel of a paid order persists the refund outcome', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Ravi', phone: '9876543210' },
+  });
+  const receipt = created.json.receipt;
+  const cap = signedWebhook('payment.captured', { id: 'pay_cc', order_id: created.json.razorpayOrderId, amount: created.json.amount_paise });
+  await fetch(`${base}/webhooks/razorpay`, { method: 'POST', headers: { 'x-razorpay-signature': cap.sig }, body: cap.payload });
+
+  const cancel = await api('POST', '/store/service/cancel', { receipt, phone: '9876543210' });
+  assert.equal(cancel.status, 200);
+  assert.equal(cancel.json.refund, 'manual'); // no live gateway keys in tests
+  const order = fake.orders.find((o) => o.receipt === receipt);
+  assert.equal(order.refund_mode, 'manual');
+  assert.equal(order.status, 'cancelled');
 });
 
 test('COD orders never claim a payment in the tracking timeline', async () => {

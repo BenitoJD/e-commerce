@@ -199,6 +199,11 @@ router.post('/cancel', async (req, res) => {
     let refund = { mode: 'none' };
     if (order.status === 'paid') {
       refund = await refundPayment(order);
+      // Persist so a 'manual' refund stays visible to staff after the browser closes.
+      await db.query(
+        'UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE receipt = $2',
+        [refund.mode, receipt]
+      );
     }
     res.json({ ok: true, receipt: updated[0].receipt, status: updated[0].status, refund: refund.mode });
   } catch (err) {

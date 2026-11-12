@@ -126,6 +126,10 @@ ALTER TABLE coupons ADD COLUMN IF NOT EXISTS used_count INTEGER NOT NULL DEFAULT
 -- never imply a payment that was not taken.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS pay_mode TEXT;
 
+-- Wave 80: persist refund outcomes so a manual refund can't be forgotten
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_mode TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
+
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (
   id SERIAL PRIMARY KEY,

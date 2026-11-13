@@ -28,7 +28,7 @@ e-commerce/
     components/       client views (ProductView, CategoryView, BrandView, HomeView…)
     public/images/    90 generated tool placeholders + 10 Gracewood furniture photos
     lib/              api client, cart, wishlist, store config, server API base
-    test/             112 client-logic tests (no install needed)
+    test/             114 client-logic tests (no install needed)
   e2e/                52 Playwright browser tests (every customer + admin flow)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
@@ -169,7 +169,7 @@ cd apps/backend && npm test        # 323 tests: pricing/GST/EMI, catalog, coupon
                                    # too), auth/scrypt/session/OTP tokens, email templates,
                                    # rate limiting, security, sitemap, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 112 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 114 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 35 routes
@@ -199,6 +199,22 @@ BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
   node scripts/smoke.mjs        # 44/44 checks (39 pages/endpoints + 5 real 404s; 43 by default, +1 with INVOICE_RECEIPT)
 node scripts/audit-pages.mjs http://localhost:3000 bosch-gsb-13-re-drill power-tools Bosch
 node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
+```
+
+## Stale tabs after a rebuild
+
+Next.js hashes JS chunks per build, so a browser tab left open across a deploy can request
+chunks that no longer exist — the classic *"Application error: a client-side exception"*.
+The storefront now detects `ChunkLoadError` in both error boundaries, reloads once (with a
+30-second loop guard), and falls back to a **“A new version is available — Reload page”**
+screen. The E2E setup also checks that every JS/CSS asset referenced by the main routes
+actually exists, so a stale `next start` fails fast with a rebuild/restart instruction
+instead of silently serving a broken app.
+
+Always restart `next start` after rebuilding; for local work use:
+
+```bash
+cd apps/storefront && rm -rf .next && npx next build && npx next start -p 3000
 ```
 
 ## Razorpay

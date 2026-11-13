@@ -1,7 +1,7 @@
 // Runs once before the browser suite. The suite places real orders and decrements stock;
 // repeated local runs would otherwise exhaust a SKU and fail with a misleading "out of
 // stock" assertion. Top the test SKUs back up and make sure the seeded coupons exist.
-const { API, ADMIN_TOKEN, P } = require('./helpers');
+const { BASE, API, ADMIN_TOKEN, P } = require('./helpers');
 
 async function request(path, { method = 'GET', body, token } = {}) {
   const res = await fetch(API + path, {
@@ -18,9 +18,34 @@ async function request(path, { method = 'GET', body, token } = {}) {
   return { status: res.status, json, text };
 }
 
+async function assertFreshBuild() {
+  // A stale `next start` after a rebuild serves HTML that points at hashed chunks which no
+  // longer exist; the browser then throws "Application error: a client-side exception".
+  // Crawling the HTML of the main route shapes catches that before any test runs.
+  const errors = [];
+  for (const route of ['/', '/category/all', `/product/${P.grinder}`, '/cart', '/admin']) {
+    const res = await fetch(BASE + route);
+    if (!res.ok) { errors.push(`${route} returned ${res.status}`); continue; }
+    const html = await res.text();
+    const assets = [...new Set([...html.matchAll(/\/_next\/static\/[^"'\s>]+\.(?:js|css)/g)].map((m) => m[0]))];
+    for (const asset of assets) {
+      const assetRes = await fetch(BASE + asset, { method: 'HEAD' });
+      if (assetRes.status !== 200) errors.push(`${route} references missing ${asset} (${assetRes.status})`);
+    }
+  }
+  if (errors.length) {
+    throw new Error(
+      'Storefront build is stale or inconsistent. Rebuild and restart it before running E2E:\n' +
+      errors.slice(0, 12).join('\n') +
+      '\n  cd apps/storefront && rm -rf .next && npx next build && npx next start -p 3000'
+    );
+  }
+}
+
 module.exports = async function globalSetup() {
   const health = await request('/health');
   if (health.status !== 200) throw new Error('Backend is not running on ' + API);
+  await assertFreshBuild();
 
   // Remove catalogue entries left behind by earlier product-CRUD runs so the public
   // catalogue stays exactly at the seeded 30 and count assertions remain meaningful.

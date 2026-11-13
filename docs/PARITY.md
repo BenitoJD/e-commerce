@@ -6,7 +6,7 @@ How this build compares with the reference store (toolsvilla.com), feature by fe
 items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
 SMTP/SMS, store identity) — none of which is code work.
 
-Evidence at this HEAD: `verify-all` **6/6**, backend **323** tests, storefront **112** tests,
+Evidence at this HEAD: `verify-all` **6/6**, backend **323** tests, storefront **114** tests,
 browser E2E **52/52** (Chromium), self-audit **3/3** (44/44 routes, 17/17 pages, 108/108 sitemap
 URLs), production build **35 routes**.
 
@@ -27,6 +27,7 @@ URLs), production build **35 routes**.
 | Handcrafted furniture catalogue | ✅ **Furniture** category with six Gracewood teak products (beds, L-shape sofa, carved wardrobes, carved door, mirror), nested subcategories, real photos, prices/HSN/specs and sitemap entries |
 | Admin customers & outbox | ✅ Customers tab (orders + lifetime value), Emails tab (status, requeue, send now) |
 | Webhook hardening | ✅ event-id dedupe + transactional order lock (a replayed `payment.failed` can’t restock twice), late captures flagged for manual refund, retried payments re-reserve stock, partial refunds tracked without closing/restocking the order, coupon uses released on failure, shipped/delivered refunds recorded even when the gateway is unavailable |
+| Stale-deploy recovery | ✅ both error boundaries detect `ChunkLoadError`, reload once with a 30-second loop guard, then offer “A new version is available — Reload page”; E2E setup fails fast if any JS/CSS asset referenced by a main route is missing |
 | Abuse/security fixes | ✅ `X-Forwarded-For` spoofing closed (`TRUST_PROXY`, nginx overwrites the header), placeholder Razorpay keys no longer take the live path, default admin tokens warned, CSV formula injection neutralised, malformed bodies/ids return 4xx, free-text quotes resolve to catalogue SKUs |
 | Development mock payments | ✅ when no gateway is configured locally the checkout explicitly offers **Simulate successful payment** (dev only) instead of opening an unusable Razorpay sheet |
 
@@ -148,7 +149,7 @@ node scripts/verify-fresh.mjs # fresh checkout of the pushed repo: 2 suites + au
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (323 backend, 112 storefront, build 35 routes),
+Last run against the pushed HEAD: `verify-all` **6/6** (323 backend, 114 storefront, build 35 routes),
 `self-audit` **3/3** (44/44 routes, 17/17 pages, 108/108 sitemap URLs), browser E2E **52/52**,
 `verify-fresh` **5/5** on a fresh checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
@@ -160,7 +161,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 112 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 114 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

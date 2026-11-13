@@ -1,6 +1,7 @@
 // Shared helpers for the browser suite.
 const { expect } = require('@playwright/test');
 
+const BASE = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const API = process.env.API_URL || 'http://localhost:9000';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'dev-admin-token-please-change-123456';
 
@@ -122,6 +123,7 @@ async function adminLogin(page) {
 
 module.exports = {
   P,
+  BASE,
   API,
   ADMIN_TOKEN,
   uniquePhone,

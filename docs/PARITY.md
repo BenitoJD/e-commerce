@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 147 (warehouse picking list; live smoke 30/30).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 148 (global print stylesheet + focus rings, 172 backend tests).
 
 ## Storefront
 
@@ -22,6 +22,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Admin charge breakdown | ✅ order detail shows **items − coupon + shipping = total charged** with a red `role="alert"` warning when it doesn't reconcile, computed by a tested pure helper (`lib/orderMath.js`) |
 | Admin bulk order actions | ✅ row checkboxes + select-all with **Mark shipped / Mark delivered / Cancel selected** via one `POST /admin/orders/bulk-status` (max 200 ids); illegal transitions are **skipped with a reason** rather than failing the batch, and a shared helper keeps stock release + refunds identical to single-order updates |
 | Warehouse picking list | ✅ **Print picking list** for the selected orders (`/admin/picking?ids=…`) — one row per SKU with the **combined quantity** across orders, HSN and a tick box; print-friendly (`no-print` controls), noindex, aggregation covered by tests |
+| Print output | ✅ global print stylesheet in `globals.css` — `.no-print`, header/footer hidden, `.print-card` — shared by the **GST invoice and the picking list** (previously `.no-print` was undefined outside the invoice, so picking-list buttons would have printed). Guarded by a test |
+| Keyboard focus | ✅ visible focus ring on `.btn-primary`/`.btn-outline` (focus-visible + offset) and on all links/buttons via a global `:focus-visible` rule |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
@@ -96,7 +98,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 169 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 172 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

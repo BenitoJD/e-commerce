@@ -56,7 +56,8 @@ export default function InvoicePage({ params }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <style>{`@media print { header, footer, .no-print { display: none !important; } body { background: #fff; } .print-card { box-shadow: none !important; border: 1px solid #ddd !important; } }`}</style>
+      {/* Print rules now live in globals.css so the invoice and the picking list share one
+          definition of what gets hidden on paper. */}
 
       <div className="flex flex-wrap items-center justify-between gap-3 no-print">
         <h1 className="text-3xl font-extrabold">Tax Invoice</h1>

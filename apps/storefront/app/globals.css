@@ -11,11 +11,11 @@ body {
 }
 
 .btn-primary {
-  @apply bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-5 py-2.5 rounded-lg transition;
+  @apply bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-5 py-2.5 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2;
 }
 
 .btn-outline {
-  @apply border border-[#F97316] text-[#F97316] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#FFF7ED] transition;
+  @apply border border-[#F97316] text-[#F97316] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#FFF7ED] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2;
 }
 
 .card {
@@ -32,4 +32,30 @@ body {
 
 .badge {
   @apply inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full;
+}
+
+/* Keyboard focus must be visible on plain links too, not just form controls. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #F97316;
+  outline-offset: 2px;
+}
+
+/* Print: invoices and the warehouse picking list must print as clean documents.
+   `.no-print` is the single switch used by both. */
+@media print {
+  .no-print,
+  header,
+  footer,
+  nav[aria-label="Account and cart"] {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .print-card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
 }

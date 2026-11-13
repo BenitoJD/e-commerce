@@ -116,7 +116,7 @@ node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 ```
 
 Individually:
-cd apps/backend && npm test        # 232 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 235 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

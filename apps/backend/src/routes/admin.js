@@ -122,10 +122,12 @@ router.get('/orders/export.csv', async (req, res) => {
       const c = o.customer || {};
       const amountPaise = Number(o.amount_paise || 0);
       const shippingPaise = Number(o.shipping_paise || 0);
-      // Prices are GST-inclusive: strip shipping (a separate supply), then split the rest.
-      const goodsPaise = Math.max(0, amountPaise - shippingPaise);
-      const taxablePaise = Math.round((goodsPaise * 100) / (100 + GST_RATE));
-      const gstPaise = goodsPaise - taxablePaise;
+      // Same treatment as the invoice: the charged total (goods + freight) is GST-inclusive
+      // at 18%, so the taxable value is derived from it directly. Shipping is shown as its
+      // own column for reference only — it is NOT excluded from the taxable value, because
+      // the invoice doesn't exclude it either and the two must agree.
+      const taxablePaise = Math.round((amountPaise * 100) / (100 + GST_RATE));
+      const gstPaise = amountPaise - taxablePaise;
       return [
         o.receipt,
         o.created_at ? new Date(o.created_at).toISOString() : '',

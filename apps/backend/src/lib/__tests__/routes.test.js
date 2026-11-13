@@ -1607,19 +1607,67 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   assert.ok(row.includes('"27AAPFU0939F1ZV"'));
   assert.ok(row.includes(`"${(created.json.amount_paise / 100).toFixed(2)}"`));
 
-  // GST filing columns: the taxable value and tax must add back to the charged amount
-  // (shipping removed first, since prices are GST-inclusive).
+  // GST filing columns must agree with the invoice: taxable + tax = charged amount.
   const cells = row.split('","').map((c) => c.replace(/^"|"$/g, ''));
   const amount = Number(cells[5]);
-  const shipping = Number(cells[7]);
   const taxable = Number(cells[8]);
   const gst = Number(cells[9]);
   assert.equal(Number(cells[10]), 18, 'gst_rate column');
-  assert.ok(Math.abs(taxable + gst - (amount - shipping)) < 0.01, `taxable ${taxable} + gst ${gst} should equal charged ${amount} minus shipping ${shipping}`);
+  assert.ok(Math.abs(taxable + gst - amount) < 0.01, `taxable ${taxable} + gst ${gst} should equal charged ${amount}`);
   assert.ok(taxable > 0 && gst > 0, 'both figures should be non-zero for a real order');
+
+  // And they must match what the invoice shows for the same order, to the paisa.
+  const invoice = await api('GET', `/store/invoice/${created.json.receipt}`);
+  assert.equal(invoice.status, 200);
+  assert.equal(Math.round(taxable * 100), invoice.json.gst.base, 'CSV taxable value must equal the invoice base');
+  assert.equal(Math.round(gst * 100), invoice.json.gst.gst, 'CSV GST must equal the invoice GST');
 
   const anonymous = await fetch(`${base}/admin/orders/export.csv`);
   assert.equal(anonymous.status, 401);
+});
+
+test('with a shipping charge, the CSV tax columns still equal the invoice', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const prevFee = process.env.SHIPPING_FEE_PAISE;
+  const prevThreshold = process.env.FREE_SHIPPING_ABOVE_PAISE;
+  // ₹99 delivery, no free-shipping threshold, so the charged total includes freight.
+  process.env.SHIPPING_FEE_PAISE = '9900';
+  delete process.env.FREE_SHIPPING_ABOVE_PAISE;
+
+  try {
+    const created = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }],
+      customer: { name: 'Freight Buyer', phone: '9812300888', pincode: '560001', stateCode: '29' },
+      payMode: 'cod',
+    });
+    assert.equal(created.status, 200);
+
+    const invoice = await api('GET', `/store/invoice/${created.json.receipt}`);
+    assert.equal(invoice.status, 200);
+    assert.equal(invoice.json.shippingPaise, 9900, 'shipping was charged');
+
+    const res = await fetch(`${base}/admin/orders/export.csv`, { headers: adminHeaders });
+    const body = await res.text();
+    const row = body.split('\r\n').find((l) => l.includes(created.json.receipt));
+    assert.ok(row, 'order should be exported');
+    const cells = row.split('","').map((c) => c.replace(/^"|"$/g, ''));
+    const amount = Number(cells[5]);
+    const shipping = Number(cells[7]);
+    const taxable = Number(cells[8]);
+    const gst = Number(cells[9]);
+
+    assert.equal(shipping, 99, 'shipping column shows the charge');
+    assert.ok(Math.abs(taxable + gst - amount) < 0.01, 'taxable + tax must equal the charged total');
+    // The decisive check: with freight in the total, a "strip shipping first" formula would
+    // disagree with the invoice. They must match to the paisa.
+    assert.equal(Math.round(taxable * 100), invoice.json.gst.base);
+    assert.equal(Math.round(gst * 100), invoice.json.gst.gst);
+  } finally {
+    if (prevFee === undefined) delete process.env.SHIPPING_FEE_PAISE;
+    else process.env.SHIPPING_FEE_PAISE = prevFee;
+    if (prevThreshold === undefined) delete process.env.FREE_SHIPPING_ABOVE_PAISE;
+    else process.env.FREE_SHIPPING_ABOVE_PAISE = prevThreshold;
+  }
 });
 
 test('the CSV export carries the buyer state when one was given', async () => {

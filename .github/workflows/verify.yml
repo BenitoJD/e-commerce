@@ -1,0 +1,44 @@
+name: verify
+
+# Runs everything the repo promises: both test suites, compose structure, a production build,
+# the repo audits, and the live end-to-end self-audit (fixture backend + built storefront).
+# Linux also delivers a real SIGTERM, which Windows cannot, so the graceful-shutdown path is
+# exercised here for the first time on every push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Canonicals/sitemap must never point at localhost; the build reads this.
+      NEXT_PUBLIC_SITE_URL: https://shop.test
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Static verification (suites, compose, build, audits)
+        run: node scripts/verify-all.mjs
+
+      - name: Live self-audit (fixture backend + built storefront)
+        run: node scripts/self-audit.mjs

@@ -118,10 +118,14 @@ node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 # catalogue, starts the built storefront against it, then runs three suites and cleans up:
 #   36/36 routes · 17/17 pages · 74/74 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
 node scripts/self-audit.mjs   # 3/3 suites
+
+# CI (.github/workflows/verify.yml) runs exactly these on every push to main and every PR:
+# pnpm install --frozen-lockfile → verify-all → self-audit. A test asserts the workflow keeps
+# running both, so a green badge can't hide skipped checks.
 ```
 
 Individually:
-cd apps/backend && npm test        # 286 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 288 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

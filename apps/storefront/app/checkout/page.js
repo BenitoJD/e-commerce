@@ -255,7 +255,7 @@ export default function CheckoutPage() {
             </div>
           );
         })()}
-        {err && <p className="text-sm text-red-600 font-semibold">{err}</p>}
+        {err && <p role="alert" className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
           {busy ? 'Placing order...' : `Pay ₹${shown.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}
         </button>

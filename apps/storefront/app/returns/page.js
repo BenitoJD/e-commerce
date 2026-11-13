@@ -125,8 +125,8 @@ export default function ReturnsPage() {
           <textarea className="input" rows={4} value={form.details} onChange={(e) => set('details', e.target.value)} placeholder="Describe the issue. For damage, mention you have unboxing photos/video." />
         </div>
 
-        {state.ok && <p className="text-sm text-green-700 font-semibold">{state.ok}</p>}
-        {state.err && <p className="text-sm text-red-600 font-semibold">{state.err}</p>}
+        {state.ok && <p role="status" className="text-sm text-green-700 font-semibold">{state.ok}</p>}
+        {state.err && <p role="alert" className="text-sm text-red-600 font-semibold">{state.err}</p>}
 
         <button disabled={state.busy} className="btn-primary w-full disabled:opacity-60">
           {state.busy ? 'Submitting...' : 'File Return Request'}

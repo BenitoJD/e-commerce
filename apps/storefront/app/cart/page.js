@@ -205,7 +205,7 @@ export default function CartPage() {
                 <button onClick={applyCoupon} disabled={couponBusy} className="btn-outline !px-4 whitespace-nowrap disabled:opacity-60">Apply</button>
               </div>
             )}
-            {couponMsg && <p className={`text-xs font-semibold mt-2 ${coupon ? 'text-green-700' : 'text-gray-600'}`}>{couponMsg}</p>}
+            {couponMsg && <p role="status" className={`text-xs font-semibold mt-2 ${coupon ? 'text-green-700' : 'text-gray-600'}`}>{couponMsg}</p>}
             <div className="border-t mt-4 pt-4">
               <label className="label">Delivery pincode</label>
               <div className="flex gap-2">

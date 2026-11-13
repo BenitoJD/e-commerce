@@ -90,6 +90,7 @@ export default function SearchBox({ compact = false }) {
         <input
           name="q"
           aria-label="Search products"
+          aria-activedescendant={open && active >= 0 ? `suggest-opt-${active}` : undefined}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => { if (hasAny) setOpen(true); }}
@@ -108,7 +109,7 @@ export default function SearchBox({ compact = false }) {
       </div>
 
       {open && (
-        <div id="search-suggest" role="listbox" className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[60] overflow-hidden text-sm">
+        <div id="search-suggest" role={hasAny ? 'listbox' : 'status'} className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[60] overflow-hidden text-sm">
           {!hasAny ? (
             <div className="px-4 py-3 text-gray-500">
               No matches for “{q.trim()}”. Press Enter to search everything.
@@ -116,6 +117,7 @@ export default function SearchBox({ compact = false }) {
           ) : rows.map((r, i) => (
             <a
               key={r.key}
+              id={`suggest-opt-${i}`}
               href={r.href}
               role="option"
               aria-selected={i === active}

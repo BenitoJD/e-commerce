@@ -96,8 +96,8 @@ export default function TrackOrderPage() {
         <div><label className="label">Receipt ID</label><input className="input" value={receipt} onChange={(e) => setReceipt(e.target.value)} placeholder="e.g. TK123456" aria-label="Receipt or order ID" /></div>
         <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
         <div className="sm:col-span-2">
-          {err && <p className="text-sm text-red-600 font-semibold mb-2">{err}</p>}
-          {notice && <p className="text-sm text-green-700 font-semibold mb-2">{notice}</p>}
+          {err && <p role="alert" className="text-sm text-red-600 font-semibold mb-2">{err}</p>}
+          {notice && <p role="status" className="text-sm text-green-700 font-semibold mb-2">{notice}</p>}
           <button disabled={busy} className="btn-primary w-full disabled:opacity-60">{busy ? 'Tracking...' : 'Track Order'}</button>
         </div>
       </form>

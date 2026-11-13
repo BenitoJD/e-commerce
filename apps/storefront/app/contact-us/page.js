@@ -47,7 +47,7 @@ export default function ContactUs() {
       </div>
       <form onSubmit={send} className="card p-5 mt-4 space-y-3">
         {sent ? (
-          <p className="text-sm text-green-700 font-semibold">Thanks {form.name.split(' ')[0] || 'there'}! We&apos;ll call you back within one working day.</p>
+          <p role="status" className="text-sm text-green-700 font-semibold">Thanks {form.name.split(' ')[0] || 'there'}! We&apos;ll call you back within one working day.</p>
         ) : (
           <>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -55,7 +55,7 @@ export default function ContactUs() {
               <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
             </div>
             <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="How can we help?" /></div>
-            {err ? <p className="text-xs text-red-600 font-semibold">{err}</p> : null}
+            {err ? <p role="alert" className="text-xs text-red-600 font-semibold">{err}</p> : null}
             <button className="btn-primary disabled:opacity-60" disabled={busy}>{busy ? 'Sending...' : 'Send Message'}</button>
           </>
         )}

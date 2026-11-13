@@ -59,8 +59,8 @@ function QuoteInner() {
         <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required aria-label="Product you need a quote for" /></div>
         <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required aria-label="Quantity needed" /></div>
         <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Delivery city, GST number, timeline..." /></div>
-        {status.ok && <p className="text-sm text-green-700 font-semibold">{status.ok}</p>}
-        {status.err && <p className="text-sm text-red-600 font-semibold">{status.err}</p>}
+        {status.ok && <p role="status" className="text-sm text-green-700 font-semibold">{status.ok}</p>}
+        {status.err && <p role="alert" className="text-sm text-red-600 font-semibold">{status.err}</p>}
         <button disabled={status.busy} className="btn-primary w-full disabled:opacity-60">{status.busy ? 'Sending...' : 'Send Quote Request'}</button>
       </form>
 

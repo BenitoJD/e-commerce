@@ -337,7 +337,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                   {alertBusy ? 'Saving...' : 'Notify me'}
                 </button>
               </div>
-              {alertMsg && <p className="text-xs font-semibold mt-2 text-green-700">{alertMsg}</p>}
+              {alertMsg && <p role="status" className="text-xs font-semibold mt-2 text-green-700">{alertMsg}</p>}
             </div>
           )}
 
@@ -376,7 +376,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
               <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Pincode e.g. 110001" className="input" inputMode="numeric" aria-label="Pincode for delivery check" />
               <button onClick={checkPin} disabled={pinState.loading} className="btn-primary whitespace-nowrap disabled:opacity-60">Check</button>
             </div>
-            {pinState.msg && <p className={`text-xs font-semibold mt-2 ${pinState.ok ? 'text-green-700' : 'text-gray-600'}`}>{pinState.msg}</p>}
+            {pinState.msg && <p role="status" className={`text-xs font-semibold mt-2 ${pinState.ok ? 'text-green-700' : 'text-gray-600'}`}>{pinState.msg}</p>}
           </div>
 
           <div className="mt-5 card p-4 text-sm">

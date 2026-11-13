@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
+const { releaseCouponUse } = require('../lib/couponRelease');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
@@ -138,7 +139,7 @@ router.get('/orders/export.csv', async (req, res) => {
 // One place for the per-order status change: guards, stock release and refunds must behave
 // identically whether the operator acts on one order or fifty.
 async function transitionOrder(id, status) {
-  const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id = $1', [id]);
+  const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code FROM orders WHERE id = $1', [id]);
   if (!current.length) return { ok: false, code: 404, error: 'Order not found' };
   const guard = canTransition(current[0].status, status);
   if (!guard.ok) return { ok: false, code: 409, error: guard.reason };
@@ -153,6 +154,10 @@ async function transitionOrder(id, status) {
   if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {
     await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
     console.log(`[admin] stock released for ${rows[0].receipt}`);
+  }
+  // ...and the coupon use that checkout claimed for this order.
+  if (status === 'cancelled' || status === 'refunded') {
+    await releaseCouponUse(db, current[0].coupon_code, current[0].status);
   }
 
   // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.

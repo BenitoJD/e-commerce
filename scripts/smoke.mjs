@@ -35,6 +35,7 @@ const ROUTES = [
   '/contact-us',
   '/shipping-policy',
   '/returns-policy',
+  '/cancellation-policy',
   '/warranty-policy',
   '/privacy-policy',
   '/terms-conditions',

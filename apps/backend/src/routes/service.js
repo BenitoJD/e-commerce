@@ -5,6 +5,7 @@ const { refundPayment } = require('../lib/refunds');
 const { clampText } = require('../lib/validate');
 const { codMaxPaise, codAvailableFor } = require('../lib/policy');
 const { returnWindow, WINDOW_DAYS } = require('../lib/returns');
+const { releaseCouponUse } = require('../lib/couponRelease');
 
 const router = express.Router();
 
@@ -191,7 +192,7 @@ router.post('/cancel', async (req, res) => {
       return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
     }
     const { rows } = await db.query(
-      'SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer, coupon_code FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -215,6 +216,8 @@ router.post('/cancel', async (req, res) => {
     );
     // Reservation was taken at checkout for pending/paid/cod_pending — put it back.
     await releaseItems(db, Array.isArray(order.items) ? order.items : []);
+    // Give the coupon use back too, or a limited code is consumed by a cancelled order.
+    await releaseCouponUse(db, order.coupon_code, order.status);
     // Paid online orders get an automatic gateway refund when possible; otherwise manual.
     let refund = { mode: 'none' };
     if (order.status === 'paid') {

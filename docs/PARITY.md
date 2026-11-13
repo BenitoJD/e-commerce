@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 154 (return-eligibility checker before submitting).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 155 (cancellation policy published + coupon use released on cancel).
 
 ## Storefront
 
@@ -41,7 +41,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block |
 | Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
 | 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) returns real 404 status; `error.js` boundary offers retry/home/browse instead of a blank app-error screen |
-| Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
+| Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 10 static pages incl. **cancellation policy**, all in the footer + sitemap |
+| Cancellation (customer) | ✅ `/store/service/cancel` from Track Order for `pending` / `paid` / `cod_pending` only (not once shipped), restocks, refunds (gateway or flagged manual) and now **releases the coupon use** so a limited code isn't consumed by a cancelled order |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
 | Returns / exchange (RMA) request | ✅ `/returns` form → `/store/service/returns` → admin Returns tab with status workflow; **customers can check their return status** by receipt + phone; `orders.delivered_at` is recorded on delivery and the **published 7-day window is enforced server-side** (day 7 inclusive, delivery-anchored with order date as fallback); **one open request per order** stops duplicate RMAs; a **"Can I still return this?" checker** answers eligibility *before* the form is filled |
 | Newsletter | ✅ `/store/service/subscribe` + footer form; admin Messages tab lists subscribers and exports CSV |
@@ -100,7 +101,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 185 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 191 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

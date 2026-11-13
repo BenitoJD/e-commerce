@@ -44,6 +44,13 @@ test('sitemap never advertises pages that robots.txt blocks', () => {
   assert.deepEqual(overlap, [], `sitemap lists robots-blocked pages: ${overlap.join(', ')}`);
 });
 
+test('sitemap includes the published policy pages', () => {
+  const xml = buildSitemap('https://shop.test');
+  for (const page of ['/returns-policy', '/shipping-policy', '/warranty-policy', '/cancellation-policy', '/privacy-policy', '/terms-conditions']) {
+    assert.ok(xml.includes(`https://shop.test${page}<`), `sitemap missing ${page}`);
+  }
+});
+
 test('sitemap omits private and transactional pages', () => {
   for (const priv of ['/my-orders', '/track-order', '/wishlist', '/cart', '/checkout', '/admin']) {
     assert.equal(STATIC_PAGES.includes(priv), false, `${priv} must not be in the sitemap`);

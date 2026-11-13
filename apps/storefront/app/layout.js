@@ -98,6 +98,7 @@ export default function RootLayout({ children }) {
               <ul className="space-y-1.5">
                 <li><a className="hover:text-white" href="/shipping-policy">Shipping Policy</a></li>
                 <li><a className="hover:text-white" href="/returns-policy">Returns & Refunds</a></li>
+                <li><a className="hover:text-white" href="/cancellation-policy">Cancellation Policy</a></li>
                 <li><a className="hover:text-white" href="/returns">Return / Exchange</a></li>
                 <li><a className="hover:text-white" href="/warranty-policy">Warranty Policy</a></li>
                 <li><a className="hover:text-white" href="/privacy-policy">Privacy Policy</a></li>

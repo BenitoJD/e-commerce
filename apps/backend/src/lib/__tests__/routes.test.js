@@ -200,6 +200,10 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, customer: o.customer }] : [] };
     }
+    if (t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer, coupon_code FROM orders WHERE receipt')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return { rows: o ? [{ ...o }] : [] };
+    }
     if (t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, customer FROM orders WHERE receipt')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ ...o }] : [] };
@@ -415,9 +419,26 @@ function makeFakeDb() {
       return { rows: o ? [{ status: o.status, items: o.items }] : [] };
     }
     if (t.startsWith('SELECT status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')
+      || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code FROM orders WHERE id')
       || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')) {
       const o = orders.find((x) => x.id === Number(params[0]));
-      return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id }] : [] };
+      return {
+        rows: o ? [{
+          receipt: o.receipt,
+          status: o.status,
+          items: o.items,
+          amount_paise: o.amount_paise,
+          razorpay_payment_id: o.razorpay_payment_id,
+          coupon_code: o.coupon_code || null,
+        }] : [],
+      };
+    }
+    if (t.startsWith('UPDATE coupons SET used_count = GREATEST(used_count - 1, 0)')) {
+      const code = String(params[0] || '').toUpperCase();
+      const c = coupons.get(code);
+      if (!c) return { rows: [] };
+      c.used_count = Math.max(0, (c.used_count || 0) - 1);
+      return { rows: [{ code, used_count: c.used_count }] };
     }
     if (t.startsWith('UPDATE orders SET status = $1 WHERE id = $2')) {
       const o = orders.find((x) => x.id === Number(params[1]));
@@ -1250,6 +1271,28 @@ test('returns enforce the 7-day window and reject duplicates', async () => {
   });
   assert.equal(second.status, 409);
   assert.match(second.json.error, /already exists/);
+});
+
+test('cancelling an order gives its coupon use back', async () => {
+  fake.coupons.set('BACK10', {
+    code: 'BACK10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000,
+    active: true, max_uses: 5, used_count: 1,
+  });
+
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Coupon Canceller', phone: '9812300601' },
+    couponCode: 'BACK10',
+  });
+  assert.equal(created.status, 200);
+  assert.equal(fake.coupons.get('BACK10').used_count, 2, 'checkout claimed a use');
+
+  const cancelled = await api('POST', '/store/service/cancel', {
+    receipt: created.json.receipt,
+    phone: '9812300601',
+  });
+  assert.equal(cancelled.status, 200);
+  assert.equal(fake.coupons.get('BACK10').used_count, 1, 'cancelling released the use');
 });
 
 test('bulk status update ships many orders and reports skips', async () => {

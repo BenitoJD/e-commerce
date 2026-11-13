@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 164 (invoice field contract proven sensitive, 207 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 165 (fresh-clone verification script: 5/5 on the pushed repo).
 
 ## Storefront
 
@@ -101,6 +101,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
 node scripts/smoke.mjs         # live routes, needs running servers (31/31 incl. a real 404)
+node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 
 Backend: `cd apps/backend && npm test` — 207 tests (pricing math, GST, EMI, catalog validity,

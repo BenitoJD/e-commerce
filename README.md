@@ -112,6 +112,7 @@ Everything that runs without Docker/Postgres, in one command:
 
 ```bash
 node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
+node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 ```
 
 Individually:

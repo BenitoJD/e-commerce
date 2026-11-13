@@ -418,6 +418,16 @@ function makeFakeDb() {
       const o = orders.find((x) => x.id === Number(params[0]));
       return { rows: o ? [{ status: o.status, items: o.items }] : [] };
     }
+    if (t.includes("WHERE status = 'pending' AND created_at < NOW()")) {
+      const minutes = Number(params[0]) || 30;
+      const cutoff = Date.now() - minutes * 60 * 1000;
+      const rows = orders
+        .filter((o) => o.status === 'pending' && new Date(o.created_at).getTime() < cutoff)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .slice(0, 200)
+        .map((o) => ({ id: o.id, receipt: o.receipt, status: o.status, created_at: o.created_at }));
+      return { rows };
+    }
     if (t.startsWith('SELECT status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')
       || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code FROM orders WHERE id')
       || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')) {
@@ -1293,6 +1303,41 @@ test('cancelling an order gives its coupon use back', async () => {
   });
   assert.equal(cancelled.status, 200);
   assert.equal(fake.coupons.get('BACK10').used_count, 1, 'cancelling released the use');
+});
+
+test('stale pending holds can be released, and only the old ones', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const stockBefore = fake.products.get('drill-a').stock;
+
+  const stale = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }],
+    customer: { name: 'Abandoned Buyer', phone: '9812300701' },
+  });
+  assert.equal(stale.status, 200);
+  // Backdate the abandoned order past the sweep window.
+  const staleOrder = fake.orders.find((o) => o.receipt === stale.json.receipt);
+  staleOrder.created_at = new Date(Date.now() - 90 * 60000).toISOString();
+
+  const fresh = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Live Buyer', phone: '9812300702' },
+  });
+  assert.equal(fresh.status, 200);
+
+  const sweep = await api('POST', '/admin/orders/release-stale?minutes=30', undefined, adminHeaders);
+  assert.equal(sweep.status, 200);
+  assert.equal(sweep.json.released.length, 1, 'only the abandoned order is released');
+  assert.equal(sweep.json.released[0].receipt, stale.json.receipt);
+
+  const staleNow = fake.orders.find((o) => o.receipt === stale.json.receipt);
+  assert.equal(staleNow.status, 'cancelled');
+  const freshNow = fake.orders.find((o) => o.receipt === fresh.json.receipt);
+  assert.equal(freshNow.status, 'pending', 'a live checkout keeps its reservation');
+  assert.equal(fake.products.get('drill-a').stock, stockBefore - 1, 'the abandoned 2 units came back');
+
+  // minutes is clamped, and the endpoint requires the admin token.
+  const noAuth = await api('POST', '/admin/orders/release-stale');
+  assert.equal(noAuth.status, 401);
 });
 
 test('bulk status update ships many orders and reports skips', async () => {

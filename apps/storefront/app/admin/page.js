@@ -7,6 +7,7 @@ import {
   getAdminOrders,
   getAdminOrdersCsv,
   bulkUpdateOrderStatus,
+  releaseStaleHolds,
   getAdminOrderDetail,
   updateOrderStatus,
   getAdminQuotes,
@@ -141,6 +142,24 @@ export default function AdminPage() {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function runReleaseStale() {
+    if (bulkBusy) return;
+    setBulkBusy(true);
+    setBulkMsg('');
+    try {
+      const r = await releaseStaleHolds(token, 30);
+      const n = (r && r.released && r.released.length) || 0;
+      setBulkMsg(n
+        ? `Released ${n} abandoned hold${n === 1 ? '' : 's'} (stock is back on sale).`
+        : 'No abandoned holds older than 30 minutes — nothing to release.');
+      await loadOrders();
+    } catch (e) {
+      setBulkMsg(`Release failed: ${e.message}`);
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -724,6 +743,14 @@ export default function AdminPage() {
                   Export CSV
                 </button>
                 <span className="text-xs text-gray-500">{orders.length} order(s)</span>
+                <button
+                  onClick={runReleaseStale}
+                  disabled={bulkBusy}
+                  className="btn-outline !py-2 !text-red-600 disabled:opacity-50"
+                  title="Cancel pending orders older than 30 minutes whose payment never completed, and return their stock"
+                >
+                  Release abandoned holds
+                </button>
               </div>
               {selectedOrders.length > 0 ? (
                 <div role="status" className="flex flex-wrap items-center gap-2 mt-3 p-2 bg-orange-50 border border-orange-200 rounded">

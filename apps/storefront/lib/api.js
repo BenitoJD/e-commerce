@@ -191,6 +191,14 @@ export async function getAdminOrders(token, status = '', search = '', { from = '
 
 // CSV downloads need the token, so the browser can't just link to the URL — fetch it
 // with headers and hand back the text for a Blob download.
+export async function releaseStaleHolds(token, minutes = 30) {
+  const res = await fetch(`${BASE}/admin/orders/release-stale?minutes=${encodeURIComponent(minutes)}`, {
+    method: 'POST',
+    headers: adminHeaders(token),
+  });
+  return handle(res);
+}
+
 export async function bulkUpdateOrderStatus(token, ids, status) {
   const res = await fetch(`${BASE}/admin/orders/bulk-status`, {
     method: 'POST',

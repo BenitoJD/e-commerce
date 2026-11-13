@@ -3,6 +3,8 @@ const db = require('../db');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
 const { releaseCouponUse } = require('../lib/couponRelease');
+const { DEFAULT_MINUTES: STALE_DEFAULT_MINUTES } = require('../lib/staleHolds');
+const { clampInt } = require('../lib/text');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
@@ -216,6 +218,33 @@ router.post('/orders/bulk-status', async (req, res) => {
   } catch (err) {
     console.error('[admin] bulk order update error:', err.message);
     res.status(500).json({ error: 'Failed to update orders' });
+  }
+});
+
+// POST /admin/orders/release-stale?minutes=30 — release stock held by abandoned checkouts.
+// A pending order whose payment sheet was closed has no webhook coming, so nothing would
+// ever release its reservation without this.
+router.post('/orders/release-stale', async (req, res) => {
+  try {
+    const minutes = clampInt(req.query.minutes, STALE_DEFAULT_MINUTES, 5, 10080);
+    const { rows } = await db.query(
+      `SELECT id, receipt, status, created_at FROM orders
+        WHERE status = 'pending' AND created_at < NOW() - ($1::int * INTERVAL '1 minute')
+        ORDER BY created_at ASC LIMIT 200`,
+      [minutes]
+    );
+    const released = [];
+    const skipped = [];
+    for (const row of rows) {
+      const result = await transitionOrder(row.id, 'cancelled');
+      if (result.ok) released.push({ id: row.id, receipt: result.order.receipt });
+      else skipped.push({ id: row.id, reason: result.error });
+    }
+    console.log(`[admin] released ${released.length} stale holds older than ${minutes}m (${skipped.length} skipped)`);
+    res.json({ minutes, released, skipped });
+  } catch (err) {
+    console.error('[admin] release stale holds error:', err.message);
+    res.status(500).json({ error: 'Failed to release stale holds' });
   }
 });
 

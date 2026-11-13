@@ -181,6 +181,21 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id }] : [] };
     }
+    if (t.startsWith('SELECT receipt, status, customer, created_at, delivered_at FROM orders WHERE receipt')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return {
+        rows: o ? [{ receipt: o.receipt, status: o.status, customer: o.customer, created_at: o.created_at, delivered_at: o.delivered_at || null }] : [],
+      };
+    }
+    if (t.startsWith('UPDATE orders SET delivered_at = COALESCE(delivered_at, NOW())')) {
+      const o = orders.find((x) => String(x.id) === String(params[0]));
+      if (o) o.delivered_at = o.delivered_at || new Date().toISOString();
+      return { rows: o ? [o] : [] };
+    }
+    if (t.startsWith('SELECT id, status FROM return_requests WHERE receipt')) {
+      const open = (ret || []).filter((r) => r.receipt === params[0] && !['rejected', 'cancelled'].includes(r.status));
+      return { rows: open.slice(-1).map((r) => ({ id: r.id, status: r.status })) };
+    }
     if (t.startsWith('SELECT receipt, status, customer FROM orders WHERE receipt')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, customer: o.customer }] : [] };
@@ -1144,6 +1159,49 @@ test('checkout rejects a malformed GSTIN but accepts a valid or blank one', asyn
     customer: { ...base.customer, phone: '9812300302' },
   });
   assert.equal(blank.status, 200, 'GSTIN stays optional for retail buyers');
+});
+
+test('returns enforce the 7-day window and reject duplicates', async () => {
+  // An old, long-delivered order must be refused with the policy quoted back.
+  const oldReceipt = 'rcpt_window_old';
+  fake.orders.push({
+    id: 9001,
+    receipt: oldReceipt,
+    status: 'delivered',
+    items: [{ slug: 'drill-a', qty: 1, unit_price_paise: 100000 }],
+    amount_paise: 118000,
+    customer: { name: 'Late Buyer', phone: '9812300401' },
+    created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
+    delivered_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+  });
+  const late = await api('POST', '/store/service/returns', {
+    receipt: oldReceipt, phone: '9812300401', reason: 'damaged', details: 'Arrived cracked',
+  });
+  assert.equal(late.status, 409);
+  assert.match(late.json.error, /Return window closed/);
+
+  // A recent delivery can file one request, but not a second one.
+  const freshReceipt = 'rcpt_window_fresh';
+  fake.orders.push({
+    id: 9002,
+    receipt: freshReceipt,
+    status: 'delivered',
+    items: [{ slug: 'drill-a', qty: 1, unit_price_paise: 100000 }],
+    amount_paise: 118000,
+    customer: { name: 'Fresh Buyer', phone: '9812300402' },
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+    delivered_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+  });
+  const first = await api('POST', '/store/service/returns', {
+    receipt: freshReceipt, phone: '9812300402', reason: 'defective', details: 'Motor does not start',
+  });
+  assert.equal(first.status, 201);
+
+  const second = await api('POST', '/store/service/returns', {
+    receipt: freshReceipt, phone: '9812300402', reason: 'defective', details: 'Again',
+  });
+  assert.equal(second.status, 409);
+  assert.match(second.json.error, /already exists/);
 });
 
 test('bulk status update ships many orders and reports skips', async () => {

@@ -133,6 +133,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
 -- Wave 106: shipping charged on the order (0 = free). Needed so invoices reconcile:
 -- items − discount + shipping = total.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_paise INTEGER NOT NULL DEFAULT 0;
+-- Delivery timestamp: the 7-day return window published in the policy is measured from
+-- here, not from order creation.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
 
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (

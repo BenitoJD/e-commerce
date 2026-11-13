@@ -4,6 +4,7 @@ const { releaseItems } = require('../lib/stock');
 const { refundPayment } = require('../lib/refunds');
 const { clampText } = require('../lib/validate');
 const { codMaxPaise, codAvailableFor } = require('../lib/policy');
+const { returnWindow } = require('../lib/returns');
 
 const router = express.Router();
 
@@ -272,7 +273,7 @@ router.post('/returns', async (req, res) => {
       return res.status(400).json({ error: `reason must be one of: ${RETURN_REASONS.join(', ')}` });
     }
     const { rows } = await db.query(
-      'SELECT receipt, status, customer FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, customer, created_at, delivered_at FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -283,6 +284,26 @@ router.post('/returns', async (req, res) => {
     if (!match) return res.status(404).json({ error: 'Phone does not match order' });
     if (!RETURNABLE.includes(String(order.status))) {
       return res.status(409).json({ error: `Orders with status '${order.status}' are not returnable` });
+    }
+
+    // The published policy says 7 days from delivery — enforce it instead of accepting
+    // any order that happens to be delivered.
+    const window = returnWindow({ deliveredAt: order.delivered_at, createdAt: order.created_at });
+    if (!window.allowed) {
+      return res.status(409).json({
+        error: `Return window closed — returns are accepted within ${window.windowDays} days of delivery. Contact us on WhatsApp if the item arrived late or faulty.`,
+      });
+    }
+
+    // One open request per order: repeat submissions create duplicate RMAs for staff.
+    const { rows: existing } = await db.query(
+      `SELECT id, status FROM return_requests WHERE receipt = $1 AND status NOT IN ('rejected', 'cancelled') ORDER BY id DESC LIMIT 1`,
+      [receipt]
+    );
+    if (existing.length) {
+      return res.status(409).json({
+        error: `A return request (#${existing[0].id}) already exists for this order — track it with your receipt and phone.`,
+      });
     }
     const ins = await db.query(
       `INSERT INTO return_requests (receipt, phone, reason, details)

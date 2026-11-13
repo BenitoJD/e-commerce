@@ -144,6 +144,10 @@ async function transitionOrder(id, status) {
   if (!guard.ok) return { ok: false, code: 409, error: guard.reason };
 
   const { rows } = await db.query('UPDATE orders SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+  // Record when the parcel actually reached the customer: the return window runs from here.
+  if (status === 'delivered') {
+    await db.query('UPDATE orders SET delivered_at = COALESCE(delivered_at, NOW()) WHERE id = $1', [id]);
+  }
 
   // Release reserved stock when an admin cancels/refunds a stock-holding order.
   if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {

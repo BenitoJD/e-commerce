@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 168 (nested categories stage 3: `/category/<parent>/<child>` pages, breadcrumbs, child chips).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 169 (nested categories complete: sitemap covers every path, smoke 32/32).
 
 ## Storefront
 
@@ -11,8 +11,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); **search URLs server-render their own matches** (with the right total), use a query-specific heading/breadcrumb and are **noindex** |
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
-| Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one) |
-| Category sitemap entries | 🚧 parent category URLs are listed; subcategory URLs are the remaining stage |
+| Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one). **Every parent and child path is in the sitemap**, derived from the taxonomy, and the nested route is covered by the live smoke suite (32/32) |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, and a **"You save ₹X (N% off MRP)"** line under the price |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
@@ -102,11 +101,11 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (31/31 incl. a real 404)
+node scripts/smoke.mjs         # live routes, needs running servers (32/32 incl. a real 404)
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 
-Backend: `cd apps/backend && npm test` — 221 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 222 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

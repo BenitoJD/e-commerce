@@ -16,6 +16,7 @@ const ROUTES = [
   '/',
   `/category/all`,
   `/category/${CATEGORY}`,
+  '/category/pumps/submersible',
   `/product/${PRODUCT}`,
   '/brands',
   `/brand/${BRAND}`,
@@ -61,6 +62,7 @@ const MARKERS = {
   '/track-order': ['Track Your Order'],
   '/returns': ['Return or Exchange'],
   '/admin': ['Admin Console'],
+  '/category/pumps/submersible': ['Submersible Pumps'],
   '/robots.txt': ['User-agent:'],
 };
 

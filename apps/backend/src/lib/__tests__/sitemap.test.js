@@ -51,6 +51,18 @@ test('sitemap includes the published policy pages', () => {
   }
 });
 
+test('sitemap lists every parent and child category from the taxonomy', () => {
+  const { allCategoryPaths } = require('../../../data/categories');
+  const xml = buildSitemap('https://shop.test');
+  for (const path of allCategoryPaths()) {
+    assert.ok(xml.includes(`https://shop.test/category/${path}<`), `sitemap missing /category/${path}`);
+  }
+  assert.ok(xml.includes('https://shop.test/category/all<'), 'the all-products page stays listed');
+  // No duplicates: a category appearing twice is a signal the list is assembled twice.
+  const categoryUrls = [...xml.matchAll(/https:\/\/shop\.test\/category\/[^<]+</g)].map((m) => m[0]);
+  assert.equal(new Set(categoryUrls).size, categoryUrls.length, 'duplicate category URLs in the sitemap');
+});
+
 test('sitemap omits private and transactional pages', () => {
   for (const priv of ['/my-orders', '/track-order', '/wishlist', '/cart', '/checkout', '/admin']) {
     assert.equal(STATIC_PAGES.includes(priv), false, `${priv} must not be in the sitemap`);

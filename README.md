@@ -116,7 +116,7 @@ node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 ```
 
 Individually:
-cd apps/backend && npm test        # 221 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 222 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
@@ -146,7 +146,7 @@ Route smoke test (needs the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 31/31 routes (30 pages/endpoints + a branded 404)
+  node scripts/smoke.mjs        # 32/32 routes (31 pages/endpoints + a branded 404)
 ```
 
 ## Razorpay

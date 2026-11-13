@@ -1,4 +1,9 @@
 const db = require('../db');
+const { allCategoryPaths } = require('../../data/categories');
+
+// Category URLs come from the taxonomy (+ the "all products" page) so adding a subcategory
+// to data/categories.js publishes it here automatically instead of drifting.
+const CATEGORY_PAGES = ['/category/all', ...allCategoryPaths().map((p) => `/category/${p}`)];
 
 const STATIC_PAGES = [
   '/deals',
@@ -15,14 +20,7 @@ const STATIC_PAGES = [
   '/warranty-policy',
   '/privacy-policy',
   '/terms-conditions',
-  '/category/all',
-  '/category/power-tools',
-  '/category/motors',
-  '/category/agriculture',
-  '/category/pumps',
-  '/category/welding',
-  '/category/cleaning',
-  '/category/machinery',
+  ...CATEGORY_PAGES,
 ];
 
 function escapeXml(s) {

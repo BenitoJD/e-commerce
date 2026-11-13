@@ -1115,8 +1115,8 @@ export default function AdminPage() {
                           {['contacted', 'quoted', 'won', 'lost'].map((s) => (
                             <button key={s} onClick={() => onQuoteAction(q.id || q._id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
                           ))}
-                          {!q.order_receipt && (q.product_slug || q.product) ? (
-                            <button onClick={() => onQuoteConvert(q.id || q._id, q.product_slug || q.product)} className="btn-primary !py-1 !px-2 text-xs mr-1 mb-1">Convert to order</button>
+                          {!q.order_receipt && (q.product_slug || q.product || q.product_name) ? (
+                            <button onClick={() => onQuoteConvert(q.id || q._id, q.product_slug || q.product || q.product_name)} className="btn-primary !py-1 !px-2 text-xs mr-1 mb-1">Convert to order</button>
                           ) : null}
                           {waLinkTo(q.phone, `Hello ${q.name || ''}, this is ${STORE.name} about your quote request for ${q.product_name || q.product_slug || 'your item'}.`) ? (
                             <a

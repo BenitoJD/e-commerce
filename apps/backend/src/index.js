@@ -22,11 +22,11 @@ const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
 const { createRateLimiter } = require('./lib/rateLimit');
 const { sweepStaleHolds, sweepIntervalMinutes } = require('./lib/sweep');
-const { parseOrigins, securityHeaders, corsOrigin, corsWarning } = require('./lib/security');
+const { securityHeaders, corsOrigin } = require('./lib/security');
 const { requestId } = require('./lib/requestId');
 const { createShutdown } = require('./lib/shutdown');
 const { seedOnBoot } = require('./lib/firstRunSeed');
-const { webhookWarning } = require('./lib/webhookAuth');
+const { configWarnings } = require('./lib/configCheck');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -130,10 +130,9 @@ const server = app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
-  const warning = corsWarning(process.env);
-  if (warning) console.warn(warning);
-  const webhookWarn = webhookWarning(process.env);
-  if (webhookWarn) console.warn(webhookWarn);
+  // One audit line per degraded production feature, so a misconfigured deploy is obvious
+  // in `docker compose logs` instead of being discovered by a shopper.
+  for (const warning of configWarnings(process.env)) console.warn(warning);
 
   // Fresh volume: create the schema, then load the catalogue so the store isn't empty until
   // someone remembers `npm run seed`. Only ever runs against an empty table.

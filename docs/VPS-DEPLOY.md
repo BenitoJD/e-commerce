@@ -97,6 +97,10 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 - `backups/` and `*.sql.gz` are gitignored — dumps contain customer PII.
 
 ## Monitoring
+- **First thing to read after `docker compose up`**: the backend log. A production deploy with
+  a missing setting prints one `[config]` / `[security]` / `[webhook]` line per degraded
+  feature — admin disabled, online checkout refusing orders, CORS blocked, or webhooks
+  rejected. A fully configured deploy prints none of them.
 - Liveness: `GET /health` — process is up (always 200 while Node runs).
 - Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
   Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.

@@ -4,7 +4,7 @@ const { applyCoupon } = require('../lib/pricing');
 const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
 const { makeReceipt } = require('../lib/receipt');
-const { clampText, normalizePhone } = require('../lib/validate');
+const { clampText, normalizePhone, normalizeGstin, isValidGstin } = require('../lib/validate');
 const { codMaxPaise, shippingFeePaise } = require('../lib/policy');
 
 const router = express.Router();
@@ -41,9 +41,10 @@ router.post('/create', async (req, res) => {
       return res.status(400).json({ error: 'pincode must be 6 digits' });
     }
     // Business buyers need their GSTIN on the tax invoice; validate when supplied.
-    const buyerGstin = String(customer.gstin || '').replace(/\s+/g, '').toUpperCase();
-    if (buyerGstin && !/^[0-9A-Z]{15}$/.test(buyerGstin)) {
-      return res.status(400).json({ error: 'GSTIN must be 15 letters/digits' });
+    // The check character matters: a typo prints a legally useless invoice.
+    const buyerGstin = normalizeGstin(customer.gstin);
+    if (buyerGstin && !isValidGstin(buyerGstin)) {
+      return res.status(400).json({ error: 'GSTIN looks invalid — check the 15-character number on your registration certificate' });
     }
     const buyer = {
       name: cleanName,

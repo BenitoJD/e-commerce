@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
+import { isValidGstin } from '../../lib/gstin';
 import { createCheckout, validateCoupon } from '../../lib/api';
 import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor, STORE } from '../../lib/store';
 
@@ -94,6 +95,11 @@ export default function CheckoutPage() {
     }
     if (!/^[6-9]\d{9}$/.test(form.phone.replace(/\D/g, ''))) { setErr('Enter a valid 10-digit mobile number.'); return; }
     if (!/^\d{6}$/.test(form.pincode)) { setErr('Enter a valid 6-digit pincode.'); return; }
+    // GSTIN is optional, but a wrong one prints a tax invoice the buyer cannot use.
+    if (form.gstin.trim() && !isValidGstin(form.gstin)) {
+      setErr('That GSTIN looks invalid — check the 15-character number on your GST certificate.');
+      return;
+    }
 
     setBusy(true);
     try {

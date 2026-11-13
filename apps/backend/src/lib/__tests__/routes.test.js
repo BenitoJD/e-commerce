@@ -738,14 +738,14 @@ test('invoice GST split never adds tax on top of the charged amount', async () =
 test('buyer GSTIN is captured, validated and printed on the invoice', async () => {
   const good = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],
-    customer: { name: 'Ravi Kumar', phone: '9876543210', gstin: '27aabc u9603r1zm' },
+    customer: { name: 'Ravi Kumar', phone: '9876543210', gstin: '27aapfu 0939f1zv' },
   });
   assert.equal(good.status, 200);
   const order = fake.orders.find((o) => o.receipt === good.json.receipt);
-  assert.equal(order.customer.gstin, '27AABCU9603R1ZM'); // normalised to upper case
+  assert.equal(order.customer.gstin, '27AAPFU0939F1ZV'); // normalised to upper case
 
   const inv = await api('GET', `/store/invoice/${good.json.receipt}`);
-  assert.equal(inv.json.customer.gstin, '27AABCU9603R1ZM');
+  assert.equal(inv.json.customer.gstin, '27AAPFU0939F1ZV');
 
   const bad = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],
@@ -1123,6 +1123,29 @@ test('COD is refused above the configured cap, and allowed just below it', async
   weapon.stock = originalStock;
 });
 
+test('checkout rejects a malformed GSTIN but accepts a valid or blank one', async () => {
+  const base = { items: [{ slug: 'drill-a', qty: 1 }], customer: { name: 'GST Buyer', phone: '9812300301' } };
+
+  const bad = await api('POST', '/store/checkout/create', {
+    ...base,
+    customer: { ...base.customer, gstin: '27AAPFU0939F1ZX' }, // wrong check character
+  });
+  assert.equal(bad.status, 400);
+  assert.match(bad.json.error, /GSTIN looks invalid/);
+
+  const good = await api('POST', '/store/checkout/create', {
+    ...base,
+    customer: { ...base.customer, gstin: '27aapfu 0939f1zv' }, // lowercase + space, still valid
+  });
+  assert.equal(good.status, 200);
+
+  const blank = await api('POST', '/store/checkout/create', {
+    ...base,
+    customer: { ...base.customer, phone: '9812300302' },
+  });
+  assert.equal(blank.status, 200, 'GSTIN stays optional for retail buyers');
+});
+
 test('bulk status update ships many orders and reports skips', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const receipts = [];
@@ -1230,7 +1253,7 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 2 }],
-    customer: { name: 'Ravi "RK" Kumar, Jr', phone: '9876543210', pincode: '560001', gstin: '27AABCU9603R1ZM' },
+    customer: { name: 'Ravi "RK" Kumar, Jr', phone: '9876543210', pincode: '560001', gstin: '27AAPFU0939F1ZV' },
     payMode: 'cod',
   });
   assert.equal(created.status, 200);
@@ -1247,7 +1270,7 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   assert.ok(row.includes('"Ravi ""RK"" Kumar, Jr"'), 'quotes doubled and comma kept inside the field');
   assert.ok(row.includes('"cod"'));
   assert.ok(row.includes('"560001"'));
-  assert.ok(row.includes('"27AABCU9603R1ZM"'));
+  assert.ok(row.includes('"27AAPFU0939F1ZV"'));
   assert.ok(row.includes(`"${(created.json.amount_paise / 100).toFixed(2)}"`));
 
   const anonymous = await fetch(`${base}/admin/orders/export.csv`);

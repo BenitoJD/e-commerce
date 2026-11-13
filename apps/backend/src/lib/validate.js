@@ -24,4 +24,32 @@ function normalizePhone(value) {
   return digits.slice(-10);
 }
 
-module.exports = { clampText, clampInt, normalizePhone };
+// GSTIN: 2-digit state code, 5-letter PAN, 4 digits, 1 letter, 1 alphanumeric, 'Z',
+// then a mod-36 check character. A wrong GSTIN on a tax invoice means the buyer cannot
+// claim input credit, so a typo is worth rejecting at checkout rather than printing it.
+const GSTIN_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function normalizeGstin(value) {
+  return String(value == null ? '' : value).replace(/[\s-]/g, '').toUpperCase();
+}
+
+function gstinChecksum(first14) {
+  let sum = 0;
+  for (let i = 0; i < 14; i += 1) {
+    const v = GSTIN_CHARS.indexOf(first14[i]);
+    if (v < 0) return null;
+    const product = v * (i % 2 === 0 ? 1 : 2);
+    sum += Math.floor(product / 36) + (product % 36);
+  }
+  return GSTIN_CHARS[(36 - (sum % 36)) % 36];
+}
+
+function isValidGstin(value) {
+  const s = normalizeGstin(value);
+  if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/.test(s)) return false;
+  const state = parseInt(s.slice(0, 2), 10);
+  if (!(state >= 1 && state <= 38)) return false; // 01–38 are the assigned state codes
+  return gstinChecksum(s.slice(0, 14)) === s[14];
+}
+
+module.exports = { clampText, clampInt, normalizePhone, normalizeGstin, isValidGstin };

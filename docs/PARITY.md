@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 149 (admin token single-sourced; picking list can actually load), 174 backend tests.
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 150 (real GSTIN validation with check character, 177 backend / 69 frontend tests).
 
 ## Storefront
 
@@ -39,6 +39,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` (browser print → PDF); seller GSTIN + **buyer GSTIN captured at checkout**, item lines with HSN, **shipping line**, coupon line, and totals that reconcile (`items − discount + shipping = total`) |
+| Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
 | 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) returns real 404 status; `error.js` boundary offers retry/home/browse instead of a blank app-error screen |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
@@ -99,14 +100,14 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 174 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 177 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 66 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 69 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

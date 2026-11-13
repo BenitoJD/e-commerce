@@ -9,6 +9,7 @@
 const BASE = (process.argv[2] || process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 const PRODUCT = process.argv[3] || process.env.PRODUCT_SLUG || '';
 const CATEGORY = process.argv[4] || process.env.CATEGORY || 'power-tools';
+const BRAND = process.argv[5] || process.env.BRAND || '';
 
 const ROUTES = [
   '/',
@@ -17,6 +18,7 @@ const ROUTES = [
   PRODUCT ? `/product/${PRODUCT}` : null,
   '/deals',
   '/brands',
+  BRAND ? `/brand/${BRAND}` : null,
   // Content pages are client-rendered with layout metadata — the place canonicals go missing.
   '/about-us',
   '/contact-us',
@@ -103,6 +105,12 @@ function metaAudit(route, body, problems) {
   const bodyOnly = body.slice(body.indexOf('<body') > -1 ? body.indexOf('<body') : 0).replace(/<script[\s\S]*?<\/script>/gi, ' ');
   const h1s = (bodyOnly.match(/<h1[\s>]/gi) || []).length;
   if (h1s !== 1) problems.push(`expected exactly one <h1>, found ${h1s}`);
+
+  // Every <img> needs an alt attribute. An empty alt="" is fine (decorative) — a missing
+  // attribute is what screen readers announce as the raw URL.
+  const imgs = bodyOnly.match(/<img\b[^>]*>/gi) || [];
+  const noAlt = imgs.filter((tag) => !/\balt\s*=/.test(tag));
+  if (noAlt.length) problems.push(`${noAlt.length} <img> without alt text`);
 
   // Canonical: present, absolute, path matches the route (a copy-pasted canonical points
   // every product at the same URL and de-indexes the rest).

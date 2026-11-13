@@ -111,12 +111,13 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 # sees: every JSON-LD block must parse, Product nodes must carry offers/price/currency/
 # availability, BreadcrumbLists must be >= 2 items with 1..n positions, and the visible text
 # must be free of ₹NaN/undefined/Invalid Date artefacts. Each page also needs exactly one
-# <h1>, a canonical that matches its own route, a unique title and no accidental noindex.
-node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug>   # 16/16 pages
+# <h1>, a canonical that matches its own route, a unique title, no accidental noindex, and
+# every <img> must carry an alt attribute (empty alt="" is fine for decorative images).
+node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
 Last run against the pushed HEAD: `verify-all` **6/6** (238 backend, 96 storefront, build 28 routes),
-`smoke` **36/36** live routes, `audit-pages` **16/16** pages, `verify-clone` **5/5** on a fresh clone
+`smoke` **36/36** live routes, `audit-pages` **17/17** pages, `verify-clone` **5/5** on a fresh clone
 of `BenitoJD/toolsvilla-clone`.
 
 Backend: `cd apps/backend && npm test` — 238 tests (pricing math, GST, EMI, catalog validity,

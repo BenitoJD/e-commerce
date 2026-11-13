@@ -101,7 +101,7 @@ Point your domain at the VPS, then set the Razorpay webhook to
 Shopping: homepage strips (deals, brands, recently viewed) · category listing with
 brand/price/sort/text filters and load-more · product pages with specs, EMI 3/6/9/12,
 video embeds, pincode ETA, reviews + Q&A, related items, WhatsApp share · search with typeahead ·
-wishlist (move one / move all, skips out-of-stock) · cart with live stock checks,
+wishlist (move one / move all, skips out-of-stock) · searchable brand directory with real imagery and A–Z filtering · cart with live stock checks,
 clear-all and coupons · Razorpay checkout (UPI/cards/netbanking/EMI) · COD capped at
 `COD_MAX_PAISE` (default ₹20,000) and enforced server-side · optional buyer GSTIN for
 business invoices · server-authoritative totals.

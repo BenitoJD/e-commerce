@@ -211,6 +211,19 @@ test.describe('Public browsing', () => {
     await expect(page.locator('a.card').first()).toBeVisible();
     await page.goto('/brands');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Shop by Brand/i);
+    await expect(page.getByText(/Featured brands/i)).toBeVisible();
+
+    // Search narrows the directory and the A–Z control filters it further.
+    const brandSearch = page.getByLabel('Search brands');
+    await brandSearch.fill('Grace');
+    await expect(page.getByRole('link', { name: /Gracewood/ }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Bosch/ })).toHaveCount(0);
+    await brandSearch.fill('');
+    await page.getByRole('button', { name: 'G', exact: true }).click();
+    await expect(page.getByRole('link', { name: /Gracewood/ }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Bosch/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'All', exact: true }).click();
+
     await page.getByRole('link', { name: /Bosch/ }).first().click();
     await expect(page).toHaveURL(/\/brand\/Bosch/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Bosch/i);

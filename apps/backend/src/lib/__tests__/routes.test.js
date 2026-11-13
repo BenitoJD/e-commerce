@@ -1123,6 +1123,50 @@ test('COD is refused above the configured cap, and allowed just below it', async
   weapon.stock = originalStock;
 });
 
+test('bulk status update ships many orders and reports skips', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const receipts = [];
+  for (let i = 0; i < 3; i += 1) {
+    const r = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }],
+      customer: { name: `Bulk ${i}`, phone: `981230020${i}` },
+    });
+    receipts.push(r.json.receipt);
+  }
+
+  const list = await api('GET', '/admin/orders?limit=10', undefined, adminHeaders);
+  const mine = list.json.orders.filter((o) => receipts.includes(o.receipt));
+  assert.equal(mine.length, 3, 'all three orders are visible to the admin');
+
+  // One of them gets cancelled first so the bulk call must skip it (illegal transition).
+  await api('PATCH', `/admin/orders/${mine[0].id}`, { status: 'cancelled' }, adminHeaders);
+
+  const res = await api('POST', '/admin/orders/bulk-status', {
+    ids: mine.map((o) => o.id),
+    status: 'shipped',
+  }, adminHeaders);
+  assert.equal(res.status, 200);
+  assert.equal(res.json.applied.length, 2, 'two orders move to shipped');
+  assert.equal(res.json.skipped.length, 1, 'the cancelled order is skipped with a reason');
+  assert.ok(res.json.skipped[0].reason, 'skip carries an explanation');
+
+  // Nothing outside the request is touched, and statuses actually persisted.
+  for (const o of mine.slice(1)) {
+    const detail = await api('GET', `/admin/orders/${o.id}`, undefined, adminHeaders);
+    assert.equal(detail.json.order.status, 'shipped');
+  }
+});
+
+test('bulk status update validates its input', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const noIds = await api('POST', '/admin/orders/bulk-status', { ids: [], status: 'shipped' }, adminHeaders);
+  assert.equal(noIds.status, 400);
+
+  const badStatus = await api('POST', '/admin/orders/bulk-status', { ids: [1], status: 'teleported' }, adminHeaders);
+  assert.equal(badStatus.status, 400);
+  assert.match(badStatus.json.error, /status must be one of/);
+});
+
 test('admin orders paging: offset moves the window and limit is respected', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   // Create three orders so paging has something to move past.

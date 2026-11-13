@@ -135,6 +135,35 @@ router.get('/orders/export.csv', async (req, res) => {
   }
 });
 
+// One place for the per-order status change: guards, stock release and refunds must behave
+// identically whether the operator acts on one order or fifty.
+async function transitionOrder(id, status) {
+  const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id = $1', [id]);
+  if (!current.length) return { ok: false, code: 404, error: 'Order not found' };
+  const guard = canTransition(current[0].status, status);
+  if (!guard.ok) return { ok: false, code: 409, error: guard.reason };
+
+  const { rows } = await db.query('UPDATE orders SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+
+  // Release reserved stock when an admin cancels/refunds a stock-holding order.
+  if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {
+    await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
+    console.log(`[admin] stock released for ${rows[0].receipt}`);
+  }
+
+  // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.
+  let refund = { mode: 'none' };
+  if ((status === 'cancelled' || status === 'refunded') && current[0].status === 'paid') {
+    refund = await refundPayment({ ...current[0], receipt: current[0].receipt });
+    // Persist the outcome: 'manual' in particular must survive a page refresh,
+    // otherwise the money is simply owed with nobody tracking it.
+    await db.query('UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE id = $2', [refund.mode, id]);
+    rows[0].refund_mode = refund.mode;
+  }
+  console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status} refund=${refund.mode}`);
+  return { ok: true, order: rows[0], refund: refund.mode };
+}
+
 // PATCH /admin/orders/:id {status}
 router.patch('/orders/:id', async (req, res) => {
   try {
@@ -142,38 +171,42 @@ router.patch('/orders/:id', async (req, res) => {
     if (!ORDER_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
     }
-    const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id = $1', [req.params.id]);
-    if (!current.length) return res.status(404).json({ error: 'Order not found' });
-    const guard = canTransition(current[0].status, status);
-    if (!guard.ok) {
-      return res.status(409).json({ error: guard.reason });
-    }
-    const { rows } = await db.query(
-      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
-      [status, req.params.id]
-    );
-    // Release reserved stock when an admin cancels/refunds a stock-holding order.
-    if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {
-      await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
-      console.log(`[admin] stock released for ${rows[0].receipt}`);
-    }
-    // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.
-    let refund = { mode: 'none' };
-    if ((status === 'cancelled' || status === 'refunded') && current[0].status === 'paid') {
-      refund = await refundPayment({ ...current[0], receipt: current[0].receipt });
-      // Persist the outcome: 'manual' in particular must survive a page refresh,
-      // otherwise the money is simply owed with nobody tracking it.
-      await db.query(
-        'UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE id = $2',
-        [refund.mode, req.params.id]
-      );
-      rows[0].refund_mode = refund.mode;
-    }
-    console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status} refund=${refund.mode}`);
-    res.json({ order: rows[0], refund: refund.mode });
+    const result = await transitionOrder(req.params.id, status);
+    if (!result.ok) return res.status(result.code).json({ error: result.error });
+    res.json({ order: result.order, refund: result.refund });
   } catch (err) {
     console.error('[admin] order update error:', err.message);
     res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
+// POST /admin/orders/bulk-status {ids: [], status} — ship/cancel many orders at once.
+// Declared before '/orders/:id' so "bulk-status" is never parsed as an order id.
+router.post('/orders/bulk-status', async (req, res) => {
+  try {
+    const { status } = req.body || {};
+    if (!ORDER_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
+    }
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.slice(0, 200) : [];
+    if (!ids.length) return res.status(400).json({ error: 'ids must be a non-empty array' });
+
+    const applied = [];
+    const skipped = [];
+    for (const id of ids) {
+      try {
+        const result = await transitionOrder(id, status);
+        if (result.ok) applied.push({ id, receipt: result.order.receipt, refund: result.refund });
+        else skipped.push({ id, reason: result.error });
+      } catch (e) {
+        skipped.push({ id, reason: e.message });
+      }
+    }
+    console.log(`[admin] bulk ${status}: ${applied.length} applied, ${skipped.length} skipped`);
+    res.json({ status, applied, skipped });
+  } catch (err) {
+    console.error('[admin] bulk order update error:', err.message);
+    res.status(500).json({ error: 'Failed to update orders' });
   }
 });
 

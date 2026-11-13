@@ -6,6 +6,7 @@ import {
   getAdminStats,
   getAdminOrders,
   getAdminOrdersCsv,
+  bulkUpdateOrderStatus,
   getAdminOrderDetail,
   updateOrderStatus,
   getAdminQuotes,
@@ -60,6 +61,9 @@ export default function AdminPage() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [ordersHasMore, setOrdersHasMore] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
   const [orderFilter, setOrderFilter] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [orderDetail, setOrderDetail] = useState(null);
@@ -142,6 +146,24 @@ export default function AdminPage() {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function runBulkStatus(status) {
+    if (!selectedOrders.length || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkMsg('');
+    try {
+      const r = await bulkUpdateOrderStatus(token, selectedOrders, status);
+      const applied = (r && r.applied) || [];
+      const skipped = (r && r.skipped) || [];
+      setBulkMsg(`${applied.length} order(s) marked ${status}${skipped.length ? `, ${skipped.length} skipped (${skipped[0].reason})` : ''}.`);
+      setSelectedOrders([]);
+      await loadOrders();
+    } catch (e) {
+      setBulkMsg(`Bulk update failed: ${e.message}`);
+    } finally {
+      setBulkBusy(false);
     }
   }
 
@@ -708,10 +730,28 @@ export default function AdminPage() {
                 </button>
                 <span className="text-xs text-gray-500">{orders.length} order(s)</span>
               </div>
+              {selectedOrders.length > 0 ? (
+                <div role="status" className="flex flex-wrap items-center gap-2 mt-3 p-2 bg-orange-50 border border-orange-200 rounded">
+                  <b className="text-sm">{selectedOrders.length} selected</b>
+                  <button onClick={() => runBulkStatus('shipped')} disabled={bulkBusy} className="btn-primary !py-1 !px-3 text-xs disabled:opacity-50">Mark shipped</button>
+                  <button onClick={() => runBulkStatus('delivered')} disabled={bulkBusy} className="btn-primary !py-1 !px-3 text-xs disabled:opacity-50">Mark delivered</button>
+                  <button onClick={() => runBulkStatus('cancelled')} disabled={bulkBusy} className="btn-outline !py-1 !px-3 text-xs !text-red-600 disabled:opacity-50">Cancel selected</button>
+                  <button onClick={() => setSelectedOrders([])} className="text-xs underline">Clear selection</button>
+                </div>
+              ) : null}
+              {bulkMsg ? <p role="status" className="text-sm font-semibold text-gray-700 mt-2">{bulkMsg}</p> : null}
               <div className="overflow-x-auto card">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-500 border-b">
+                      <th className="p-2">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all orders on this page"
+                          checked={orders.length > 0 && selectedOrders.length === orders.length}
+                          onChange={(e) => setSelectedOrders(e.target.checked ? orders.map((o) => o.id) : [])}
+                        />
+                      </th>
                       <th className="p-2">Receipt</th>
                       <th className="p-2">Amount</th>
                       <th className="p-2">Customer</th>
@@ -722,6 +762,16 @@ export default function AdminPage() {
                   <tbody>
                     {orders.map((o, i) => (
                       <tr key={o.id || o._id || o.receipt || i} className="border-b last:border-0">
+                        <td className="p-2">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select order ${o.receipt || o.id}`}
+                            checked={selectedOrders.includes(o.id)}
+                            onChange={(e) => setSelectedOrders((prev) => (
+                              e.target.checked ? [...prev, o.id] : prev.filter((x) => x !== o.id)
+                            ))}
+                          />
+                        </td>
                         <td className="p-2 font-mono text-xs">{o.receipt || o.id || o._id}<br /><span className="text-gray-400">{o.created_at || o.createdAt ? new Date(o.created_at || o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>{(o.razorpay_payment_id || o.razorpayPaymentId) ? <><br /><span className="text-gray-400" title="Razorpay payment ID">pay_{String(o.razorpay_payment_id || o.razorpayPaymentId).slice(-8)}</span></> : null}</td>
                         <td className="p-2">{o.amount_paise != null ? inrFromPaise(o.amount_paise) : (o.amount != null ? inrMaybe(o.amount) : '—')}{(o.coupon_code || o.couponCode) ? <div className="text-xs text-green-700 font-semibold">{o.coupon_code || o.couponCode}{o.discount_paise || o.discountPaise ? ` −₹${(Number(o.discount_paise ?? o.discountPaise) / 100).toLocaleString('en-IN')}` : ''}</div> : null}</td>
                         <td className="p-2 text-xs">{o.customer?.name || o.name || o.email || o.phone || '—'}</td>

@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 145 (admin charge breakdown + reconciliation warning, 167 backend / 63 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 146 (bulk order actions, 169 backend tests).
 
 ## Storefront
 
@@ -94,7 +94,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 167 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 169 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

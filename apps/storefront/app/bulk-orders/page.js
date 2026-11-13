@@ -1,3 +1,17 @@
+import { absoluteUrl } from '../../lib/serverApi';
+import { STORE } from '../../lib/store';
+
+export const metadata = {
+  title: `Bulk Orders (B2B) | ${STORE.name}`,
+  description: 'Wholesale slab pricing on 5+ units, GST invoice for input tax credit, freight support and a dedicated account manager for sites, farms, factories and resellers.',
+  alternates: { canonical: absoluteUrl('/bulk-orders') },
+  openGraph: {
+    title: `Bulk Orders (B2B) | ${STORE.name}`,
+    description: 'Wholesale pricing on 5+ units with GST invoice and freight support.',
+    url: absoluteUrl('/bulk-orders'),
+  },
+};
+
 export default function BulkOrders() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

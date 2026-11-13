@@ -112,7 +112,7 @@ function sitemapXml() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.test';
   const urls = [
     '/', '/deals', '/brands', '/bulk-quote', '/bulk-orders', '/emi-options', '/contact-us',
-    '/about-us', '/shipping-policy', '/returns-policy', '/cancellation-policy', '/returns',
+    '/about-us', '/shipping-policy', '/returns-policy', '/cancellation-policy',
     '/warranty-policy', '/privacy-policy', '/terms-conditions', '/category/all',
     ...CATEGORIES.flatMap((c) => [`/category/${c.slug}`, ...c.children.map((k) => `/category/${c.slug}/${k.slug}`)]),
     ...PRODUCTS.map((p) => `/product/${p.slug}`),

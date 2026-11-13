@@ -129,11 +129,13 @@ async function main() {
     BRAND: first.brand,
   });
   const auditOk = await runScript('page audit (SEO + metadata)', 'audit-pages.mjs', [base, first.slug, first.category, first.brand], {});
+  // Every advertised URL, not just the hand-listed ones.
+  const crawlOk = await runScript('sitemap crawl (every advertised URL)', 'crawl-sitemap.mjs', [base], {});
 
   cleanup();
-  const passed = [smokeOk, auditOk].filter(Boolean).length;
-  console.log(`\n=== self-audit: ${passed}/2 suites passed ===`);
-  process.exit(passed === 2 ? 0 : 1);
+  const passed = [smokeOk, auditOk, crawlOk].filter(Boolean).length;
+  console.log(`\n=== self-audit: ${passed}/3 suites passed ===`);
+  process.exit(passed === 3 ? 0 : 1);
 }
 
 process.on('SIGINT', () => { cleanup(); process.exit(130); });

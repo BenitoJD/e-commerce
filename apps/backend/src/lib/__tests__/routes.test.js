@@ -1157,7 +1157,8 @@ test('sitemap lists products and brand pages, not just static URLs', async () =>
   assert.ok(xml.includes('<loc>https://shop.test/product/drill-a</loc>'));
   assert.ok(xml.includes('<loc>https://shop.test/brand/DrillCo</loc>'));
   assert.ok(xml.includes('<loc>https://shop.test/brand/MotorCo</loc>'));
-  assert.ok(xml.includes('<loc>https://shop.test/returns</loc>'));
+  // /returns is a noindex RMA form, so it must NOT be advertised here.
+  assert.ok(!xml.includes('<loc>https://shop.test/returns</loc>'));
 });
 
 test('stock endpoint returns live availability for cart slugs', async () => {

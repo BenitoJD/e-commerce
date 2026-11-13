@@ -16,7 +16,8 @@ const STATIC_PAGES = [
   '/shipping-policy',
   '/returns-policy',
   '/cancellation-policy',
-  '/returns',
+  // NOTE: /returns is deliberately absent — that page is a private RMA form marked
+  // `noindex, nofollow`, and a sitemap must not advertise pages we ask crawlers to ignore.
   '/warranty-policy',
   '/privacy-policy',
   '/terms-conditions',

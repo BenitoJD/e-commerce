@@ -63,6 +63,12 @@ test('sitemap lists every parent and child category from the taxonomy', () => {
   assert.equal(new Set(categoryUrls).size, categoryUrls.length, 'duplicate category URLs in the sitemap');
 });
 
+test('the sitemap never advertises a page the storefront marks noindex', () => {
+  const xml = buildSitemap('https://shop.test');
+  // /returns is the RMA form: its layout sets robots noindex,nofollow.
+  assert.ok(!xml.includes('https://shop.test/returns<'), 'noindex pages must stay out of the sitemap');
+});
+
 test('sitemap omits private and transactional pages', () => {
   for (const priv of ['/my-orders', '/track-order', '/wishlist', '/cart', '/checkout', '/admin']) {
     assert.equal(STATIC_PAGES.includes(priv), false, `${priv} must not be in the sitemap`);

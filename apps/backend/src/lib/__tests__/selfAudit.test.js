@@ -16,6 +16,7 @@ test('self-audit boots both servers and runs the two live suites', () => {
   assert.match(src, /next',\s*'dist',\s*'bin',\s*'next'/, 'must start the built storefront');
   assert.match(src, /smoke\.mjs/);
   assert.match(src, /audit-pages\.mjs/);
+  assert.match(src, /crawl-sitemap\.mjs/, 'the crawl covers every advertised URL, not a hand list');
   assert.match(src, /cleanup\(\)/, 'must always clean up child processes');
 });
 

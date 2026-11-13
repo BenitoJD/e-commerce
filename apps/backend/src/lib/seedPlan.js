@@ -6,14 +6,15 @@
 //  2. `stock` is NEVER overwritten — live inventory belongs to the operator, and a
 //     re-seed must not silently restock sold-out items.
 
-const PRODUCT_COLUMNS = ['slug', 'name', 'brand', 'category', 'subcategory', 'price_paise', 'mrp_paise', 'hsn', 'stock', 'specs', 'images', 'videos'];
+const PRODUCT_COLUMNS = ['slug', 'name', 'brand', 'category', 'subcategory', 'description', 'price_paise', 'mrp_paise', 'hsn', 'stock', 'specs', 'images', 'videos'];
 
-const PRODUCT_UPSERT_SQL = `INSERT INTO products (${PRODUCT_COLUMNS.join(', ')}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+const PRODUCT_UPSERT_SQL = `INSERT INTO products (${PRODUCT_COLUMNS.join(', ')}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT (slug) DO UPDATE SET
          name = EXCLUDED.name,
          brand = EXCLUDED.brand,
          category = EXCLUDED.category,
          subcategory = EXCLUDED.subcategory,
+         description = EXCLUDED.description,
          price_paise = EXCLUDED.price_paise,
          mrp_paise = EXCLUDED.mrp_paise,
          hsn = EXCLUDED.hsn,
@@ -28,6 +29,7 @@ function productParams(p) {
     p.brand,
     p.category,
     p.subcategory || null,
+    p.description || null,
     p.price_paise,
     p.mrp_paise,
     p.hsn,

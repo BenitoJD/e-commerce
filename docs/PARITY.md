@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 175 (invoice API sends buyer state; nested-field contract guard proven sensitive).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 176 (product description column + seeded copy; page↔schema field guard).
 
 ## Storefront
 
@@ -12,7 +12,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
 | Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one). **Every parent and child path is in the sitemap**, derived from the taxonomy, and the nested route is covered by the live smoke suite (32/32) |
-| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, and a **"You save ₹X (N% off MRP)"** line under the price |
+| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, a **"You save ₹X (N% off MRP)"** line under the price, and a **long-form description** (column + seeded copy; the page had rendered this field against a column that never existed) |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab (search by name/brand/slug, **paged with Load more** so nothing beyond 100 is unreachable) + `POST/DELETE /admin/products` |
@@ -110,8 +110,8 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
 `smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 227 tests (pricing math, GST, EMI, catalog validity,
-category taxonomy + tree counts, state list, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
+Backend: `cd apps/backend && npm test` — 229 tests (pricing math, GST, EMI, catalog validity,
+category taxonomy + tree counts, state list, product field contract, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,

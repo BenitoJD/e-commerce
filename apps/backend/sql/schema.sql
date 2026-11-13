@@ -139,6 +139,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
 -- Two-level categories: products carry a leaf slug; the tree lives in data/categories.js.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory TEXT;
 CREATE INDEX IF NOT EXISTS idx_products_subcategory ON products(subcategory);
+-- Long-form copy shown on the product page (the page already rendered this field, but no
+-- column existed, so the section was permanently blank).
+ALTER TABLE products ADD COLUMN IF NOT EXISTS description TEXT;
 
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (

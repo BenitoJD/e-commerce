@@ -1,8 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { getInvoice } from '../../../lib/api';
+import PrintButton from '../../../components/PrintButton';
+import { getInvoiceForRender } from '../../../lib/serverApi';
 import { STORE } from '../../../lib/store';
+import { splitTax } from '../../../lib/tax';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(paise || 0) / 100);
@@ -14,29 +13,10 @@ function fmtDate(v) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export default function InvoicePage({ params }) {
+export default async function InvoicePage({ params }) {
   const receipt = decodeURIComponent(params?.receipt || '');
-  const [inv, setInv] = useState(null);
-  const [err, setErr] = useState('');
-
-  useEffect(() => {
-    if (!receipt) { setErr('Missing receipt ID.'); return; }
-    let alive = true;
-    (async () => {
-      try {
-        const r = await getInvoice(receipt);
-        if (alive) setInv(r.invoice || r);
-      } catch (e2) {
-        if (alive) setErr(e2.message || 'Invoice not found.');
-      }
-    })();
-    return () => { alive = false; };
-  }, [receipt]);
-
-  const print = () => {
-    if (typeof window !== 'undefined') window.print();
-  };
-
+  const inv = receipt ? await getInvoiceForRender(receipt) : null;
+  const err = !receipt ? 'Missing receipt ID.' : (inv ? '' : 'Invoice not found.');
   const items = Array.isArray(inv?.items) ? inv.items : [];
   const customer = inv?.customer || {};
   const rawPayMode = String(inv?.payMode ?? inv?.pay_mode ?? '').toLowerCase();
@@ -53,6 +33,13 @@ export default function InvoicePage({ params }) {
   const itemsTotal = Number(inv?.itemsTotalPaise ?? inv?.items_total_paise ?? itemsTotalFallback) || 0;
   const base = inv?.gst?.base ?? Math.round(((inv?.grandPaise ?? inv?.grand_paise ?? 0) * 100) / (100 + Number(gstRate)));
   const gstAmt = inv?.gst?.gst ?? Math.round(Number(base) * (Number(gstRate) / 100));
+  // Compliant tax presentation: CGST+SGST within a state, IGST across states.
+  const tax = splitTax(gstAmt, {
+    sellerGstin: STORE.gstin,
+    sellerStateCode: STORE.stateCode,
+    buyerGstin: customer.gstin || '',
+    rate: Number(gstRate) || 18,
+  });
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -61,7 +48,7 @@ export default function InvoicePage({ params }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 no-print">
         <h1 className="text-3xl font-extrabold">Tax Invoice</h1>
-        <button onClick={print} className="btn-primary !py-2">Print / Save PDF</button>
+        <PrintButton />
       </div>
 
       {err && <p className="text-sm text-red-600 font-semibold mt-4">{err}</p>}
@@ -73,12 +60,15 @@ export default function InvoicePage({ params }) {
             <div>
               <div className="font-extrabold text-lg">{STORE.name}</div>
               <div className="text-gray-600">GSTIN: {STORE.gstin}</div>
-              <div className="text-gray-600">Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026</div>
+              <div className="text-gray-600">{STORE.address}</div>
               <div className="text-gray-600">{STORE.email} • {STORE.phoneDisplay}</div>
             </div>
             <div className="text-right">
               <div><span className="text-gray-500">Receipt no:</span> <b>{inv.receipt || receipt}</b></div>
               <div><span className="text-gray-500">Date:</span> <b>{fmtDate(inv.createdAt || inv.created_at)}</b></div>
+              {tax.placeOfSupply ? (
+                <div><span className="text-gray-500">Place of supply:</span> <b>{tax.placeOfSupply}</b>{tax.assumed ? <span className="text-gray-400"> (seller state)</span> : null}</div>
+              ) : null}
               <div className="mt-1"><span className="badge bg-green-100 text-green-800">{String(inv.status || 'paid').toUpperCase()}</span></div>
             </div>
           </div>
@@ -141,7 +131,14 @@ export default function InvoicePage({ params }) {
               </>
             ) : null}
             <div className="flex justify-between"><span className="text-gray-500">Subtotal (taxable base)</span><b>{inr(inv.subtotalPaise ?? inv.subtotal_paise ?? base)}</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">GST @ {gstRate}%</span><b>{inr(gstAmt)}</b></div>
+            {tax.kind === 'inter' ? (
+              <div className="flex justify-between"><span className="text-gray-500">IGST @ {gstRate}%</span><b>{inr(tax.igstPaise)}</b></div>
+            ) : (
+              <>
+                <div className="flex justify-between"><span className="text-gray-500">CGST @ {tax.halfRate}%</span><b>{inr(tax.cgstPaise)}</b></div>
+                <div className="flex justify-between"><span className="text-gray-500">SGST @ {tax.halfRate}%</span><b>{inr(tax.sgstPaise)}</b></div>
+              </>
+            )}
             <div className="flex justify-between text-base border-t pt-2"><span>Grand total</span><b>{inr(inv.grandPaise ?? inv.grand_paise ?? (Number(base) + Number(gstAmt)))}</b></div>
           </div>
 

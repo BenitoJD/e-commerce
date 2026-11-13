@@ -115,11 +115,11 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 177 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 178 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 69 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 76 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 25 routes

@@ -24,6 +24,15 @@ async function cachedJson(url) {
   return cache.wrap(url, () => safeJson(url));
 }
 
+// Invoice data for server rendering. Deliberately NOT cached: it carries a customer's
+// name/address/GSTIN and a stale copy could show someone else's details after a re-issue.
+export async function getInvoiceForRender(receipt) {
+  if (!receipt) return null;
+  const data = await safeJson(`${BASE}/store/invoice/${encodeURIComponent(receipt)}`);
+  if (!data) return null;
+  return data.invoice || data;
+}
+
 export async function getProductForMeta(slug) {
   const data = await cachedJson(`${BASE}/store/products/${encodeURIComponent(slug)}`);
   if (!data) return null;

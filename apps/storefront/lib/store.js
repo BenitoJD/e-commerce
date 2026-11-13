@@ -44,6 +44,10 @@ export const STORE = {
   phoneDisplay: displayPhone(PHONE_DIGITS),
   email: process.env.NEXT_PUBLIC_STORE_EMAIL || 'care@toolskart.in',
   gstin: process.env.NEXT_PUBLIC_STORE_GSTIN || '00AAAAA0000A1Z5',
+  address: process.env.NEXT_PUBLIC_STORE_ADDRESS || 'Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026',
+  // GST state code of the seller. Drives the CGST/SGST vs IGST decision on invoices, so it
+  // must be explicit: the placeholder GSTIN above carries an unusable "00" code.
+  stateCode: process.env.NEXT_PUBLIC_STORE_STATE_CODE || '27',
 };
 
 // COD cap shown to shoppers. Must mirror the backend's COD_MAX_PAISE; both are

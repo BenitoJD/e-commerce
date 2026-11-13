@@ -31,6 +31,7 @@ import {
   updateStock
 } from '../../lib/api';
 import { waLinkTo, STORE } from '../../lib/store';
+import { reconcileOrder } from '../../lib/orderMath';
 
 function inrFromPaise(paise) {
   const n = Number(paise || 0) / 100;
@@ -799,7 +800,23 @@ export default function AdminPage() {
                       ) : null}
                       <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
                       <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || '—'}</b></div>
-                      <div className="mt-1">Total charged: <b>{inrFromPaise(orderDetail.amountPaise)}</b></div>
+                      {(() => {
+                        // Explain the charge: items − discount + shipping must equal the total.
+                        const m = reconcileOrder(orderDetail);
+                        return (
+                          <div className="mt-2 border-t pt-2">
+                            <div className="flex justify-between gap-4"><span>Items</span><span>{inrFromPaise(m.subtotalPaise)}</span></div>
+                            {m.discountPaise ? <div className="flex justify-between gap-4 text-green-700"><span>Coupon {orderDetail.couponCode || ''}</span><span>− {inrFromPaise(m.discountPaise)}</span></div> : null}
+                            <div className="flex justify-between gap-4"><span>Shipping</span><span>{m.shippingPaise ? inrFromPaise(m.shippingPaise) : 'Free'}</span></div>
+                            <div className="flex justify-between gap-4 font-bold border-t mt-1 pt-1"><span>Total charged</span><span>{inrFromPaise(m.totalPaise)}</span></div>
+                            {!m.matches ? (
+                              <div role="alert" className="text-red-600 font-bold mt-1">
+                                Reconciles to {inrFromPaise(m.expectedPaise)} — differs by {inrFromPaise(Math.abs(m.differencePaise))}. Check the invoice before replying.
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 

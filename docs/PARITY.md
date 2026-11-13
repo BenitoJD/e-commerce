@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 144 (invoice access from the admin console, 167 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 145 (admin charge breakdown + reconciliation warning, 167 backend / 63 frontend tests).
 
 ## Storefront
 
@@ -19,6 +19,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Dashboard metrics | ✅ Overview shows **orders today, revenue today, 7-day revenue**, unpaid/COD-pending count and **manual refunds needing action** (computed by a tested summariser) |
 | Admin order paging | ✅ Orders list supports `limit`/`offset` with a **Load more orders** button, so history beyond the first page stays reachable |
 | Admin invoice access | ✅ **Invoice** link on every order row and **Open GST invoice** in the detail panel — support and GST filing no longer require hand-building `/invoice/<receipt>` (guarded by a test) |
+| Admin charge breakdown | ✅ order detail shows **items − coupon + shipping = total charged** with a red `role="alert"` warning when it doesn't reconcile, computed by a tested pure helper (`lib/orderMath.js`) |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
@@ -100,8 +101,8 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 58 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, GST-inclusive split, COD cap + shipping
+Storefront: `cd apps/storefront && npm test` — 63 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, order money reconciliation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,
 JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN-proof

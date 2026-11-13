@@ -1,6 +1,16 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { createRateLimiter } = require('../rateLimit');
+
+test('index.js meters the typeahead endpoint separately from writes', () => {
+  const src = fs.readFileSync(path.resolve(__dirname, '..', '..', '..', 'src', 'index.js'), 'utf8');
+  assert.match(src, /SUGGEST_RATE_LIMIT_MAX/, 'the typeahead budget must be configurable');
+  assert.match(src, /app\.use\('\/store\/search\/suggest', suggestLimit\)/, 'suggest must be rate limited');
+  // Reads stay unmetered elsewhere so SEO crawls are not throttled into 429s.
+  assert.doesNotMatch(src, /app\.use\('\/store\/products', \w*[Ll]imit\)/, 'product listing must stay unmetered');
+});
 
 function fakeReq(ip = '1.2.3.4') {
   return { ip, socket: { remoteAddress: ip } };

@@ -76,6 +76,15 @@ const lookupLimit = createRateLimiter({
 });
 app.use(['/store/invoice', '/store/service/track', '/store/checkout/verify'], lookupLimit);
 
+// Typeahead hits the database on every keystroke, so it needs its own (generous) budget:
+// fast typing debounced at 250 ms stays well under it, while a scraper is cut off.
+const suggestLimit = createRateLimiter({
+  windowMs: 60000,
+  max: Number(process.env.SUGGEST_RATE_LIMIT_MAX) || 120,
+  message: 'Too many search requests, please slow down.',
+});
+app.use('/store/search/suggest', suggestLimit);
+
 app.use('/store/products', productsRouter);
 app.use('/store/brands', brandsRouter);
 app.use('/store/deals', dealsRouter);

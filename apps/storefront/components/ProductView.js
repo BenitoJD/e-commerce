@@ -6,6 +6,7 @@ import { addToCart } from '../lib/cart';
 import { addToWishlist, removeFromWishlist, isWishlisted } from '../lib/wishlist';
 import { waShareLink } from '../lib/store';
 import { pushRecent, parseRecent } from '../lib/recent';
+import { toggleCompare, parseCompare, COMPARE_KEY } from '../lib/compare';
 
 const FALLBACK = {
   slug: 'bosch-gsb-13-re-drill',
@@ -36,6 +37,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [wished, setWished] = useState(false);
+  const [comparing, setComparing] = useState(false);
   const [alertEmail, setAlertEmail] = useState('');
   const [alertBusy, setAlertBusy] = useState(false);
   const [alertMsg, setAlertMsg] = useState('');
@@ -76,7 +78,10 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
       }
     }
     load();
-    if (typeof window !== 'undefined') setWished(isWishlisted(slug));
+    if (typeof window !== 'undefined') {
+      setWished(isWishlisted(slug));
+      setComparing(parseCompare(localStorage.getItem(COMPARE_KEY)).some((x) => String(x.slug) === String(slug)));
+    }
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -361,6 +366,27 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             <button onClick={toggleWish} aria-label="Toggle wishlist" className={`border rounded-lg px-4 py-2.5 font-bold transition ${wished ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-400'}`}>
               {wished ? '❤ Wishlisted' : '♡ Wishlist'}
             </button>
+            <button
+              onClick={() => {
+                const next = toggleCompare(parseCompare(localStorage.getItem(COMPARE_KEY)), {
+                  slug: p.slug || slug,
+                  name: p.name,
+                  price: p.price,
+                  image: p.image || (p.images && p.images[0]) || '',
+                  brand: p.brand || '',
+                });
+                try { localStorage.setItem(COMPARE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+                window.dispatchEvent(new Event('compare-updated'));
+                setComparing(next.some((x) => String(x.slug) === String(p.slug || slug)));
+              }}
+              className={`btn-outline !py-2 !px-3 text-sm ${comparing ? '!bg-orange-50' : ''}`}
+              aria-pressed={comparing}
+            >
+              {comparing ? '✓ Comparing' : '⇄ Compare'}
+            </button>
+            {comparing ? (
+              <a href="/compare" className="text-xs font-bold text-[#F97316] underline self-center">See comparison</a>
+            ) : null}
             <a
               href={waShareLink(
                 `${p.name} — ₹${Number(p.price || 0).toLocaleString('en-IN')}`,

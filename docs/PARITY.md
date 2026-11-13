@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 169 (nested categories complete: sitemap covers every path, smoke 32/32).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 170 (product comparison, 29 routes, smoke 33/33).
 
 ## Storefront
 
@@ -30,6 +30,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
+| Product comparison | ✅ **`/compare`** — add up to **4** products with the "⇄ Compare" button on any product page (`aria-pressed` state, "See comparison" link once added); the table lines up price, MRP, availability, HSN and the **union of every spec key** (missing values show "—"), with per-column Remove, Clear all and Add-to-cart. List is per-visitor (localStorage), so the page is **noindex + robots-disallowed** and absent from the sitemap |
 | Wishlist | ✅ localStorage + `/wishlist` with **live stock refresh** (stale saved stock corrected on load), move-one / move-all (skips sold-out), sold-out button disabled, clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
 | Deals of the day + countdown | ✅ `/deals` — **`GET /store/deals`** computes the discount and ordering in SQL (no first-page truncation), server-rendered with ItemList + breadcrumb schema and a client-only countdown |
@@ -101,7 +102,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (32/32 incl. a real 404)
+node scripts/smoke.mjs         # live routes, needs running servers (33/33 incl. a real 404)
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 
@@ -115,7 +116,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 83 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 89 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,
@@ -123,7 +124,7 @@ JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 28 routes.
+Build: `cd apps/storefront && npm run build` must compile all 29 routes.
 Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then

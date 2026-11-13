@@ -7,7 +7,7 @@ export default function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/cart', '/checkout', '/my-orders', '/track-order', '/order-success', '/wishlist', '/invoice'],
+        disallow: ['/admin', '/cart', '/checkout', '/my-orders', '/track-order', '/order-success', '/wishlist', '/compare', '/invoice'],
       },
     ],
     sitemap: `${base}/sitemap.xml`,

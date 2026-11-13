@@ -17,6 +17,9 @@ export async function generateMetadata({ params }) {
     return {
       title: `Product not found — ${STORE.name}`,
       description: `This product could not be found at ${STORE.name}. Browse power tools, motors, pumps and machinery.`,
+      // Next streams this dynamic route (status stays 200) so the body shows the branded
+      // 404; noindex keeps the dead URL out of the index regardless.
+      robots: { index: false, follow: true },
       alternates: { canonical: absoluteUrl(`/product/${encodeURIComponent(slug)}`) },
     };
   }

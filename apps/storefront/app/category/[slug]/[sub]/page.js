@@ -4,6 +4,7 @@
 // keep parent and child pages distinct for SEO, breadcrumbs and filters while the parent page
 // still lists everything underneath it.
 import CategoryView from '../../../../components/CategoryView';
+import { notFound } from 'next/navigation';
 import { getProductsPage, getProductsForMeta, getCategoriesForMeta, paiseToRupees, absoluteUrl } from '../../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../../lib/jsonld';
 import { STORE } from '../../../../lib/store';
@@ -38,6 +39,15 @@ export async function generateMetadata({ params, searchParams }) {
 
   const tree = await getCategoriesForMeta();
   const { parent, child } = findNode(tree, parentSlug, childSlug);
+  // Unknown pair: noindex metadata here, branded 404 in the body (see the parent page note).
+  if (tree.length && !child) {
+    return {
+      title: `Category not found — ${STORE.name}`,
+      description: 'This subcategory does not exist. Browse the parent category or all products.',
+      robots: { index: false, follow: true },
+      alternates: { canonical },
+    };
+  }
   const label = child ? child.label : `${humanize(parentSlug)} ${humanize(childSlug)}`;
   const path = `${parentSlug}/${childSlug}`;
 
@@ -77,6 +87,9 @@ export default async function SubCategoryPage({ params, searchParams }) {
     getProductsPage(path, PAGE_SIZE, initialQ),
   ]);
   const { parent, child } = findNode(tree, parentSlug, childSlug);
+  // A slug pair the taxonomy doesn't know is a dead URL, not an empty category: answer 404
+  // so search engines drop it instead of indexing a permanent "0 products" page.
+  if (tree.length && !child) notFound();
   const parentLabel = parent ? parent.label : humanize(parentSlug);
   const childLabel = child ? child.label : humanize(childSlug);
 

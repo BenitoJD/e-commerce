@@ -17,6 +17,7 @@ const ROUTES = [
   `/category/all`,
   `/category/${CATEGORY}`,
   '/category/pumps/submersible',
+  '/category/does-not-exist',
   `/product/${PRODUCT}`,
   '/brands',
   `/brand/${BRAND}`,
@@ -65,6 +66,9 @@ const MARKERS = {
   '/returns': ['Return or Exchange'],
   '/admin': ['Admin Console'],
   '/category/pumps/submersible': ['Submersible Pumps'],
+  // A slug the taxonomy doesn't know: the page must say so (and carries noindex) rather
+  // than pretending to be an empty category.
+  '/category/does-not-exist': ['Category not found'],
   '/robots.txt': ['User-agent:'],
 };
 

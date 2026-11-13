@@ -1,4 +1,5 @@
 import CategoryView from '../../../components/CategoryView';
+import { notFound } from 'next/navigation';
 import { getProductsPage, getProductsForMeta, getCategoriesForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
@@ -16,6 +17,22 @@ function humanize(slug) {
 export async function generateMetadata({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
   const query = String((searchParams && searchParams.q) || '').trim();
+
+  // Decide the 404 here: generateMetadata runs before the response is committed, so the
+  // status is a real 404. Calling notFound() only in the page body streams a 200 first.
+  // Unknown slug: answer with not-found metadata (noindex) — the page body renders the
+  // branded 404. Throwing notFound() here would skip the noindex and still stream a 200.
+  if (!query && slug !== 'all') {
+    const tree = await getCategoriesForMeta();
+    if (tree.length && !tree.some((c) => c.slug === slug)) {
+      return {
+        title: `Category not found — ${STORE.name}`,
+        description: 'This category does not exist. Browse all products, deals and brands instead.',
+        robots: { index: false, follow: true },
+        alternates: { canonical: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+      };
+    }
+  }
 
   if (query) {
     return {
@@ -56,6 +73,12 @@ export default async function CategoryPage({ params, searchParams }) {
     getProductsPage(slug, PAGE_SIZE, initialQ),
     getCategoriesForMeta(),
   ]);
+  // Unknown category slugs are dead URLs: 404 them instead of rendering an empty,
+  // indexable listing. "/category/all" and search results stay valid. (The status is set
+  // in generateMetadata; this keeps the body from rendering stale content in dev.)
+  const known = slug === 'all'
+    || (tree.length > 0 && tree.some((c) => c.slug === slug));
+  if (tree.length && !known && !initialQ) notFound();
   return (
     <>
       <script

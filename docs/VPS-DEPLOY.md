@@ -28,6 +28,13 @@ BASE_URL=https://yourdomain.com PRODUCT_SLUG=<a real slug> BRAND=<a real brand> 
   stage only ships `.next`, `public`, `package.json`, `next.config.js`, `node_modules`.
   Tests fail if it requires app code or if the Dockerfile stops declaring the build args
   (`BACKEND_INTERNAL_URL` is needed at build time for the `/sitemap.xml` rewrite).
+- **Redeploys drain gracefully.** The backend handles `SIGTERM`/`SIGINT`: it stops the
+  stale-hold sweep timer, stops accepting connections, lets in-flight checkouts and Razorpay
+  webhooks finish, then drains the Postgres pool and exits 0. A hung request can't block a
+  deploy forever — `SHUTDOWN_TIMEOUT_MS` (default 10000) forces exit after the deadline, and
+  Compose/`docker stop` allow 10s by default, so keep the two in step if you raise it.
+  Check the logs after a redeploy: `[shutdown] SIGTERM received — draining` then
+  `[shutdown] clean exit`.
 - After `docker compose up`, check `docker compose exec storefront \
   node -e "console.log(require('./.next/routes-manifest.json').rewrites)"` — the sitemap
   destination should be `http://backend:9000/sitemap.xml`, not `localhost`.

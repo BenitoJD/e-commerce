@@ -120,8 +120,8 @@ Last run against the pushed HEAD: `verify-all` **6/6** (238 backend, 96 storefro
 `smoke` **36/36** live routes, `audit-pages` **17/17** pages, `verify-clone` **5/5** on a fresh clone
 of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 238 tests (pricing math, GST, EMI, catalog validity,
-category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
+Backend: `cd apps/backend && npm test` — 245 tests (pricing math, GST, EMI, catalog validity,
+category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline)**, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,

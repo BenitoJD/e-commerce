@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 179 (a failed state list can no longer block checkout; verified live with the API returning 500).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 180 (accounting export gains taxable value, GST and place-of-supply state).
 
 ## Storefront
 
@@ -16,7 +16,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab (search by name/brand/slug, **paged with Load more** so nothing beyond 100 is unreachable) + `POST/DELETE /admin/products` |
-| Accounting export | ✅ `GET /admin/orders/export.csv` with **status + date-range (from/to)** filters, RFC-style quoting, shipping column; Orders tab has from/to date pickers for both the list and the export |
+| Accounting export | ✅ `GET /admin/orders/export.csv` with **status + date-range (from/to)** filters, RFC-style quoting and shipping column — plus the columns a GST return needs: **taxable value, GST amount @ 18% and place-of-supply state**, with the test asserting taxable + tax reconciles to the charged amount (shipping excluded); Orders tab has from/to date pickers for both the list and the export |
 | Dashboard metrics | ✅ Overview shows **orders today, revenue today, 7-day revenue**, unpaid/COD-pending count and **manual refunds needing action** (computed by a tested summariser) |
 | Admin order paging | ✅ Orders list supports `limit`/`offset` with a **Load more orders** button, so history beyond the first page stays reachable |
 | Admin invoice access | ✅ **Invoice** link on every order row and **Open GST invoice** in the detail panel — support and GST filing no longer require hand-building `/invoice/<receipt>` (guarded by a test) |
@@ -110,7 +110,7 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
 `smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 236 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 237 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

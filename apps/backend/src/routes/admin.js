@@ -109,23 +109,40 @@ router.get('/orders/export.csv', async (req, res) => {
          FROM orders ${where} ORDER BY created_at DESC, id DESC LIMIT 5000`,
       params
     );
-    const header = ['receipt', 'date', 'status', 'payment_mode', 'refund', 'amount_inr', 'discount_inr', 'shipping_inr', 'coupon', 'customer', 'phone', 'pincode', 'gstin', 'payment_id'];
+    const header = [
+      'receipt', 'date', 'status', 'payment_mode', 'refund',
+      'amount_inr', 'discount_inr', 'shipping_inr',
+      // GST filing needs the taxable value and the tax itself, not just the charged total.
+      'taxable_value_inr', 'gst_inr', 'gst_rate',
+      'coupon', 'customer', 'phone', 'pincode', 'state', 'gstin', 'payment_id',
+    ];
     const csvEscape = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const GST_RATE = 18;
     const lines = rows.map((o) => {
       const c = o.customer || {};
+      const amountPaise = Number(o.amount_paise || 0);
+      const shippingPaise = Number(o.shipping_paise || 0);
+      // Prices are GST-inclusive: strip shipping (a separate supply), then split the rest.
+      const goodsPaise = Math.max(0, amountPaise - shippingPaise);
+      const taxablePaise = Math.round((goodsPaise * 100) / (100 + GST_RATE));
+      const gstPaise = goodsPaise - taxablePaise;
       return [
         o.receipt,
         o.created_at ? new Date(o.created_at).toISOString() : '',
         o.status,
         o.pay_mode || (o.status === 'cod_pending' ? 'cod' : 'online'),
         o.refund_mode || '',
-        (Number(o.amount_paise || 0) / 100).toFixed(2),
+        (amountPaise / 100).toFixed(2),
         (Number(o.discount_paise || 0) / 100).toFixed(2),
-        (Number(o.shipping_paise || 0) / 100).toFixed(2),
+        (shippingPaise / 100).toFixed(2),
+        (taxablePaise / 100).toFixed(2),
+        (gstPaise / 100).toFixed(2),
+        String(GST_RATE),
         o.coupon_code || '',
         c.name || '',
         c.phone || '',
         c.pincode || '',
+        c.state || '',
         c.gstin || '',
         o.razorpay_payment_id || '',
       ].map(csvEscape).join(',');

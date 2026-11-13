@@ -1597,7 +1597,7 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type'), /text\/csv/);
   const header = body.split('\r\n')[0];
-  assert.equal(header, 'receipt,date,status,payment_mode,refund,amount_inr,discount_inr,shipping_inr,coupon,customer,phone,pincode,gstin,payment_id');
+  assert.equal(header, 'receipt,date,status,payment_mode,refund,amount_inr,discount_inr,shipping_inr,taxable_value_inr,gst_inr,gst_rate,coupon,customer,phone,pincode,state,gstin,payment_id');
 
   const row = body.split('\r\n').find((l) => l.includes(created.json.receipt));
   assert.ok(row, 'export should contain the new order');
@@ -1607,8 +1607,34 @@ test('orders CSV export is token-guarded and escapes quotes/commas', async () =>
   assert.ok(row.includes('"27AAPFU0939F1ZV"'));
   assert.ok(row.includes(`"${(created.json.amount_paise / 100).toFixed(2)}"`));
 
+  // GST filing columns: the taxable value and tax must add back to the charged amount
+  // (shipping removed first, since prices are GST-inclusive).
+  const cells = row.split('","').map((c) => c.replace(/^"|"$/g, ''));
+  const amount = Number(cells[5]);
+  const shipping = Number(cells[7]);
+  const taxable = Number(cells[8]);
+  const gst = Number(cells[9]);
+  assert.equal(Number(cells[10]), 18, 'gst_rate column');
+  assert.ok(Math.abs(taxable + gst - (amount - shipping)) < 0.01, `taxable ${taxable} + gst ${gst} should equal charged ${amount} minus shipping ${shipping}`);
+  assert.ok(taxable > 0 && gst > 0, 'both figures should be non-zero for a real order');
+
   const anonymous = await fetch(`${base}/admin/orders/export.csv`);
   assert.equal(anonymous.status, 401);
+});
+
+test('the CSV export carries the buyer state when one was given', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'State Buyer', phone: '9812300999', pincode: '560001', stateCode: '29' },
+    payMode: 'cod',
+  });
+  assert.equal(created.status, 200);
+
+  const res = await fetch(`${base}/admin/orders/export.csv`, { headers: adminHeaders });
+  const body = await res.text();
+  const row = body.split('\r\n').find((l) => l.includes(created.json.receipt));
+  assert.ok(row.includes('"Karnataka"'), 'state name should appear in the export (place of supply)');
 });
 
 test('admin order detail: items enriched with names, customer and payment ids', async () => {

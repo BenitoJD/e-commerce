@@ -1,10 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const { buildPoolConfig } = require('./lib/dbConfig');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/toolsvilla',
-});
+const pool = new Pool(buildPoolConfig(process.env));
 
 // Idle-client errors (e.g. Postgres restart) throw if unhandled and crash the process.
 pool.on('error', (err) => {

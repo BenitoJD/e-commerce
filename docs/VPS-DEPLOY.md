@@ -86,13 +86,19 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 
 ## Monitoring
 - Liveness: `GET /health` — process is up (always 200 while Node runs).
-- `robots.txt` is generated from `NEXT_PUBLIC_SITE_URL` at build time, so set that before
-  building — otherwise the sitemap link points at localhost.- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
+- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
   Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.
 - Both containers ship a Docker `HEALTHCHECK` (backend hits `/ready`, storefront hits `/`)
   and run as the unprivileged `node` user.
 - Verified behaviour with the database unreachable: process stays up, API returns clean
   JSON 500s, `/sitemap.xml` still serves valid XML.
+- **Connection pool is bounded**: `DB_POOL_MAX` (default 10) caps clients per container,
+  `DB_CONNECT_TIMEOUT_MS` (5000) fails fast instead of queueing forever, and
+  `DB_STATEMENT_TIMEOUT_MS` (15000) aborts a runaway query so it can't pin a connection.
+  Raise the pool only with Postgres `max_connections` in mind (compose Postgres is shared by
+  the API alone here, so 10 is generous).
+- `robots.txt` is generated from `NEXT_PUBLIC_SITE_URL` at build time, so set that before
+  building — otherwise the sitemap link points at localhost.
 
 ## Housekeeping the backend does on its own
 - **Schema + first-boot seed**: `sql/schema.sql` is applied on the first query, and an empty

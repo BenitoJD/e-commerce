@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 163 (typeahead rate limit verified live, 204 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 164 (invoice field contract proven sensitive, 207 backend tests).
 
 ## Storefront
 
@@ -40,7 +40,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; **timeline dates only the steps actually recorded** (`placed` = order date, `delivered` = `delivered_at`, `refunded` = `refunded_at`, intermediate steps undated) and the UI renders readable local times; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
-| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block |
+| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block — with a **field-level contract test** proving every key the page reads is actually sent (verified to fail on a rename) |
 | Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
 | 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) returns real 404 status; `error.js` boundary offers retry/home/browse instead of a blank app-error screen |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 10 static pages incl. **cancellation policy**, all in the footer + sitemap |
@@ -103,7 +103,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (31/31 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 204 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 207 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

@@ -37,6 +37,7 @@ export default function RootLayout({ children }) {
             <nav aria-label="Account and cart" className="ml-auto flex items-center gap-3 text-sm font-semibold">
               <a href="/track-order" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">Track Order</a>
               <a href="/wishlist" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">❤ Wishlist</a>
+              <a href="/compare" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">⇄ Compare</a>
               <a href="/bulk-quote" className="hidden sm:inline-block btn-outline !py-2">Bulk Quote</a>
               <a href="/cart" className="btn-primary !py-2">Cart</a>
             </nav>

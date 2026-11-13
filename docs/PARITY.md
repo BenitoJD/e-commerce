@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 170 (product comparison, 29 routes, smoke 33/33).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 171 (compare reachable from the header; nav guarded by test).
 
 ## Storefront
 
@@ -30,7 +30,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
-| Product comparison | ✅ **`/compare`** — add up to **4** products with the "⇄ Compare" button on any product page (`aria-pressed` state, "See comparison" link once added); the table lines up price, MRP, availability, HSN and the **union of every spec key** (missing values show "—"), with per-column Remove, Clear all and Add-to-cart. List is per-visitor (localStorage), so the page is **noindex + robots-disallowed** and absent from the sitemap |
+| Product comparison | ✅ **`/compare`** — add up to **4** products with the "⇄ Compare" button on any product page (`aria-pressed` state, "See comparison" link once added), reachable from the **header** as well since the list is per-browser; the table lines up price, MRP, availability, HSN and the **union of every spec key** (missing values show "—"), with per-column Remove, Clear all and Add-to-cart. List is per-visitor (localStorage), so the page is **noindex + robots-disallowed** and absent from the sitemap |
 | Wishlist | ✅ localStorage + `/wishlist` with **live stock refresh** (stale saved stock corrected on load), move-one / move-all (skips sold-out), sold-out button disabled, clear all |
 | Recently viewed | ✅ `tw_recent` strip on homepage; product views recorded via a tested helper (`pushRecent`/`parseRecent`: de-dupe, newest-first, 8-item cap, corrupt-storage safe) |
 | Deals of the day + countdown | ✅ `/deals` — **`GET /store/deals`** computes the discount and ordering in SQL (no first-page truncation), server-rendered with ItemList + breadcrumb schema and a client-only countdown |
@@ -109,7 +109,7 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
 `smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 222 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 223 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

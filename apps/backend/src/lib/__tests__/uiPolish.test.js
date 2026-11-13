@@ -19,3 +19,12 @@ test('product page states the saving in rupees, not just a percentage', () => {
   assert.match(src, /You save ₹/, 'shoppers should see the absolute saving');
   assert.match(src, /off MRP/, 'and what it is measured against');
 });
+
+test('the header exposes the shopper tools (wishlist, compare, cart)', () => {
+  const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'layout.js'), 'utf8');
+  for (const href of ['/wishlist', '/compare', '/cart']) {
+    assert.ok(src.includes(`href="${href}"`), `header is missing a ${href} link`);
+  }
+  // Compare lives in localStorage, so a header entry point is the only way to reach it.
+  assert.match(src, /href="\/compare"[^>]*>⇄ Compare/, 'compare link should be labelled for shoppers');
+});

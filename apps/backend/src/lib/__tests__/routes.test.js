@@ -764,6 +764,13 @@ test('invoice balances: lines minus coupon equal grand total', async () => {
   const lines = inv.json.items.reduce((s, it) => s + it.linePaise, 0);
   assert.equal(lines - inv.json.discountPaise, inv.json.grandPaise);
   assert.equal(inv.json.grandPaise, created.json.amount_paise);
+
+  // The printed columns must add up: subtotal is the value BEFORE GST, and subtotal + GST
+  // equals the grand total. Sending the inclusive total as "subtotal" made the invoice's
+  // own arithmetic wrong on its face.
+  assert.equal(inv.json.subtotalPaise, inv.json.gst.base, 'subtotal is the taxable value');
+  assert.equal(inv.json.gst.base + inv.json.gst.gst, inv.json.grandPaise);
+  assert.ok(inv.json.subtotalPaise < inv.json.grandPaise, 'subtotal must exclude GST');
 });
 
 test('invoice reconciles when shipping is charged: items - discount + shipping = total', async () => {

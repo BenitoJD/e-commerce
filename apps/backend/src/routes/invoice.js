@@ -71,7 +71,10 @@ router.get('/:receipt', async (req, res) => {
         stateCode: customer.stateCode || customer.state_code || '',
       },
       items,
-      subtotalPaise: grandPaise,
+      // "Subtotal" here means the taxable value *before* GST (the invoice prints it above
+      // the tax lines). Sending the GST-inclusive total made the printed columns add up to
+      // more than the grand total.
+      subtotalPaise: base,
       gst: { rate: 18, base, gst },
       grandPaise,
       razorpayPaymentId: order.razorpay_payment_id || null,

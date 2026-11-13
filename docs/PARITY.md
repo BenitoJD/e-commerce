@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 141 (ARIA combobox + live regions, 160 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 142 (parity doc restructured + guarded, 163 backend tests).
 
 ## Storefront
 
@@ -57,6 +57,16 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Observability | ✅ every response carries `X-Request-Id` (honours a sane upstream id); 4xx/5xx JSON includes `requestId`, and 5xx logs are prefixed with it so a customer quote can be traced |
 | SSR caching | ✅ short-TTL cache (`SSR_CACHE_TTL_MS`, default 10s) on server-rendered product/category/home fetches — measured 6 page views → 1 backend call, still revalidating after TTL |
 
+## Accessibility & consistency
+
+| Control | Status |
+|---|---|
+| Form labels | ✅ every storefront `<input>` has an accessible name (`aria-label`), not just placeholder text — **51 inputs labelled**, enforced by a test that fails on any new unlabelled input |
+| Keyboard navigation | ✅ **"Skip to main content"** link (visible on focus), focusable `<main id="main-content">` target, labelled navigation landmark, `lang="en"` — enforced by a layout test |
+| Search typeahead | ✅ full ARIA combobox pattern: `aria-expanded`, `aria-controls`, `aria-autocomplete`, **`aria-activedescendant` with stable option ids** (arrow-key highlight is announced), `aria-selected`; the empty state is a `status` region rather than a listbox |
+| Async feedback | ✅ coupon/pincode/quote/contact/returns/tracking messages use live regions — `role="status"` for success, `role="alert"` for errors — so screen readers announce them |
+| Single-source branding | ✅ store name, phone, email and GSTIN come from `lib/store.js` (`NEXT_PUBLIC_STORE_*`) and propagate to every page, the invoice letterhead and WhatsApp templates — a test fails on any hardcoded brand name (verified by building with a different name) |
+
 ## Needs your inputs (code slots ready)
 
 | Item | What to provide |
@@ -67,15 +77,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | Email / SMS notifications | No mailer or SMS gateway is wired up, and no copy promises one (a test enforces this). Supply SMTP or MSG91 credentials to add order-confirmation emails/OTP login. |
-| Accessibility of forms | ✅ every storefront `<input>` has an accessible name (`aria-label`), not just placeholder text — **51 inputs labelled**, enforced by a test that fails on any new unlabelled input |
-| Keyboard navigation | ✅ **"Skip to main content"** link (visible on focus), focusable `<main id="main-content">` target, labelled navigation landmark, `lang="en"` — enforced by a layout test |
-| Search typeahead (a11y) | ✅ full ARIA combobox pattern: `aria-expanded`, `aria-controls`, `aria-autocomplete`, **`aria-activedescendant` with stable option ids** (arrow-key highlight is announced), `aria-selected`; the empty state is a `status` region rather than a listbox |
-| Async feedback (a11y) | ✅ coupon/pincode/quote/contact/returns/tracking messages use live regions — `role="status"` for success, `role="alert"` for errors — so screen readers announce them |
-| Trust / branding | ✅ store name, phone, email and GSTIN come from `lib/store.js` (`NEXT_PUBLIC_STORE_*`) and propagate to every page, the invoice letterhead and WhatsApp templates — a test fails on any hardcoded brand name (verified by building with a different name) |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
-
-## Tests
 
 ## Tests
 
@@ -88,7 +91,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 160 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 163 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

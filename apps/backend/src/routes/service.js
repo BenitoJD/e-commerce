@@ -4,7 +4,7 @@ const { releaseItems } = require('../lib/stock');
 const { refundPayment } = require('../lib/refunds');
 const { clampText } = require('../lib/validate');
 const { codMaxPaise, codAvailableFor } = require('../lib/policy');
-const { returnWindow } = require('../lib/returns');
+const { returnWindow, WINDOW_DAYS } = require('../lib/returns');
 
 const router = express.Router();
 
@@ -315,6 +315,60 @@ router.post('/returns', async (req, res) => {
   } catch (err) {
     console.error('[service] return error:', err.message);
     res.status(500).json({ error: 'Failed to file return' });
+  }
+});
+
+// GET /store/service/returns/eligibility?receipt=&phone= — tell the customer *before* they
+// submit whether the 7-day window is still open (and why not, if it isn't).
+router.get('/returns/eligibility', async (req, res) => {
+  try {
+    const receipt = String(req.query.receipt || '').trim();
+    const phone = digits(req.query.phone);
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    if (!phone || phone.length < 10) {
+      return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
+    }
+    const { rows } = await db.query(
+      'SELECT receipt, status, customer, created_at, delivered_at FROM orders WHERE receipt = $1',
+      [receipt]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    const order = rows[0];
+    const customerPhone = digits(order.customer && order.customer.phone);
+    const match = customerPhone === phone
+      || (customerPhone.length >= 10 && phone.length >= 10 && customerPhone.slice(-10) === phone.slice(-10));
+    if (!match) return res.status(404).json({ error: 'Phone does not match order' });
+
+    if (!RETURNABLE.includes(String(order.status))) {
+      return res.json({
+        eligible: false,
+        reason: `Orders with status '${order.status}' are not returnable`,
+        windowDays: WINDOW_DAYS,
+      });
+    }
+    const window = returnWindow({ deliveredAt: order.delivered_at, createdAt: order.created_at });
+    const { rows: existing } = await db.query(
+      `SELECT id, status FROM return_requests WHERE receipt = $1 AND status NOT IN ('rejected', 'cancelled') ORDER BY id DESC LIMIT 1`,
+      [receipt]
+    );
+    if (existing.length) {
+      return res.json({
+        eligible: false,
+        reason: `A return request (#${existing[0].id}) already exists for this order`,
+        requestId: existing[0].id,
+        windowDays: WINDOW_DAYS,
+      });
+    }
+    res.json({
+      eligible: window.allowed,
+      reason: window.allowed ? null : `Return window closed — returns are accepted within ${window.windowDays} days of delivery`,
+      daysLeft: window.daysLeft,
+      deadline: window.deadline ? window.deadline.toISOString() : null,
+      windowDays: window.windowDays || WINDOW_DAYS,
+    });
+  } catch (err) {
+    console.error('[service] eligibility error:', err.message);
+    res.status(500).json({ error: 'Failed to check return eligibility' });
   }
 });
 

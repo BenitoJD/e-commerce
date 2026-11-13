@@ -1161,6 +1161,54 @@ test('checkout rejects a malformed GSTIN but accepts a valid or blank one', asyn
   assert.equal(blank.status, 200, 'GSTIN stays optional for retail buyers');
 });
 
+test('return eligibility answers before submitting, and matches what submission does', async () => {
+  const recent = 'rcpt_elig_recent';
+  fake.orders.push({
+    id: 9101,
+    receipt: recent,
+    status: 'delivered',
+    items: [{ slug: 'drill-a', qty: 1, unit_price_paise: 100000 }],
+    amount_paise: 118000,
+    customer: { name: 'Eligible Buyer', phone: '9812300501' },
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+    delivered_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+  });
+  const ok = await api('GET', `/store/service/returns/eligibility?receipt=${recent}&phone=9812300501`);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.json.eligible, true);
+  assert.equal(ok.json.windowDays, 7);
+  assert.ok(ok.json.daysLeft > 0, 'a live countdown is shown');
+  assert.ok(ok.json.deadline, 'the deadline is returned');
+
+  const late = 'rcpt_elig_late';
+  fake.orders.push({
+    id: 9102,
+    receipt: late,
+    status: 'delivered',
+    items: [{ slug: 'drill-a', qty: 1, unit_price_paise: 100000 }],
+    amount_paise: 118000,
+    customer: { name: 'Late Buyer', phone: '9812300502' },
+    created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
+    delivered_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+  });
+  const closed = await api('GET', `/store/service/returns/eligibility?receipt=${late}&phone=9812300502`);
+  assert.equal(closed.json.eligible, false);
+  assert.match(closed.json.reason, /Return window closed/);
+
+  // Wrong phone must not reveal eligibility.
+  const wrong = await api('GET', `/store/service/returns/eligibility?receipt=${late}&phone=9999999999`);
+  assert.equal(wrong.status, 404);
+
+  // After filing, eligibility must report the existing request rather than inviting another.
+  const filed = await api('POST', '/store/service/returns', {
+    receipt: recent, phone: '9812300501', reason: 'damaged', details: 'Cracked housing',
+  });
+  assert.equal(filed.status, 201);
+  const after = await api('GET', `/store/service/returns/eligibility?receipt=${recent}&phone=9812300501`);
+  assert.equal(after.json.eligible, false);
+  assert.match(after.json.reason, /already exists/);
+});
+
 test('returns enforce the 7-day window and reject duplicates', async () => {
   // An old, long-delivered order must be refused with the policy quoted back.
   const oldReceipt = 'rcpt_window_old';

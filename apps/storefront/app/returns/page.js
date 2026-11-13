@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { requestReturn, getReturnStatus } from '../../lib/api';
+import { requestReturn, getReturnStatus, checkReturnEligibility } from '../../lib/api';
 import { STORE } from '../../lib/store';
 
 const RETURN_STATUS_LABEL = {
@@ -30,7 +30,24 @@ export default function ReturnsPage() {
   });
   const [state, setState] = useState({ busy: false, ok: '', err: '', id: null });
   const [lookup, setLookup] = useState({ receipt: '', phone: '', busy: false, err: '', info: null });
+  const [elig, setElig] = useState({ receipt: '', phone: '', busy: false, err: '', info: null });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function checkEligibility() {
+    const receipt = elig.receipt.trim();
+    const phone = elig.phone.trim();
+    if (!receipt || !phone) {
+      setElig((s) => ({ ...s, err: 'Enter both receipt ID and phone number.', info: null }));
+      return;
+    }
+    setElig((s) => ({ ...s, busy: true, err: '', info: null }));
+    try {
+      const r = await checkReturnEligibility(receipt, phone);
+      setElig((s) => ({ ...s, busy: false, info: r }));
+    } catch (e) {
+      setElig((s) => ({ ...s, busy: false, err: e.message || 'Could not check eligibility.', info: null }));
+    }
+  }
 
   async function checkStatus(e) {
     if (e) e.preventDefault();
@@ -97,9 +114,50 @@ export default function ReturnsPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Return or Exchange</h1>
       <p className="text-sm text-gray-500 mt-1">
-        Damaged, wrong or defective item? File it here — we arrange pickup. See the{' '}
-        <a href="/returns-policy" className="text-[#F97316] font-bold underline">returns policy</a> for eligibility.
+        Damaged, wrong or defective item? File it here — we arrange pickup. Returns are accepted
+        within <b>7 days of delivery</b>; see the{' '}
+        <a href="/returns-policy" className="text-[#F97316] font-bold underline">returns policy</a>.
       </p>
+
+      <div className="card p-4 mt-5">
+        <div className="font-bold text-sm">Can I still return this order?</div>
+        <p className="text-xs text-gray-500 mt-1">Check before you fill the form — it takes a second.</p>
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-[180px]">
+            <label className="label">Receipt / Order ID</label>
+            <input
+              className="input"
+              value={elig.receipt}
+              onChange={(e) => setElig((s) => ({ ...s, receipt: e.target.value, info: null, err: '' }))}
+              placeholder="rcpt_1755…"
+              aria-label="Receipt or order ID for eligibility check"
+            />
+          </div>
+          <div className="flex-1 min-w-[160px]">
+            <label className="label">Phone</label>
+            <input
+              className="input"
+              value={elig.phone}
+              onChange={(e) => setElig((s) => ({ ...s, phone: e.target.value, info: null, err: '' }))}
+              placeholder="98765 43210"
+              inputMode="numeric"
+              aria-label="Phone number for eligibility check"
+              autoComplete="tel"
+            />
+          </div>
+          <button type="button" onClick={checkEligibility} disabled={elig.busy} className="btn-outline !py-2 disabled:opacity-60">
+            {elig.busy ? 'Checking…' : 'Check'}
+          </button>
+        </div>
+        {elig.err ? <p role="alert" className="text-sm text-red-600 font-semibold mt-2">{elig.err}</p> : null}
+        {elig.info ? (
+          <p role="status" className={`text-sm font-semibold mt-2 ${elig.info.eligible ? 'text-green-700' : 'text-amber-700'}`}>
+            {elig.info.eligible
+              ? `Eligible — about ${elig.info.daysLeft} day${elig.info.daysLeft === 1 ? '' : 's'} left in the ${elig.info.windowDays}-day window.`
+              : (elig.info.reason || 'Not eligible for a return right now.')}
+          </p>
+        ) : null}
+      </div>
 
       <form onSubmit={submit} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">

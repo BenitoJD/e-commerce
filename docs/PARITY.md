@@ -105,6 +105,9 @@ node scripts/smoke.mjs         # live routes, needs running servers (32/32 incl.
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 
+Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
+`smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
+
 Backend: `cd apps/backend && npm test` — 222 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront

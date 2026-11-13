@@ -1,4 +1,5 @@
 import ProductView from '../../../components/ProductView';
+import { notFound } from 'next/navigation';
 import { getProductForMeta, getRatingForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { productJsonLd, breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
@@ -50,28 +51,27 @@ export async function generateMetadata({ params }) {
 export default async function ProductPage({ params }) {
   const slug = decodeURIComponent(params.slug || '');
   const [p, rating] = await Promise.all([getProductForMeta(slug), getRatingForMeta(slug)]);
+  // A slug the catalogue doesn't know is a dead URL: answer 404 with the branded page rather
+  // than rendering a product shell around nothing.
+  if (!p) notFound();
   return (
     <>
-      {p ? (
-        <>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: productJsonLd(p, { storeName: STORE.name, absoluteUrl, paiseToRupees, rating }),
-            }}
-          />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: breadcrumbJsonLd([
-                { name: 'Home', url: absoluteUrl('/') },
-                { name: humanize(p.category || 'all'), url: absoluteUrl(`/category/${encodeURIComponent(p.category || 'all')}`) },
-                { name: p.name, url: absoluteUrl(`/product/${encodeURIComponent(p.slug)}`) },
-              ]),
-            }}
-          />
-        </>
-      ) : null}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: productJsonLd(p, { storeName: STORE.name, absoluteUrl, paiseToRupees, rating }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: breadcrumbJsonLd([
+            { name: 'Home', url: absoluteUrl('/') },
+            { name: humanize(p.category || 'all'), url: absoluteUrl(`/category/${encodeURIComponent(p.category || 'all')}`) },
+            { name: p.name, url: absoluteUrl(`/product/${encodeURIComponent(p.slug)}`) },
+          ]),
+        }}
+      />
       <ProductView slug={slug} initialProduct={p} />
     </>
   );

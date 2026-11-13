@@ -17,7 +17,6 @@ const ROUTES = [
   `/category/all`,
   `/category/${CATEGORY}`,
   '/category/pumps/submersible',
-  '/category/does-not-exist',
   `/product/${PRODUCT}`,
   '/brands',
   `/brand/${BRAND}`,
@@ -51,6 +50,10 @@ const ROUTES = [
 // Routes that must NOT return 200, with the marker proving the right page rendered.
 const EXPECTED_STATUS = {
   '/definitely-not-a-page': { status: 404, marker: "couldn't find that page" },
+  // Unknown catalogue slugs must be real 404s, not empty 200s that search engines index.
+  '/category/does-not-exist': { status: 404, marker: "couldn't find that page" },
+  '/category/pumps/does-not-exist': { status: 404, marker: "couldn't find that page" },
+  '/product/does-not-exist': { status: 404, marker: "couldn't find that page" },
 };
 
 // Content markers that prove the page actually rendered (not just a shell).
@@ -66,9 +69,6 @@ const MARKERS = {
   '/returns': ['Return or Exchange'],
   '/admin': ['Admin Console'],
   '/category/pumps/submersible': ['Submersible Pumps'],
-  // A slug the taxonomy doesn't know: the page must say so (and carries noindex) rather
-  // than pretending to be an empty category.
-  '/category/does-not-exist': ['Category not found'],
   '/robots.txt': ['User-agent:'],
 };
 

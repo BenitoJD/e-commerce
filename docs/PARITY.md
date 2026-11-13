@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 172 (unknown category/product URLs noindexed with a not-found title; smoke 34/34).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 173 (real 404s for unknown slugs — root loading boundary removed; smoke 36/36).
 
 ## Storefront
 
@@ -44,7 +44,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block — with a **field-level contract test** proving every key the page reads is actually sent (verified to fail on a rename) |
 | Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
-| 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) for unknown routes; **unknown product/category/subcategory slugs render that same 404 body with a "… not found" title and `noindex, follow`** (Next streams these dynamic routes, so the status stays 200 — the noindex is what keeps dead URLs out of the index; smoke asserts the title marker) |
+| 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) with a **real 404 status** for unknown routes *and* for unknown product / category / subcategory slugs; `error.js` boundary offers retry/home/browse instead of a blank app-error screen. (The root `app/loading.js` boundary was removed: a root Suspense boundary made every dynamic `notFound()` stream a `200`, so a fake skeleton cost honest status codes.) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 10 static pages incl. **cancellation policy**, all in the footer + sitemap |
 | Cancellation (customer) | ✅ `/store/service/cancel` from Track Order for `pending` / `paid` / `cod_pending` only (not once shipped), restocks, refunds (gateway or flagged manual) and now **releases the coupon use** so a limited code isn't consumed by a cancelled order |
 | Contact / support | ✅ contact form persisted + admin Messages tab; **WhatsApp deep links** from admin (messages, quotes, returns) and from customer order history |
@@ -102,7 +102,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (34/34 incl. a real 404)
+node scripts/smoke.mjs         # live routes, needs running servers (36/36 incl. four real 404s)
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 

@@ -146,7 +146,7 @@ Route smoke test (needs the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 34/34 routes (33 pages/endpoints + a branded 404)
+  node scripts/smoke.mjs        # 36/36 routes (32 pages/endpoints + 4 real 404s)
 ```
 
 ## Razorpay

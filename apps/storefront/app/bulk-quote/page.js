@@ -48,10 +48,8 @@ function QuoteInner() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-extrabold">Request Bulk Quote</h1>
-      <p className="text-sm text-gray-500 mt-1">Wholesale pricing on 5+ units • GST invoice • freight support across India.</p>
-      <form onSubmit={submit} className="card p-5 mt-5 space-y-4">
+    <div>
+      <form onSubmit={submit} className="card p-5 mt-1 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required aria-label="Your name" autoComplete="name" /></div>
           <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required aria-label="Phone number" autoComplete="tel" /></div>
@@ -93,8 +91,17 @@ function QuoteInner() {
 
 export default function BulkQuotePage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading...</div>}>
-      <QuoteInner />
-    </Suspense>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Heading and intro live OUTSIDE the Suspense boundary: useSearchParams() forces a
+          client-side bailout, so anything inside it is absent from the server-rendered HTML
+          (crawlers and slow connections saw only "Loading..."). */}
+      <h1 className="text-3xl font-extrabold">Request Bulk Quote</h1>
+      <p className="text-sm text-gray-500 mt-1">Wholesale pricing on 5+ units • GST invoice • freight support across India.</p>
+      <div className="mt-4">
+        <Suspense fallback={<p className="text-sm text-gray-500">Loading the quote form…</p>}>
+          <QuoteInner />
+        </Suspense>
+      </div>
+    </div>
   );
 }

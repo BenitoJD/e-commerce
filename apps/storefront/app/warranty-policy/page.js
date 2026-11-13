@@ -1,4 +1,18 @@
+import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+
+export const metadata = {
+  title: `Warranty Policy | ${STORE.name}`,
+  description:
+    'Manufacturer warranty terms, what the invoice proves and how claims are handled.',
+  alternates: { canonical: absoluteUrl('/warranty-policy') },
+  openGraph: {
+    title: `Warranty Policy | ${STORE.name}`,
+    description: 'Manufacturer warranty terms, what the invoice proves and how claims are handled.',
+    url: absoluteUrl('/warranty-policy'),
+  },
+};
+
 
 export default function WarrantyPolicy() {
   return (

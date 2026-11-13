@@ -1,4 +1,18 @@
+import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+
+export const metadata = {
+  title: `Returns Policy | ${STORE.name}`,
+  description:
+    'The 7-day return window, what qualifies, how to raise an RMA and when refunds are issued.',
+  alternates: { canonical: absoluteUrl('/returns-policy') },
+  openGraph: {
+    title: `Returns Policy | ${STORE.name}`,
+    description: 'The 7-day return window, what qualifies, how to raise an RMA and when refunds are issued.',
+    url: absoluteUrl('/returns-policy'),
+  },
+};
+
 
 export default function ReturnsPolicy() {
   return (

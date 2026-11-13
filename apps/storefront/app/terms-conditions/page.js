@@ -1,3 +1,18 @@
+import { STORE } from '../../lib/store';
+import { absoluteUrl } from '../../lib/serverApi';
+export const metadata = {
+  title: `Terms & Conditions | ${STORE.name}`,
+  description:
+    'The terms that apply when you order from this store: pricing, GST, delivery, cancellations and liability.',
+  alternates: { canonical: absoluteUrl('/terms-conditions') },
+  openGraph: {
+    title: `Terms & Conditions | ${STORE.name}`,
+    description: 'The terms that apply when you order from this store: pricing, GST, delivery, cancellations and liability.',
+    url: absoluteUrl('/terms-conditions'),
+  },
+};
+
+
 export default function Terms() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -1,3 +1,18 @@
+import { STORE } from '../../lib/store';
+import { absoluteUrl } from '../../lib/serverApi';
+export const metadata = {
+  title: `EMI Options | ${STORE.name}`,
+  description:
+    'Credit and debit card EMI plans, indicative monthly amounts and what to check before choosing a tenure.',
+  alternates: { canonical: absoluteUrl('/emi-options') },
+  openGraph: {
+    title: `EMI Options | ${STORE.name}`,
+    description: 'Credit and debit card EMI plans, indicative monthly amounts and what to check before choosing a tenure.',
+    url: absoluteUrl('/emi-options'),
+  },
+};
+
+
 export default function EmiOptions() {
   const rows = [
     { plan: '3 months', rate: 'No-cost on HDFC, ICICI, SBI cards', example: '₹10,000 → 3 × ₹3,334' },

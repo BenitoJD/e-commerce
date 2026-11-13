@@ -1,4 +1,18 @@
+import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+
+export const metadata = {
+  title: `Privacy Policy | ${STORE.name}`,
+  description:
+    'What personal data the store collects, why it is needed for delivery and GST invoicing, and how it is protected.',
+  alternates: { canonical: absoluteUrl('/privacy-policy') },
+  openGraph: {
+    title: `Privacy Policy | ${STORE.name}`,
+    description: 'What personal data the store collects, why it is needed for delivery and GST invoicing, and how it is protected.',
+    url: absoluteUrl('/privacy-policy'),
+  },
+};
+
 
 export default function PrivacyPolicy() {
   return (

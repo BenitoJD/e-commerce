@@ -1,3 +1,18 @@
+import { STORE } from '../../lib/store';
+import { absoluteUrl } from '../../lib/serverApi';
+export const metadata = {
+  title: `Shipping Policy | ${STORE.name}`,
+  description:
+    'Dispatch timelines, delivery partners, freight charges and serviceable pincodes for pan-India delivery.',
+  alternates: { canonical: absoluteUrl('/shipping-policy') },
+  openGraph: {
+    title: `Shipping Policy | ${STORE.name}`,
+    description: 'Dispatch timelines, delivery partners, freight charges and serviceable pincodes for pan-India delivery.',
+    url: absoluteUrl('/shipping-policy'),
+  },
+};
+
+
 export default function ShippingPolicy() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

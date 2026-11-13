@@ -1,4 +1,18 @@
+import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+
+export const metadata = {
+  title: `About Us | ${STORE.name}`,
+  description:
+    'Who we are, what we stock and how we support buyers of power tools, motors, pumps, welding and farm machinery across India.',
+  alternates: { canonical: absoluteUrl('/about-us') },
+  openGraph: {
+    title: `About Us | ${STORE.name}`,
+    description: 'Who we are, what we stock and how we support buyers of power tools, motors, pumps, welding and farm machinery across India.',
+    url: absoluteUrl('/about-us'),
+  },
+};
+
 
 export default function AboutUs() {
   return (

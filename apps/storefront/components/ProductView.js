@@ -332,7 +332,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                   placeholder="you@example.com"
                   className="input"
                   inputMode="email"
-                  type="email" aria-label="Email address" />
+                  type="email" aria-label="Email address" autoComplete="email" />
                 <button onClick={doStockAlert} disabled={alertBusy} className="btn-primary whitespace-nowrap disabled:opacity-60">
                   {alertBusy ? 'Saving...' : 'Notify me'}
                 </button>

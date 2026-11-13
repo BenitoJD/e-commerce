@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 142 (parity doc restructured + guarded, 163 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 143 (autofill purposes on all identity fields, 166 backend tests).
 
 ## Storefront
 
@@ -62,6 +62,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Control | Status |
 |---|---|
 | Form labels | ✅ every storefront `<input>` has an accessible name (`aria-label`), not just placeholder text — **51 inputs labelled**, enforced by a test that fails on any new unlabelled input |
+| Autofill (input purpose) | ✅ checkout declares `autocomplete` for name / phone / street-address / postal-code (plus `required` on the four delivery fields); contact, bulk-quote, returns, track-order, my-orders and the stock-alert email declare theirs too — WCAG 1.3.5, guarded by tests |
 | Keyboard navigation | ✅ **"Skip to main content"** link (visible on focus), focusable `<main id="main-content">` target, labelled navigation landmark, `lang="en"` — enforced by a layout test |
 | Search typeahead | ✅ full ARIA combobox pattern: `aria-expanded`, `aria-controls`, `aria-autocomplete`, **`aria-activedescendant` with stable option ids** (arrow-key highlight is announced), `aria-selected`; the empty state is a `status` region rather than a listbox |
 | Async feedback | ✅ coupon/pincode/quote/contact/returns/tracking messages use live regions — `role="status"` for success, `role="alert"` for errors — so screen readers announce them |
@@ -91,7 +92,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 163 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 166 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

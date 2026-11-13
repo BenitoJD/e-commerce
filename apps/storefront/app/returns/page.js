@@ -109,7 +109,7 @@ export default function ReturnsPage() {
           </div>
           <div>
             <label className="label">Phone used at checkout</label>
-            <input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" />
+            <input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" autoComplete="tel" />
           </div>
         </div>
 

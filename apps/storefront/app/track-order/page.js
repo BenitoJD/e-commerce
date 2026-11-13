@@ -94,7 +94,7 @@ export default function TrackOrderPage() {
       <p className="text-sm text-gray-500 mt-1">Enter the receipt ID from your confirmation page and your order phone number.</p>
       <form onSubmit={go} className="card p-5 mt-5 grid sm:grid-cols-2 gap-4">
         <div><label className="label">Receipt ID</label><input className="input" value={receipt} onChange={(e) => setReceipt(e.target.value)} placeholder="e.g. TK123456" aria-label="Receipt or order ID" /></div>
-        <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
+        <div><label className="label">Phone</label><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" autoComplete="tel" /></div>
         <div className="sm:col-span-2">
           {err && <p role="alert" className="text-sm text-red-600 font-semibold mb-2">{err}</p>}
           {notice && <p role="status" className="text-sm text-green-700 font-semibold mb-2">{notice}</p>}

@@ -51,8 +51,8 @@ export default function ContactUs() {
         ) : (
           <>
             <div className="grid sm:grid-cols-2 gap-3">
-              <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" aria-label="Your name" /></div>
-              <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" /></div>
+              <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" aria-label="Your name" autoComplete="name" /></div>
+              <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" autoComplete="tel" /></div>
             </div>
             <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="How can we help?" /></div>
             {err ? <p role="alert" className="text-xs text-red-600 font-semibold">{err}</p> : null}

@@ -53,8 +53,8 @@ function QuoteInner() {
       <p className="text-sm text-gray-500 mt-1">Wholesale pricing on 5+ units • GST invoice • freight support across India.</p>
       <form onSubmit={submit} className="card p-5 mt-5 space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required aria-label="Your name" /></div>
-          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required aria-label="Phone number" /></div>
+          <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" required aria-label="Your name" autoComplete="name" /></div>
+          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" required aria-label="Phone number" autoComplete="tel" /></div>
         </div>
         <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required aria-label="Product you need a quote for" /></div>
         <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required aria-label="Quantity needed" /></div>

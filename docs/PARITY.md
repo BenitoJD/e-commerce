@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 182 (invoice subtotal is the pre-GST value — printed columns now reconcile in rendered HTML).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 183 (smoke now scans rendered text for artifacts; it caught ₹NaN on SSR product/category/home pages, now fixed).
 
 ## Storefront
 
@@ -104,6 +104,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
 node scripts/smoke.mjs         # live routes, needs running servers (36/36 incl. four real 404s)
+                               #   + scans visible text for ₹NaN / undefined / Invalid Date artefacts
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 ```
 
@@ -117,7 +118,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 93 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 96 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

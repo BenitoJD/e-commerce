@@ -72,6 +72,28 @@ const MARKERS = {
   '/robots.txt': ['User-agent:'],
 };
 
+// Template artefacts that mean a value failed to render (a mock-hidden bug in the making).
+// Script/style blocks are stripped first: Next's own runtime legitimately contains these
+// words, and flagging them would make the check useless noise.
+const ARTEFACTS = [/\bundefined\b/, /\bNaN\b/, /Invalid Date/, /\[object Object\]/];
+
+function visibleText(body) {
+  return body
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ');
+}
+
+function findArtefacts(body) {
+  const text = visibleText(body);
+  const found = [];
+  for (const re of ARTEFACTS) {
+    const m = text.match(re);
+    if (m) found.push(m[0]);
+  }
+  return found;
+}
+
 async function check(route) {
   const url = BASE + route;
   const expected = EXPECTED_STATUS[route];
@@ -79,6 +101,7 @@ async function check(route) {
     const res = await fetch(url, { redirect: 'manual' });
     const body = await res.text();
     const problems = [];
+
     if (expected) {
       if (res.status !== expected.status) problems.push(`expected ${expected.status}, got ${res.status}`);
       if (expected.marker && !body.toLowerCase().includes(expected.marker.toLowerCase())) {
@@ -93,6 +116,14 @@ async function check(route) {
         problems.push('sitemap is not XML (is the backend reachable?)');
       }
     }
+
+    // HTML pages only: XML/TXT bodies aren't rendered templates.
+    const isHtml = res.status === 200 && !/\.(xml|txt)$/.test(route);
+    if (isHtml) {
+      const artefacts = findArtefacts(body);
+      if (artefacts.length) problems.push(`rendered artefact(s): ${artefacts.join(', ')}`);
+    }
+
     return { route, status: res.status, bytes: body.length, problems };
   } catch (err) {
     return { route, status: 0, bytes: 0, problems: [err.message] };

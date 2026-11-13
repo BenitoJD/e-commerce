@@ -5,6 +5,7 @@
 // per request. Ten seconds keeps prices/stock effectively live while cutting load.
 import { serverApiBase } from './serverApiBase';
 import { createTtlCache } from './ttlCache';
+import { withRupeePrices, mapProducts } from './productMapping';
 
 const BASE = serverApiBase();
 const TTL_MS = Number(process.env.SSR_CACHE_TTL_MS) || 10000;
@@ -24,6 +25,9 @@ async function cachedJson(url) {
   return cache.wrap(url, () => safeJson(url));
 }
 
+// Server-rendered views receive products straight from the API, but the components read
+// rupee fields — productMapping converts paise→rupees (see that module for why).
+
 // Invoice data for server rendering. Deliberately NOT cached: it carries a customer's
 // name/address/GSTIN and a stale copy could show someone else's details after a re-issue.
 export async function getInvoiceForRender(receipt) {
@@ -37,7 +41,7 @@ export async function getProductForMeta(slug) {
   const data = await cachedJson(`${BASE}/store/products/${encodeURIComponent(slug)}`);
   if (!data) return null;
   const p = data.product || data;
-  return p && p.name ? p : null;
+  return p && p.name ? withRupeePrices(p) : null;
 }
 
 export async function getProductsForMeta(category, limit = 8) {
@@ -52,7 +56,7 @@ export async function getProductsPage(category, limit = 40, search = '') {
   if (search) parts.push(`q=${encodeURIComponent(search)}`);
   const data = await cachedJson(`${BASE}/store/products?${parts.join('&')}`);
   if (!data) return { items: [], total: null };
-  const items = Array.isArray(data) ? data : data.products || [];
+  const items = mapProducts(Array.isArray(data) ? data : data.products || []);
   const total = !Array.isArray(data) && Number.isFinite(Number(data.total)) ? Number(data.total) : null;
   return { items, total };
 }
@@ -84,7 +88,7 @@ export async function getDealsForMeta(minOff = 20, limit = 60) {
   const q = new URLSearchParams({ minOff: String(minOff), limit: String(limit) });
   const data = await cachedJson(`${BASE}/store/deals?${q.toString()}`);
   if (!data) return [];
-  return Array.isArray(data.deals) ? data.deals : [];
+  return mapProducts(Array.isArray(data.deals) ? data.deals : []);
 }
 
 // Products for one brand via the search endpoint's brand filter, plus the true total so
@@ -93,7 +97,7 @@ export async function getBrandPage(name, limit = 40) {
   const q = new URLSearchParams({ brand: String(name || ''), limit: String(limit) });
   const data = await cachedJson(`${BASE}/store/search?${q.toString()}`);
   if (!data) return { items: [], total: null };
-  const items = Array.isArray(data) ? data : data.products || [];
+  const items = mapProducts(Array.isArray(data) ? data : data.products || []);
   const total = !Array.isArray(data) && Number.isFinite(Number(data.total)) ? Number(data.total) : null;
   return { items, total };
 }

@@ -2,6 +2,11 @@ import './globals.css';
 import NewsletterForm from '../components/NewsletterForm';
 import SearchBox from '../components/SearchBox';
 import { STORE, waLink } from '../lib/store';
+import { warnOnce } from '../lib/storeCheck';
+
+// Server-rendered on every request, so this is the closest thing the storefront has to a
+// boot hook: warn once if a production deploy still carries placeholder contact details.
+warnOnce(process.env);
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),

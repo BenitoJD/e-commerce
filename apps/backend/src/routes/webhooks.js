@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { releaseItems } = require('../lib/stock');
 const { verifySignature, amountMatches, decideTransition } = require('../lib/orderTransitions');
+const { webhookMode } = require('../lib/webhookAuth');
 
 const router = express.Router();
 
@@ -10,17 +11,24 @@ const router = express.Router();
 // POST /webhooks/razorpay
 router.post('/razorpay', async (req, res) => {
   try {
+    const mode = webhookMode(process.env);
+    if (mode === 'error') {
+      // Fail closed: without a real secret anyone could fake a payment event.
+      console.error('[webhook] rejected: RAZORPAY_WEBHOOK_SECRET is missing or a placeholder');
+      return res.status(503).json({ ok: false, error: 'Webhook verification is not configured' });
+    }
+
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
     const signature = req.headers['x-razorpay-signature'] || '';
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body || {}));
 
-    if (secret && !secret.includes('placeholder')) {
+    if (mode === 'verify') {
       if (!verifySignature(raw, signature, secret)) {
         console.log('[webhook] invalid signature');
         return res.status(400).json({ ok: false, error: 'Invalid signature' });
       }
     } else {
-      console.log('[webhook] skipping signature check (placeholder secret)');
+      console.log('[webhook] skipping signature check (development without a secret)');
     }
 
     let event;

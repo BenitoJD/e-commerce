@@ -26,6 +26,7 @@ const { parseOrigins, securityHeaders, corsOrigin, corsWarning } = require('./li
 const { requestId } = require('./lib/requestId');
 const { createShutdown } = require('./lib/shutdown');
 const { seedOnBoot } = require('./lib/firstRunSeed');
+const { webhookWarning } = require('./lib/webhookAuth');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -131,6 +132,8 @@ const server = app.listen(PORT, () => {
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
   const warning = corsWarning(process.env);
   if (warning) console.warn(warning);
+  const webhookWarn = webhookWarning(process.env);
+  if (webhookWarn) console.warn(webhookWarn);
 
   // Fresh volume: create the schema, then load the catalogue so the store isn't empty until
   // someone remembers `npm run seed`. Only ever runs against an empty table.

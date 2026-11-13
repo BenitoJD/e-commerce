@@ -613,6 +613,45 @@ test('verify + customer cancel releases stock', async () => {
   assert.equal(c.json.status, 'cancelled');
 });
 
+test('webhooks: production without a secret rejects unsigned events and cannot mark paid', async () => {
+  const created = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1 }],
+    customer: { name: 'Webhook Probe', phone: '9812300666', pincode: '560001' },
+    payMode: 'online',
+  });
+  assert.equal(created.status, 200);
+  const receipt = created.json.receipt;
+  const rzpOrder = created.json.razorpayOrderId;
+
+  const saved = {
+    NODE_ENV: process.env.NODE_ENV,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
+  };
+  process.env.NODE_ENV = 'production';
+  delete process.env.RAZORPAY_WEBHOOK_SECRET;
+  try {
+    const payload = JSON.stringify({
+      event: 'payment.captured',
+      payload: { payment: { entity: { order_id: rzpOrder, id: 'pay_forged_1', amount: created.json.amount_paise } } },
+    });
+    const forged = await fetch(`${base}/webhooks/razorpay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-razorpay-signature': 'forged' },
+      body: payload,
+    });
+    assert.equal(forged.status, 503, 'unverifiable webhooks must be refused outright');
+
+    const after = await api('GET', `/store/checkout/verify?receipt=${receipt}`);
+    assert.notEqual(after.json.status, 'paid', 'a forged event must never mark an order paid');
+    assert.equal(after.json.razorpay_payment_id || null, null, 'no payment id should be stored');
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+});
+
 test('webhooks: capture marks paid, duplicate is idempotent, late failure ignored', async () => {
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],

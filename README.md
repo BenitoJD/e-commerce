@@ -164,7 +164,7 @@ ADMIN_TOKEN=<admin token> RAZORPAY_WEBHOOK_SECRET=<test secret> node scripts/e2e
 ```
 
 Individually:
-cd apps/backend && npm test        # 314 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 318 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks (idempotent), transitions, refunds (partial
                                    # too), auth/scrypt/session/OTP tokens, email templates,
                                    # rate limiting, security, sitemap, API contract, health,
@@ -213,8 +213,8 @@ Full steps: `docs/RAZORPAY.md`.
 ## What still needs your inputs
 
 Real product photography (overwrite the placeholder SVGs), VPS + domain, Razorpay live
-keys + webhook secret, an **SMTP provider** for order emails, an **SMS provider** for guest
-OTP lookup (accounts work without one), and your GSTIN/phone/email/address (one place:
+keys + webhook secret, an **SMTP provider** for order emails, a **Twilio** account (or equivalent) for guest
+OTP SMS (accounts work without one), and your GSTIN/phone/email/address (one place:
 `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL/ADDRESS`, plus `AUTH_SECRET`).
 
 ## Repository

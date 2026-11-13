@@ -7,6 +7,7 @@
 const { corsWarning } = require('./security');
 const { webhookWarning } = require('./webhookAuth');
 const { paymentsConfigured, mockPaymentsAllowed } = require('./payments');
+const { smsConfigured } = require('./sms');
 
 const MIN_ADMIN_TOKEN = 16;
 const DEFAULT_ADMIN_TOKENS = new Set(['change-me-long-random-string', 'changeme', 'please-change-me', 'admin', 'admin123', 'toolsvilla']);
@@ -44,8 +45,8 @@ function configWarnings(env = process.env) {
   if (!(env.SMTP_HOST && env.SMTP_FROM)) {
     warnings.push('[config] SMTP is not configured — order emails are recorded in the admin outbox but not delivered.');
   }
-  if (!(env.SMS_PROVIDER && env.SMS_API_KEY)) {
-    warnings.push('[config] No SMS provider is configured — phone OTP order lookup is unavailable; customers should create an account.');
+  if (!smsConfigured(env)) {
+    warnings.push('[config] No SMS provider is configured — guest OTP order lookup is unavailable; customers should create an account.');
   }
 
   return warnings;

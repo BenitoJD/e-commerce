@@ -8,6 +8,7 @@ const {
   OTP_MINUTES, OTP_MAX_ATTEMPTS,
 } = require('../lib/auth');
 const { normalizeEmail, isEmail, notifyPasswordReset } = require('../lib/notify');
+const { smsConfigured, sendSms } = require('../lib/sms');
 
 const router = express.Router();
 
@@ -176,18 +177,26 @@ router.post('/otp/request', async (req, res) => {
        VALUES ($1, $2, NOW() + ($3 || ' minutes')::interval)`,
       [phone, hashOtp(phone, code), String(OTP_MINUTES)]
     );
-    const smsConfigured = Boolean(process.env.SMS_PROVIDER && process.env.SMS_API_KEY);
+    const configured = smsConfigured(process.env);
     const dev = String(process.env.NODE_ENV || '') !== 'production' || String(process.env.ALLOW_DEV_OTP || '').toLowerCase() === 'true';
-    if (!smsConfigured && !dev) {
+    if (!configured && !dev) {
       return res.status(503).json({
-        error: 'Phone login is not configured yet. Sign in to your account instead, or contact support.',
+        error: 'Phone verification is not configured yet. Sign in to your account instead, or contact support.',
         code: 'SMS_NOT_CONFIGURED',
       });
     }
-    console.log(`[auth] OTP for ${phone}: ${code}`);
+    if (configured) {
+      const sent = await sendSms(phone, `${code} is your ${process.env.NEXT_PUBLIC_STORE_NAME || 'E-Commerce'} verification code. It expires in ${OTP_MINUTES} minutes.`);
+      if (!sent.sent) {
+        console.error(`[auth] SMS delivery failed for ${phone}: ${sent.reason}`);
+        return res.status(502).json({ error: 'Could not send the code right now. Please try again in a minute.', code: 'SMS_SEND_FAILED' });
+      }
+    } else {
+      console.log(`[auth] (no SMS provider) OTP for ${phone}: ${code}`);
+    }
     res.json({
       ok: true,
-      message: smsConfigured ? `We sent a 6-digit code to ${phone}.` : `Development code for ${phone}: ${code}`,
+      message: configured ? `We sent a 6-digit code to ${phone}.` : `Development code for ${phone}: ${code}`,
       expiresInMinutes: OTP_MINUTES,
       ...(dev ? { devCode: code } : {}),
     });

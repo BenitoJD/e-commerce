@@ -6,7 +6,7 @@ How this build compares with the reference store (toolsvilla.com), feature by fe
 items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
 SMTP/SMS, store identity) — none of which is code work.
 
-Evidence at this HEAD: `verify-all` **6/6**, backend **314** tests, storefront **112** tests,
+Evidence at this HEAD: `verify-all` **6/6**, backend **318** tests, storefront **112** tests,
 browser E2E **43/43** (Chromium), self-audit **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap
 URLs), production build **35 routes**.
 
@@ -116,7 +116,7 @@ URLs), production build **35 routes**.
 | Real product photos | Placeholders exist and are auto-checked; replace with your shoot/vendor photos by overwriting `apps/storefront/public/images/<slug>.svg` (or edit `data/products.js` + rerun `scripts/gen-product-images.mjs`) |
 | VPS + domain | Any Mumbai/Bangalore 4vCPU/8GB → `docs/VPS-DEPLOY.md` |
 | Razorpay live keys | Dashboard → backend `.env`, webhook URL |
-| SMS for guest OTP | MSG91/equivalent key (`SMS_PROVIDER`, `SMS_API_KEY`). Accounts and guest checkout work without it; guest order lookup falls back to accounts when SMS is absent. |
+| SMS for guest OTP | Twilio credentials (`SMS_PROVIDER=twilio`, `TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM`). Accounts and guest checkout work without it; guest order lookup falls back to accounts when SMS is absent. |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
 | SMTP provider | Order emails are generated into a durable outbox today; set `SMTP_HOST/PORT/USER/PASS/FROM` to deliver them. Without it the admin Emails tab shows each message as `logged`. |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
@@ -147,12 +147,12 @@ node scripts/verify-fresh.mjs # fresh checkout of the pushed repo: 2 suites + au
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (314 backend, 112 storefront, build 35 routes),
+Last run against the pushed HEAD: `verify-all` **6/6** (318 backend, 112 storefront, build 35 routes),
 `self-audit` **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap URLs), browser E2E **43/43**,
 `verify-fresh` **5/5** on a fresh checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
-Backend: `cd apps/backend && npm test` — 314 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 318 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline), production config audit**, **nginx routing/caching rules**, CI workflow shape, coupon expiry/usage caps, webhook state machine + signature (fails closed in production), LIKE escaping, CORS policy (no wildcard in production), status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

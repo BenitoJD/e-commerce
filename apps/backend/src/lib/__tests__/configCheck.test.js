@@ -12,8 +12,10 @@ const GOOD = {
   AUTH_SECRET: 'a'.repeat(40),
   SMTP_HOST: 'smtp.test',
   SMTP_FROM: 'care@shop.test',
-  SMS_PROVIDER: 'msg91',
-  SMS_API_KEY: 'sms-key',
+  SMS_PROVIDER: 'twilio',
+  TWILIO_ACCOUNT_SID: 'ACxxxxxxxx',
+  TWILIO_AUTH_TOKEN: 'token',
+  TWILIO_FROM: '+15551234567',
 };
 
 test('a correctly configured production deploy warns about nothing', () => {

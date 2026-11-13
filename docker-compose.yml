@@ -42,7 +42,9 @@ services:
       SMTP_FROM: ${SMTP_FROM:-E-Commerce <care@ecommerce.in>}
       NOTIFY_INTERVAL_SECONDS: ${NOTIFY_INTERVAL_SECONDS:-30}
       SMS_PROVIDER: ${SMS_PROVIDER:-}
-      SMS_API_KEY: ${SMS_API_KEY:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
       PORT: 9000
       # Exactly one reverse-proxy hop (nginx). X-Forwarded-For is overwritten by nginx.
       TRUST_PROXY: ${TRUST_PROXY:-1}

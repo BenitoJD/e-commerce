@@ -314,6 +314,11 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             {p.mrp && <span className="text-gray-400 line-through">₹{Number(p.mrp).toLocaleString('en-IN')}</span>}
             {off > 0 && <span className="badge bg-green-600 text-white">{off}% OFF</span>}
           </div>
+          {off > 0 ? (
+            <p className="text-sm font-semibold text-green-700 mt-1">
+              You save ₹{(Number(p.mrp) - Number(p.price)).toLocaleString('en-IN')} ({off}% off MRP)
+            </p>
+          ) : null}
           <p className="text-xs text-gray-500 mt-1">Inclusive of all taxes • GST invoice available for ITC</p>
           <p className={`text-sm font-bold mt-2 ${outOfStock ? 'text-red-600' : lowStock ? 'text-amber-600' : 'text-green-700'}`}>
             {outOfStock ? 'Out of stock' : lowStock ? `Only ${stockNum} left — order soon` : stockNum !== null ? 'In stock' : 'In stock'}

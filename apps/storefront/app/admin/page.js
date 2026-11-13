@@ -612,11 +612,12 @@ export default function AdminPage() {
         <p className="text-sm text-gray-500 mt-4">Enter the admin token to continue. It is stored only in this tab (sessionStorage as <code>tk_admin</code>).</p>
       ) : (
         <>
-          <div className="flex gap-2 mt-6 flex-wrap">
+          <nav aria-label="Admin sections" className="flex gap-2 mt-6 flex-wrap">
             {tabs.map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
+                aria-current={tab === key ? 'true' : undefined}
                 className={tab === key ? 'btn-primary !py-2' : 'btn-outline !py-2'}
               >
                 {label}
@@ -625,7 +626,7 @@ export default function AdminPage() {
             <button onClick={() => { if (tab === 'overview') loadStats(); if (tab === 'orders') loadOrders(); if (tab === 'quotes') loadQuotes(); if (tab === 'coupons') loadCoupons(); if (tab === 'messages') loadMessages(); if (tab === 'reviews') loadModReviews(); if (tab === 'returns') loadReturns(); if (tab === 'products') loadCatalog(); }} className="btn-outline !py-2 ml-auto">
               Refresh
             </button>
-          </div>
+          </nav>
 
           {error ? <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div> : null}
           {loading ? <div className="mt-4 text-sm text-gray-500">Loading…</div> : null}

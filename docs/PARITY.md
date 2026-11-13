@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 161 (cart shipping line + free-shipping nudge, 83 frontend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 162 (admin tab semantics + product savings line, 203 backend tests).
 
 ## Storefront
 
@@ -11,7 +11,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); **search URLs server-render their own matches** (with the right total), use a query-specific heading/breadcrumb and are **noindex** |
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
-| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share** |
+| Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, and a **"You save ₹X (N% off MRP)"** line under the price |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
 | Admin catalogue CRUD (create/edit/delete products) | ✅ admin Products tab (search by name/brand/slug, **paged with Load more** so nothing beyond 100 is unreachable) + `POST/DELETE /admin/products` |
@@ -103,7 +103,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (31/31 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 201 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 203 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

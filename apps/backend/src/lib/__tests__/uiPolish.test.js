@@ -20,6 +20,14 @@ test('product page states the saving in rupees, not just a percentage', () => {
   assert.match(src, /off MRP/, 'and what it is measured against');
 });
 
+test('checkout never hard-requires the state picker', () => {
+  const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'checkout', 'page.js'), 'utf8');
+  // If /store/states fails the select has no options; a hardcoded `required` would make the
+  // whole checkout unsubmittable, so requirement must come from the loaded options.
+  assert.match(src, /required=\{stateFieldRequired\(states\)\}/, 'state select must derive its required flag');
+  assert.doesNotMatch(src, /aria-label="Delivery state"[^>]*\brequired\b(?!=\{)/, 'state select must not be unconditionally required');
+});
+
 test('the header exposes the shopper tools (wishlist, compare, cart)', () => {
   const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'layout.js'), 'utf8');
   for (const href of ['/wishlist', '/compare', '/cart']) {

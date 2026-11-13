@@ -116,11 +116,11 @@ node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 ```
 
 Individually:
-cd apps/backend && npm test        # 235 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 236 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 90 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 93 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 29 routes

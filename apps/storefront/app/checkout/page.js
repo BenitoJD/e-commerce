@@ -5,6 +5,7 @@ import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { isValidGstin } from '../../lib/gstin';
 import { createCheckout, validateCoupon, getStates } from '../../lib/api';
+import { normalizeStates, stateFieldRequired, stateForPayload } from '../../lib/stateOptions';
 import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor, STORE } from '../../lib/store';
 
 function loadRazorpay() {
@@ -45,7 +46,7 @@ export default function CheckoutPage() {
     // GST state list. A failed fetch just leaves the picker empty (state stays optional).
     let alive = true;
     getStates()
-      .then((r) => { if (alive) setStates((r && r.states) || []); })
+      .then((r) => { if (alive) setStates(normalizeStates(r)); })
       .catch(() => { /* keep the form usable without the list */ });
     return () => { alive = false; };
   }, []);
@@ -112,7 +113,7 @@ export default function CheckoutPage() {
     setBusy(true);
     try {
       const payload = {
-        customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode, stateCode: form.stateCode || null, gstin: form.gstin.trim() || null },
+        customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode, stateCode: stateForPayload(states, form.stateCode), gstin: form.gstin.trim() || null },
         items: items.map((i) => ({ slug: i.slug, qty: i.qty, price: i.price })),
         payMode: form.payMode,
         amount: total,
@@ -218,7 +219,7 @@ export default function CheckoutPage() {
               onChange={(e) => set('stateCode', e.target.value)}
               aria-label="Delivery state"
               autoComplete="address-level1"
-              required
+              required={stateFieldRequired(states)}
             >
               <option value="">Select state</option>
               {states.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}

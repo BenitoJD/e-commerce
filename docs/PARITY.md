@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 160 (READMEs counts derived from source and guarded; live smoke 31/31).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 161 (cart shipping line + free-shipping nudge, 83 frontend tests).
 
 ## Storefront
 
@@ -35,7 +35,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Brand pages | ✅ `GET /store/brands` (SQL aggregation) drives a server-rendered directory; `/brand/[name]` renders via the search brand filter with **true product total** and a page size that matches the client's paging (Load more works) |
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; **order summary with per-line qty/price and "Edit cart"** before payment; COD capped by **one shared policy** (`COD_MAX_PAISE`, mirrored to the UI via `NEXT_PUBLIC_COD_MAX_PAISE`), enforced server-side and reflected in pincode answers |
-| Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout |
+| Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout — and the **cart shows the same shipping line plus a nudge** ("Add ₹1,800 more for free shipping, otherwise ₹99 delivery applies.") computed by a tested helper |
 | Checkout integrity | ✅ the basket is **normalised server-side** before pricing: repeated slugs merged into one line, quantity bounded to **1–999 per item** (larger values would overflow the `INTEGER` amount column), max 50 distinct lines, no missing slugs — and genuine bulk buyers are pointed at the quote flow |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; **timeline dates only the steps actually recorded** (`placed` = order date, `delivered` = `delivered_at`, `refunded` = `refunded_at`, intermediate steps undated) and the UI renders readable local times; refund outcome (auto/manual) persisted and flagged in admin |
@@ -110,7 +110,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 79 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 83 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

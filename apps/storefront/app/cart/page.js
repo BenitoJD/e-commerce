@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCart, updateQty, removeItem, cartTotal, cartStockStatus, clearCart } from '../../lib/cart';
 import { validateCoupon, checkPincode, fetchStock } from '../../lib/api';
-import { SHIPPING_FEE_RUPEES } from '../../lib/store';
+import { SHIPPING_FEE_RUPEES, shippingFor, shippingHint } from '../../lib/store';
 
 function readCoupon() {
   if (typeof window === 'undefined') return null;
@@ -61,6 +61,9 @@ export default function CartPage() {
 
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const payable = Math.max(0, subtotal - discount);
+  // Same rule the server charges with, so the cart total can't disagree with checkout.
+  const shipping = shippingFor(payable);
+  const shipHint = shippingHint(payable);
 
   // Live stock check: the cart is local storage and can be days old, so verify
   // availability before the shopper reaches the payment step.
@@ -220,10 +223,18 @@ export default function CartPage() {
             <div className="mt-4 space-y-1 font-bold">
               <div className="flex justify-between text-sm text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
               {discount > 0 && <div className="flex justify-between text-sm text-green-700"><span>Coupon ({coupon.code})</span><span>−₹{discount.toLocaleString('en-IN')}</span></div>}
-              <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{payable.toLocaleString('en-IN')}</span></div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Shipping</span>
+                <span>{shipHint.free ? 'Free' : `₹${shipping.toLocaleString('en-IN')}`}</span>
+              </div>
+              <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{(payable + shipping).toLocaleString('en-IN')}</span></div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Prices include GST. {SHIPPING_FEE_RUPEES > 0 ? 'Shipping calculated at checkout.' : 'Free shipping across India.'}
+            <p className="text-xs text-gray-500 mt-1">Prices include GST.</p>
+            <p
+              className={`text-xs font-semibold mt-1 ${shipHint.free ? 'text-green-700' : 'text-gray-600'}`}
+              role="status"
+            >
+              {shipHint.text}
             </p>
             {!stockStatus.ok ? (
               <>

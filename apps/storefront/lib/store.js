@@ -38,6 +38,31 @@ export function shippingFor(subtotalRupees) {
   return SHIPPING_FEE_RUPEES;
 }
 
+// Cart messaging about delivery. Tells the shopper how much more unlocks free shipping
+// instead of the vague "calculated at checkout" they used to get.
+export function shippingHint(payableRupees, {
+  fee = SHIPPING_FEE_RUPEES,
+  freeAbove = FREE_SHIPPING_ABOVE_RUPEES,
+} = {}) {
+  const payable = Math.max(0, Number(payableRupees) || 0);
+  const inr = (n) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+
+  if (!fee) {
+    return { free: true, gapRupees: 0, text: 'Free shipping across India.' };
+  }
+  if (freeAbove > 0 && payable >= freeAbove) {
+    return { free: true, gapRupees: 0, text: `Free shipping unlocked — no delivery charge.` };
+  }
+  if (freeAbove > payable) {
+    return {
+      free: false,
+      gapRupees: freeAbove - payable,
+      text: `Add ${inr(freeAbove - payable)} more for free shipping, otherwise ${inr(fee)} delivery applies.`,
+    };
+  }
+  return { free: false, gapRupees: 0, text: `${inr(fee)} delivery applies to this order.` };
+}
+
 export const STORE = {
   name: process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart',
   phoneDigits: PHONE_DIGITS,

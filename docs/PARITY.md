@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 151 (compliant invoice: CGST/SGST vs IGST + place of supply, server-rendered).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 152 (invoice amount-in-words + signature block, 79 frontend tests).
 
 ## Storefront
 
@@ -38,7 +38,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
-| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, and a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact) |
+| GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block |
 | Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
 | 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) returns real 404 status; `error.js` boundary offers retry/home/browse instead of a blank app-error screen |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 9 static pages + footer |
@@ -107,7 +107,7 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 76 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 79 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

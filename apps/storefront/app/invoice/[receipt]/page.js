@@ -2,6 +2,7 @@ import PrintButton from '../../../components/PrintButton';
 import { getInvoiceForRender } from '../../../lib/serverApi';
 import { STORE } from '../../../lib/store';
 import { splitTax } from '../../../lib/tax';
+import { paiseToWords } from '../../../lib/amountWords';
 
 const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(paise || 0) / 100);
@@ -33,6 +34,7 @@ export default async function InvoicePage({ params }) {
   const itemsTotal = Number(inv?.itemsTotalPaise ?? inv?.items_total_paise ?? itemsTotalFallback) || 0;
   const base = inv?.gst?.base ?? Math.round(((inv?.grandPaise ?? inv?.grand_paise ?? 0) * 100) / (100 + Number(gstRate)));
   const gstAmt = inv?.gst?.gst ?? Math.round(Number(base) * (Number(gstRate) / 100));
+  const grandPaise = Number(inv?.grandPaise ?? inv?.grand_paise ?? (Number(base) + Number(gstAmt))) || 0;
   // Compliant tax presentation: CGST+SGST within a state, IGST across states.
   const tax = splitTax(gstAmt, {
     sellerGstin: STORE.gstin,
@@ -139,10 +141,23 @@ export default async function InvoicePage({ params }) {
                 <div className="flex justify-between"><span className="text-gray-500">SGST @ {tax.halfRate}%</span><b>{inr(tax.sgstPaise)}</b></div>
               </>
             )}
-            <div className="flex justify-between text-base border-t pt-2"><span>Grand total</span><b>{inr(inv.grandPaise ?? inv.grand_paise ?? (Number(base) + Number(gstAmt)))}</b></div>
+            <div className="flex justify-between text-base border-t pt-2"><span>Grand total</span><b>{inr(grandPaise)}</b></div>
           </div>
 
-          <p className="text-xs text-gray-500 mt-6">18% GST invoice — eligible for input tax credit on business purchases. For help contact {STORE.email} with your receipt number.</p>
+          <p className="text-sm mt-3"><span className="text-gray-500">Amount in words:</span> <b>{paiseToWords(grandPaise)}</b></p>
+          <p className="text-xs text-gray-500 mt-1">All prices are inclusive of GST. Reverse charge: No.</p>
+
+          <div className="flex justify-between items-end mt-8 pt-6 border-t">
+            <p className="text-xs text-gray-500 max-w-sm">
+              18% GST invoice — eligible for input tax credit on business purchases.
+              For help contact {STORE.email} with your receipt number.
+            </p>
+            <div className="text-right">
+              <div className="text-xs text-gray-500">For {STORE.name}</div>
+              <div className="h-10" />
+              <div className="text-xs font-semibold border-t pt-1">Authorised Signatory</div>
+            </div>
+          </div>
         </div>
       )}
     </div>

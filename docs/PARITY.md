@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 156 (abandoned-checkout stock hold release, 196 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 157 (automatic abandoned-hold sweep, documented), 198 backend tests.
 
 ## Storefront
 
@@ -22,7 +22,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Admin charge breakdown | ✅ order detail shows **items − coupon + shipping = total charged** with a red `role="alert"` warning when it doesn't reconcile, computed by a tested pure helper (`lib/orderMath.js`) |
 | Admin bulk order actions | ✅ row checkboxes + select-all with **Mark shipped / Mark delivered / Cancel selected** via one `POST /admin/orders/bulk-status` (max 200 ids); illegal transitions are **skipped with a reason** rather than failing the batch, and a shared helper keeps stock release + refunds identical to single-order updates |
 | Warehouse picking list | ✅ **Print picking list** for the selected orders (`/admin/picking?ids=…`) — one row per SKU with the **combined quantity** across orders, HSN and a tick box; print-friendly (`no-print` controls), noindex, aggregation covered by tests; **shares the admin token with the console** via `lib/adminToken.js` (same key, same storage) |
-| Stock reservation | ✅ transactional reserve on checkout; released on cancel, refund, failed payment (webhook) — and **abandoned checkouts no longer hold stock forever**: `POST /admin/orders/release-stale` (default 30 min, clamped 5 min–7 days) cancels stale pending orders and returns their stock, with a **"Release abandoned holds"** button in the Orders tab |
+| Stock reservation | ✅ transactional reserve on checkout; released on cancel, refund, failed payment (webhook) — and **abandoned checkouts no longer hold stock forever**: a background sweep runs every `STALE_SWEEP_MINUTES` (default 15, `0` disables, skipped in tests) through the same `transitionOrder` helper, plus an on-demand **"Release abandoned holds"** admin button and `POST /admin/orders/release-stale` (5 min–7 day window, max 200/run) |
 | Admin session | ✅ one token helper (`getAdminToken/setAdminToken/clearAdminToken`, `sessionStorage` key `tk_admin`) used by the console and every admin sub-page — a page inventing its own key silently behaved as logged out, so a test now forbids direct key access |
 | Print output | ✅ global print stylesheet in `globals.css` — `.no-print`, header/footer hidden, `.print-card` — shared by the **GST invoice and the picking list** (previously `.no-print` was undefined outside the invoice, so picking-list buttons would have printed). Guarded by a test |
 | Keyboard focus | ✅ visible focus ring on `.btn-primary`/`.btn-outline` (focus-visible + offset) and on all links/buttons via a global `:focus-visible` rule |
@@ -102,7 +102,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 196 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 198 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

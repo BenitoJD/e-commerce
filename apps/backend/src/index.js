@@ -19,6 +19,7 @@ const sitemapHandler = require('./routes/sitemap');
 const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
 const { createRateLimiter } = require('./lib/rateLimit');
+const { sweepStaleHolds, sweepIntervalMinutes } = require('./lib/sweep');
 const { parseOrigins, securityHeaders } = require('./lib/security');
 const { requestId } = require('./lib/requestId');
 
@@ -109,4 +110,17 @@ app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
+
+  // Abandoned checkouts hold stock with no webhook coming to release it, so sweep on a
+  // timer. 0 disables it (the admin button still works); skipped under test.
+  const sweepMinutes = sweepIntervalMinutes();
+  if (process.env.NODE_ENV !== 'test' && sweepMinutes > 0) {
+    const run = () => sweepStaleHolds(db, { minutes: sweepMinutes })
+      .then(({ released }) => {
+        if (released.length) console.log(`[sweep] released ${released.length} abandoned hold(s)`);
+      })
+      .catch((e) => console.error('[sweep] error:', e.message));
+    setInterval(run, sweepMinutes * 60 * 1000).unref();
+    console.log(`[backend] stale-hold sweep every ${sweepMinutes}m`);
+  }
 });

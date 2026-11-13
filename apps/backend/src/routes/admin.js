@@ -4,6 +4,8 @@ const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { shouldReleaseOnCancel, canTransition } = require('../lib/orderTransitions');
 const { releaseCouponUse } = require('../lib/couponRelease');
 const { DEFAULT_MINUTES: STALE_DEFAULT_MINUTES } = require('../lib/staleHolds');
+const { transitionOrder } = require('../lib/orderService');
+const { sweepStaleHolds } = require('../lib/sweep');
 const { clampInt } = require('../lib/text');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
@@ -138,43 +140,6 @@ router.get('/orders/export.csv', async (req, res) => {
   }
 });
 
-// One place for the per-order status change: guards, stock release and refunds must behave
-// identically whether the operator acts on one order or fifty.
-async function transitionOrder(id, status) {
-  const { rows: current } = await db.query('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code FROM orders WHERE id = $1', [id]);
-  if (!current.length) return { ok: false, code: 404, error: 'Order not found' };
-  const guard = canTransition(current[0].status, status);
-  if (!guard.ok) return { ok: false, code: 409, error: guard.reason };
-
-  const { rows } = await db.query('UPDATE orders SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
-  // Record when the parcel actually reached the customer: the return window runs from here.
-  if (status === 'delivered') {
-    await db.query('UPDATE orders SET delivered_at = COALESCE(delivered_at, NOW()) WHERE id = $1', [id]);
-  }
-
-  // Release reserved stock when an admin cancels/refunds a stock-holding order.
-  if ((status === 'cancelled' || status === 'refunded') && shouldReleaseOnCancel(current[0].status)) {
-    await releaseItems(db, Array.isArray(current[0].items) ? current[0].items : []);
-    console.log(`[admin] stock released for ${rows[0].receipt}`);
-  }
-  // ...and the coupon use that checkout claimed for this order.
-  if (status === 'cancelled' || status === 'refunded') {
-    await releaseCouponUse(db, current[0].coupon_code, current[0].status);
-  }
-
-  // Paid orders cancelled/refunded by admin get an automatic gateway refund when possible.
-  let refund = { mode: 'none' };
-  if ((status === 'cancelled' || status === 'refunded') && current[0].status === 'paid') {
-    refund = await refundPayment({ ...current[0], receipt: current[0].receipt });
-    // Persist the outcome: 'manual' in particular must survive a page refresh,
-    // otherwise the money is simply owed with nobody tracking it.
-    await db.query('UPDATE orders SET refund_mode = $1, refunded_at = NOW() WHERE id = $2', [refund.mode, id]);
-    rows[0].refund_mode = refund.mode;
-  }
-  console.log(`[admin] order ${rows[0].receipt} ${current[0].status} -> ${status} refund=${refund.mode}`);
-  return { ok: true, order: rows[0], refund: refund.mode };
-}
-
 // PATCH /admin/orders/:id {status}
 router.patch('/orders/:id', async (req, res) => {
   try {
@@ -182,7 +147,7 @@ router.patch('/orders/:id', async (req, res) => {
     if (!ORDER_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of: ${ORDER_STATUSES.join(', ')}` });
     }
-    const result = await transitionOrder(req.params.id, status);
+    const result = await transitionOrder(db, req.params.id, status);
     if (!result.ok) return res.status(result.code).json({ error: result.error });
     res.json({ order: result.order, refund: result.refund });
   } catch (err) {
@@ -206,7 +171,7 @@ router.post('/orders/bulk-status', async (req, res) => {
     const skipped = [];
     for (const id of ids) {
       try {
-        const result = await transitionOrder(id, status);
+        const result = await transitionOrder(db, id, status);
         if (result.ok) applied.push({ id, receipt: result.order.receipt, refund: result.refund });
         else skipped.push({ id, reason: result.error });
       } catch (e) {
@@ -227,19 +192,7 @@ router.post('/orders/bulk-status', async (req, res) => {
 router.post('/orders/release-stale', async (req, res) => {
   try {
     const minutes = clampInt(req.query.minutes, STALE_DEFAULT_MINUTES, 5, 10080);
-    const { rows } = await db.query(
-      `SELECT id, receipt, status, created_at FROM orders
-        WHERE status = 'pending' AND created_at < NOW() - ($1::int * INTERVAL '1 minute')
-        ORDER BY created_at ASC LIMIT 200`,
-      [minutes]
-    );
-    const released = [];
-    const skipped = [];
-    for (const row of rows) {
-      const result = await transitionOrder(row.id, 'cancelled');
-      if (result.ok) released.push({ id: row.id, receipt: result.order.receipt });
-      else skipped.push({ id: row.id, reason: result.error });
-    }
+    const { released, skipped } = await sweepStaleHolds(db, { minutes });
     console.log(`[admin] released ${released.length} stale holds older than ${minutes}m (${skipped.length} skipped)`);
     res.json({ minutes, released, skipped });
   } catch (err) {

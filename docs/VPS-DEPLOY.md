@@ -72,3 +72,12 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
   and run as the unprivileged `node` user.
 - Verified behaviour with the database unreachable: process stays up, API returns clean
   JSON 500s, `/sitemap.xml` still serves valid XML.
+
+## Housekeeping the backend does on its own
+- **Abandoned checkouts** reserve stock at checkout. If the shopper closes the payment sheet,
+  no webhook arrives, so the backend sweeps every `STALE_SWEEP_MINUTES` (default **15**;
+  set `0` to disable) and cancels pending orders older than the sweep window, returning their
+  stock and releasing any coupon use. It logs only when it actually releases something.
+- You can also run it on demand from the admin Orders tab (**Release abandoned holds**) or
+  `POST /admin/orders/release-stale?minutes=30` with the admin token — handy straight after a
+  sale where carts were abandoned.

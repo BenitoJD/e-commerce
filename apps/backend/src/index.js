@@ -24,6 +24,7 @@ const { createRateLimiter } = require('./lib/rateLimit');
 const { sweepStaleHolds, sweepIntervalMinutes } = require('./lib/sweep');
 const { parseOrigins, securityHeaders } = require('./lib/security');
 const { requestId } = require('./lib/requestId');
+const { createShutdown } = require('./lib/shutdown');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -119,7 +120,9 @@ process.on('unhandledRejection', (err) => {
   console.error('[backend] unhandledRejection:', err && err.message);
 });
 
-app.listen(PORT, () => {
+let sweepTimer = null;
+
+const server = app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
@@ -133,7 +136,15 @@ app.listen(PORT, () => {
         if (released.length) console.log(`[sweep] released ${released.length} abandoned hold(s)`);
       })
       .catch((e) => console.error('[sweep] error:', e.message));
-    setInterval(run, sweepMinutes * 60 * 1000).unref();
+    sweepTimer = setInterval(run, sweepMinutes * 60 * 1000);
+    if (sweepTimer.unref) sweepTimer.unref();
     console.log(`[backend] stale-hold sweep every ${sweepMinutes}m`);
   }
 });
+
+// Redeploys send SIGTERM: finish in-flight checkouts/webhooks before exiting instead of
+// cutting them off mid-transaction, and drain the Postgres pool.
+const shutdown = createShutdown({ server, pool: db.pool, interval: sweepTimer, timeoutMs: Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000 });
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.on(signal, () => { shutdown(signal); });
+}

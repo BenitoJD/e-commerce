@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 188 (admin product form covers description, image paths and video URLs; 239 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 189 (graceful shutdown on SIGTERM with a hard deadline; wiring verified by booting the server and emitting the signal).
 
 ## Storefront
 

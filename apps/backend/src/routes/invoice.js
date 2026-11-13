@@ -66,6 +66,9 @@ router.get('/:receipt', async (req, res) => {
         address: customer.address || '',
         pincode: customer.pincode || '',
         gstin: customer.gstin || '',
+        // Needed for the invoice's place of supply (CGST+SGST vs IGST) on B2C orders.
+        state: customer.state || '',
+        stateCode: customer.stateCode || customer.state_code || '',
       },
       items,
       subtotalPaise: grandPaise,

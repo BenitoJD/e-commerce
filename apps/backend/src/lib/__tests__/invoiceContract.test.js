@@ -58,6 +58,25 @@ test('every invoice field the page reads exists in the API payload', () => {
   assert.deepEqual(missing, [], `invoice page reads fields the API never sends: ${missing.join(', ')}`);
 });
 
+test('nested customer fields the page reads are actually sent', () => {
+  const page = fs.readFileSync(PAGE, 'utf8');
+  const route = fs.readFileSync(ROUTE, 'utf8');
+  const customerBlock = route.slice(route.indexOf('customer: {'), route.indexOf('}', route.indexOf('customer: {')) + 1);
+
+  const read = new Set();
+  for (const m of page.matchAll(/\bcustomer\.([a-zA-Z_][a-zA-Z0-9_]*)/g)) read.add(m[1]);
+
+  const missing = [];
+  for (const key of read) {
+    const camelOf = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    const snakeOf = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+    if (![key, camelOf, snakeOf].some((c) => customerBlock.includes(`${c}:`) || customerBlock.includes(c))) {
+      missing.push(key);
+    }
+  }
+  assert.deepEqual(missing, [], `invoice page reads customer fields the API never sends: ${missing.join(', ')}`);
+});
+
 test('the invoice payload carries the money fields the page reconciles with', () => {
   const { keys } = apiKeysFromRoute();
   for (const key of ['items', 'discountPaise', 'shippingPaise', 'grandPaise', 'gst', 'receipt']) {

@@ -82,7 +82,10 @@ export default async function InvoicePage({ params }) {
               <div className="font-bold mb-1">Billed To</div>
               <div className="font-semibold">{customer.name || '—'}</div>
               <div className="text-gray-600">{customer.address || ''}</div>
-              <div className="text-gray-600">{customer.pincode || ''}</div>
+              <div className="text-gray-600">
+                {customer.pincode || ''}
+                {customer.state ? ` • ${customer.state}` : ''}
+              </div>
               <div className="text-gray-600">Phone: {customer.phone || '—'}</div>
               {customer.gstin ? (
                 <div className="text-gray-600 font-semibold">GSTIN: {customer.gstin}</div>

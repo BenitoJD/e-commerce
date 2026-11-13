@@ -39,6 +39,7 @@ const ROUTES = [
   '/privacy-policy',
   '/terms-conditions',
   '/admin',
+  '/admin/picking?ids=smoke',
   '/robots.txt',
   '/sitemap.xml',
 ];

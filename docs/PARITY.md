@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 146 (bulk order actions, 169 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 147 (warehouse picking list; live smoke 30/30).
 
 ## Storefront
 
@@ -21,6 +21,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Admin invoice access | ✅ **Invoice** link on every order row and **Open GST invoice** in the detail panel — support and GST filing no longer require hand-building `/invoice/<receipt>` (guarded by a test) |
 | Admin charge breakdown | ✅ order detail shows **items − coupon + shipping = total charged** with a red `role="alert"` warning when it doesn't reconcile, computed by a tested pure helper (`lib/orderMath.js`) |
 | Admin bulk order actions | ✅ row checkboxes + select-all with **Mark shipped / Mark delivered / Cancel selected** via one `POST /admin/orders/bulk-status` (max 200 ids); illegal transitions are **skipped with a reason** rather than failing the batch, and a shared helper keeps stock release + refunds identical to single-order updates |
+| Warehouse picking list | ✅ **Print picking list** for the selected orders (`/admin/picking?ids=…`) — one row per SKU with the **combined quantity** across orders, HSN and a tick box; print-friendly (`no-print` controls), noindex, aggregation covered by tests |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
 | Pincode delivery check | ✅ `/store/service/pincode` + product page and cart checkers; **COD availability is amount-aware** (product price × qty and cart subtotal are sent, so a high-value item says "prepaid only" instead of promising COD) |
 | Out-of-stock handling | ✅ badges everywhere + "tell me when it's back" (`/store/service/stock-alert`) with **honest copy** (team contacts you — no automated email exists yet); admin Stock tab lists pending restock requests |
@@ -92,7 +93,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (29/29 incl. a real 404)
+node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
 Backend: `cd apps/backend && npm test` — 169 tests (pricing math, GST, EMI, catalog validity,
@@ -102,8 +103,8 @@ call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 63 tests (catalog filter/sort logic, cart
-add/merge/clamp + reorder mapping + stock status, order money reconciliation, GST-inclusive split, COD cap + shipping
+Storefront: `cd apps/storefront && npm test` — 66 tests (catalog filter/sort logic, cart
+add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,
 JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN-proof

@@ -736,6 +736,14 @@ export default function AdminPage() {
                   <button onClick={() => runBulkStatus('shipped')} disabled={bulkBusy} className="btn-primary !py-1 !px-3 text-xs disabled:opacity-50">Mark shipped</button>
                   <button onClick={() => runBulkStatus('delivered')} disabled={bulkBusy} className="btn-primary !py-1 !px-3 text-xs disabled:opacity-50">Mark delivered</button>
                   <button onClick={() => runBulkStatus('cancelled')} disabled={bulkBusy} className="btn-outline !py-1 !px-3 text-xs !text-red-600 disabled:opacity-50">Cancel selected</button>
+                  <a
+                    href={`/admin/picking?ids=${encodeURIComponent(selectedOrders.join(','))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-outline !py-1 !px-3 text-xs"
+                  >
+                    Print picking list
+                  </a>
                   <button onClick={() => setSelectedOrders([])} className="text-xs underline">Clear selection</button>
                 </div>
               ) : null}

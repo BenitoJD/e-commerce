@@ -25,6 +25,7 @@ const { sweepStaleHolds, sweepIntervalMinutes } = require('./lib/sweep');
 const { parseOrigins, securityHeaders } = require('./lib/security');
 const { requestId } = require('./lib/requestId');
 const { createShutdown } = require('./lib/shutdown');
+const { seedOnBoot } = require('./lib/firstRunSeed');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -126,6 +127,10 @@ const server = app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
+
+  // Fresh volume: create the schema, then load the catalogue so the store isn't empty until
+  // someone remembers `npm run seed`. Only ever runs against an empty table.
+  seedOnBoot(db).catch(() => { /* logged inside */ });
 
   // Abandoned checkouts hold stock with no webhook coming to release it, so sweep on a
   // timer. 0 disables it (the admin button still works); skipped under test.

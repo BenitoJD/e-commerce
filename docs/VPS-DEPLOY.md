@@ -74,7 +74,12 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
    `NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com` etc. Without them the bundle bakes in localhost.
 5. Domains: `shop.yourdomain.com` → storefront, `api.yourdomain.com` → backend. Enable SSL.
 6. Razorpay webhook: `https://api.yourdomain.com/webhooks/razorpay`.
-7. Run seed once: backend terminal → `npm run seed`.
+7. No manual seed needed: on first boot the backend creates the schema and, **only when the
+   products table is empty**, loads the 30-product catalogue and coupons (`SEED_ON_BOOT=false`
+   disables it). The log line is `[seed] empty catalogue — seeded …`, or
+   `[seed] catalogue already has N products — not seeding` on later boots, so your edits are
+   never overwritten. `npm run seed` still exists as a manual refresh (it updates catalogue
+   content while preserving stock and coupon usage).
 
 ## Backups
 - Enable VPS snapshots + nightly `pg_dump` to S3/R2. Keep Meili key + webhook secret in Coolify secrets, never in git.
@@ -90,6 +95,9 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
   JSON 500s, `/sitemap.xml` still serves valid XML.
 
 ## Housekeeping the backend does on its own
+- **Schema + first-boot seed**: `sql/schema.sql` is applied on the first query, and an empty
+  catalogue is seeded once (see step 7 of the Coolify section). A fresh volume therefore
+  serves a working store without manual steps, while a populated one is never re-seeded.
 - **Abandoned checkouts** reserve stock at checkout. If the shopper closes the payment sheet,
   no webhook arrives, so the backend sweeps every `STALE_SWEEP_MINUTES` (default **15**;
   set `0` to disable) and cancels pending orders older than the sweep window, returning their

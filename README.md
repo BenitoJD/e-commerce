@@ -29,7 +29,7 @@ e-commerce/
     public/images/    90 generated placeholder images (3 views × 30 products, SVG)
     lib/              api client, cart, wishlist, store config, server API base
     test/             112 client-logic tests (no install needed)
-  e2e/                43 Playwright browser tests (every customer + admin flow)
+  e2e/                51 Playwright browser tests (every customer + admin flow)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
   scripts/            smoke.mjs, validate-compose.cjs, gen-product-images.mjs
@@ -164,7 +164,7 @@ ADMIN_TOKEN=<admin token> RAZORPAY_WEBHOOK_SECRET=<test secret> node scripts/e2e
 ```
 
 Individually:
-cd apps/backend && npm test        # 318 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 323 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks (idempotent), transitions, refunds (partial
                                    # too), auth/scrypt/session/OTP tokens, email templates,
                                    # rate limiting, security, sitemap, API contract, health,

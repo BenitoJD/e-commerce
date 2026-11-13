@@ -9,6 +9,7 @@ const { sweepStaleHolds } = require('../lib/sweep');
 const { clampInt } = require('../lib/text');
 const { clampText } = require('../lib/validate');
 const { resolveCategory } = require('../../data/categories');
+const { resolveProductText } = require('../lib/productMatch');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
@@ -407,13 +408,10 @@ router.post('/quotes/:id/convert', async (req, res) => {
     }
     let productSlug = quote.product_slug;
     if (!productSlug && quote.product_name) {
-      // Older free-text quotes: resolve the name at conversion time.
-      const { rows: match } = await db.query(
-        'SELECT slug FROM products WHERE LOWER(name) = LOWER($1) OR name ILIKE $2 ORDER BY LENGTH(name) ASC LIMIT 1',
-        [quote.product_name, `%${String(quote.product_name).slice(0, 100)}%`]
-      );
-      if (match.length) {
-        productSlug = match[0].slug;
+      // Older free-text quotes: resolve the buyer's words at conversion time.
+      const match = await resolveProductText(db, quote.product_name);
+      if (match) {
+        productSlug = match.slug;
         await db.query('UPDATE bulk_quotes SET product_slug = $1 WHERE id = $2', [productSlug, quote.id]);
       }
     }

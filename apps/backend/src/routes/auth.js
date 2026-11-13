@@ -242,7 +242,7 @@ router.get('/orders', async (req, res) => {
     const user = await sessionUser(db, bearerToken(req));
     if (!user) return res.status(401).json({ error: 'Not signed in' });
     const { rows } = await db.query(
-      `SELECT receipt, status, amount_paise, items, created_at, pay_mode, coupon_code, discount_paise, shipping_paise, notes
+      `SELECT receipt, status, amount_paise, items, created_at, pay_mode, coupon_code, discount_paise, shipping_paise, notes, customer->>'phone' AS phone
          FROM orders WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT 100`,
       [user.id]
     );

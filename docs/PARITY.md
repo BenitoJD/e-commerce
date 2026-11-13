@@ -6,8 +6,8 @@ How this build compares with the reference store (toolsvilla.com), feature by fe
 items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
 SMTP/SMS, store identity) — none of which is code work.
 
-Evidence at this HEAD: `verify-all` **6/6**, backend **318** tests, storefront **112** tests,
-browser E2E **43/43** (Chromium), self-audit **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap
+Evidence at this HEAD: `verify-all` **6/6**, backend **323** tests, storefront **112** tests,
+browser E2E **51/51** (Chromium), self-audit **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap
 URLs), production build **35 routes**.
 
 ## Accounts, messaging & operations (added in this pass)
@@ -130,7 +130,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-pnpm test:e2e                  # 43/43 browser tests against a running stack
+pnpm test:e2e                  # 51/51 browser tests against a running stack
 node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue data)
                                # + built storefront + smoke + page audit + sitemap crawl, cleaned up
                                # automatically — the reproducible end-to-end check (3/3)
@@ -147,12 +147,12 @@ node scripts/verify-fresh.mjs # fresh checkout of the pushed repo: 2 suites + au
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (318 backend, 112 storefront, build 35 routes),
-`self-audit` **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap URLs), browser E2E **43/43**,
+Last run against the pushed HEAD: `verify-all` **6/6** (323 backend, 112 storefront, build 35 routes),
+`self-audit` **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap URLs), browser E2E **51/51**,
 `verify-fresh` **5/5** on a fresh checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
-Backend: `cd apps/backend && npm test` — 318 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 323 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline), production config audit**, **nginx routing/caching rules**, CI workflow shape, coupon expiry/usage caps, webhook state machine + signature (fails closed in production), LIKE escaping, CORS policy (no wildcard in production), status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

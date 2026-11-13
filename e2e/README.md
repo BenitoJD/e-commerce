@@ -1,6 +1,6 @@
 # Browser end-to-end suite
 
-43 Playwright tests that drive the real storefront, API and Postgres the way a shopper
+51 Playwright tests that drive the real storefront, API and Postgres the way a shopper
 and an operator do.
 
 ## Prerequisites

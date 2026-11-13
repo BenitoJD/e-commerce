@@ -30,7 +30,7 @@ module.exports = async function globalSetup() {
     for (const p of stale) await request(`/admin/products/${p.slug}`, { method: 'DELETE', token: ADMIN_TOKEN });
   } catch { /* non-fatal */ }
 
-  for (const slug of [P.grinder, P.drill, P.router, P.washer, P.scrubber]) {
+  for (const slug of [P.grinder, P.drill, P.router, P.washer, P.scrubber, 'bosch-gsb-13-re-drill']) {
     const current = await request(`/store/products/${slug}`);
     const stock = Number(current.json?.product?.stock ?? 0);
     if (stock < 40) {

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  fetchMe, fetchAccountOrders, saveAddress, deleteAddress, logoutAccount, getStates,
+  fetchMe, fetchAccountOrders, saveAddress, deleteAddress, logoutAccount, getStates, trackOrder,
 } from '../../lib/api';
+import { addToCart, orderItemsToCartLines } from '../../lib/cart';
 import { getToken, clearToken } from '../../lib/auth';
 
 const inr = (paise) => `₹${Math.round(Number(paise || 0) / 100).toLocaleString('en-IN')}`;
@@ -25,6 +26,7 @@ export default function AccountPage() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [reorderNote, setReorderNote] = useState('');
 
   const load = useCallback(async () => {
     const token = getToken();
@@ -48,6 +50,31 @@ export default function AccountPage() {
       .then((r) => setStates(Array.isArray(r) ? r : (r && r.states) || []))
       .catch(() => { /* keep the address form usable; the state stays optional */ });
   }, []);
+
+  const reorder = async (order) => {
+    setErr(''); setMsg(''); setReorderNote('');
+    setBusy(true);
+    try {
+      const phone = order.phone || user.phone;
+      if (!phone) { setErr('This order has no phone on file; open it from My Orders instead.'); return; }
+      const r = await trackOrder(order.receipt, phone);
+      const tracked = r.order || r;
+      const lines = orderItemsToCartLines(tracked.items);
+      if (!lines.length) { setErr('Could not load items for that order.'); return; }
+      let added = 0;
+      for (const line of lines) {
+        if (line.price <= 0) continue;
+        addToCart(line, line.qty);
+        added += 1;
+      }
+      if (!added) { setErr('Those items cannot be reordered right now.'); return; }
+      window.location.href = '/cart';
+    } catch (e2) {
+      setErr(e2.message || 'Could not reorder.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const logout = async () => {
     try { await logoutAccount(getToken()); } catch { /* ignore */ }
@@ -159,6 +186,7 @@ export default function AccountPage() {
                 <div className="flex gap-3 text-xs font-bold">
                   <a className="text-[#F97316] underline" href={`/invoice/${encodeURIComponent(o.receipt)}`}>Invoice</a>
                   <a className="text-[#F97316] underline" href={`/track-order?receipt=${encodeURIComponent(o.receipt)}`}>Track</a>
+                  <button onClick={() => reorder(o)} disabled={busy} className="text-[#F97316] underline disabled:opacity-50">Reorder</button>
                 </div>
               </div>
             </div>

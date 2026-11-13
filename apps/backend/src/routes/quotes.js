@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { clampText, clampInt, normalizePhone } = require('../lib/validate');
 const { verifyOrderToken, sessionUser, bearerToken } = require('../lib/auth');
+const { resolveProductText } = require('../lib/productMatch');
 
 const router = express.Router();
 
@@ -25,13 +26,8 @@ router.post('/', async (req, res) => {
     // "slug" that the admin convert action can never find.
     const candidate = rawSlug || rawText;
     if (candidate) {
-      const { rows: found } = await db.query(
-        `SELECT slug FROM products
-          WHERE slug = $1 OR LOWER(name) = LOWER($1) OR name ILIKE $2
-          ORDER BY (slug = $1) DESC, LENGTH(name) ASC LIMIT 1`,
-        [candidate, `%${candidate.slice(0, 100)}%`]
-      );
-      if (found.length) slug = found[0].slug;
+      const match = await resolveProductText(db, candidate);
+      if (match) slug = match.slug;
       else productName = candidate.slice(0, 200);
     }
     const { rows } = await db.query(

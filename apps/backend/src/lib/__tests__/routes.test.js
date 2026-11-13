@@ -422,6 +422,19 @@ function makeFakeDb() {
       if (o) o.status = 'cancelled';
       return { rows: o ? [{ receipt: o.receipt, status: o.status }] : [] };
     }
+    if (t.startsWith('SELECT slug, name, brand FROM products WHERE LOWER(slug) = LOWER($1)')) {
+      const q = String(params[0] || '').toLowerCase();
+      const p = [...products.values()].find((x) => x.slug.toLowerCase() === q || x.name.toLowerCase() === q);
+      return { rows: p ? [{ slug: p.slug, name: p.name, brand: p.brand || '' }] : [] };
+    }
+    if (t.startsWith('SELECT slug, name, brand FROM products WHERE')) {
+      const needles = params.map((x) => String(x).replace(/%/g, '').toLowerCase());
+      const rows = [...products.values()].filter((p) => {
+        const hay = `${p.name} ${p.brand || ''} ${p.slug}`.toLowerCase();
+        return needles.some((n) => hay.includes(n));
+      }).slice(0, 25).map((p) => ({ slug: p.slug, name: p.name, brand: p.brand || '' }));
+      return { rows };
+    }
     if (t.startsWith('SELECT slug FROM products WHERE slug = $1 OR LOWER(name) = LOWER($1)')) {
       const candidate = String(params[0] || '').toLowerCase();
       const found = [...products.values()].find((p) => p.slug.toLowerCase() === candidate || p.name.toLowerCase() === candidate || p.name.toLowerCase().includes(candidate));

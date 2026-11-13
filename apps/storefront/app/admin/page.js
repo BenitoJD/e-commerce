@@ -733,6 +733,15 @@ export default function AdminPage() {
                         </td>
                         <td className="p-2">
                           <button onClick={() => onOrderDetail(o.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">View</button>
+                          {/* Operators need the GST invoice for support and filing — don't make them build the URL by hand. */}
+                          <a
+                            href={`/invoice/${encodeURIComponent(o.receipt || '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1"
+                          >
+                            Invoice
+                          </a>
                           {orderActions(o)}
                         </td>
                       </tr>
@@ -758,7 +767,17 @@ export default function AdminPage() {
                         {orderDetail.couponCode ? ` • coupon ${orderDetail.couponCode} −₹${((orderDetail.discountPaise || 0) / 100).toLocaleString('en-IN')}` : ''}
                       </div>
                     </div>
-                    <button onClick={() => setOrderDetail(null)} className="btn-outline !py-1 !px-2 text-xs">Close</button>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`/invoice/${encodeURIComponent(orderDetail.receipt || '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-outline !py-1 !px-2 text-xs"
+                      >
+                        Open GST invoice
+                      </a>
+                      <button onClick={() => setOrderDetail(null)} className="btn-outline !py-1 !px-2 text-xs">Close</button>
+                    </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4 mt-3 text-sm">

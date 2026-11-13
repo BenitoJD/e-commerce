@@ -20,7 +20,8 @@ const CATS = [
   { slug: 'motors', name: 'Motors', img: '/images/crompton-5hp-motor.svg' },
   { slug: 'agriculture', name: 'Agriculture', img: '/images/neptune-battery-sprayer.svg' },
   { slug: 'welding', name: 'Welding', img: '/images/ibell-arc-250-welding.svg' },
-  { slug: 'cleaning', name: 'Cleaning', img: '/images/karcher-hd5-pressure-washer.svg' }
+  { slug: 'cleaning', name: 'Cleaning', img: '/images/karcher-hd5-pressure-washer.svg' },
+  { slug: 'furniture', name: 'Furniture', img: '/images/gracewood-carved-door.jpg' }
 ];
 
 function off(p) {
@@ -85,15 +86,15 @@ export default function HomeView({ initialProducts = null }) {
         <div className="max-w-7xl mx-auto px-4 py-14 grid md:grid-cols-2 gap-8 items-center">
           <div>
             <span className="badge bg-white/20 text-white mb-3">GST Invoice • EMI • Pan-India Delivery</span>
-            <h1 className="text-4xl md:text-5xl font-black leading-tight">India&apos;s Machinery Store</h1>
-            <p className="mt-3 text-orange-50">Power tools, motors, agri equipment & welders at wholesale prices. UPI, cards, EMI & COD accepted.</p>
+            <h1 className="text-4xl md:text-5xl font-black leading-tight">Machinery, Tools &amp; Handcrafted Furniture</h1>
+            <p className="mt-3 text-orange-50">Power tools, motors, agri equipment, welders and solid-teak furniture at honest prices. UPI, cards, EMI & COD accepted.</p>
             <div className="mt-6 flex gap-3">
               <a href="/category/all" className="bg-white text-orange-700 font-bold px-6 py-3 rounded-lg">Shop Now</a>
               <a href="/bulk-quote" className="border border-white text-white font-bold px-6 py-3 rounded-lg">Bulk Quote</a>
             </div>
           </div>
           <div className="hidden md:block">
-            <img src="/images/bosch-gws-600-grinder.svg" alt="Machinery" className="rounded-2xl shadow-2xl" />
+            <img src="/images/gracewood-teak-sofa.jpg" alt="Handcrafted teak sofa set" className="rounded-2xl shadow-2xl w-full h-80 object-cover" />
           </div>
         </div>
       </section>
@@ -110,7 +111,7 @@ export default function HomeView({ initialProducts = null }) {
 
       <section className="max-w-7xl mx-auto px-4 mt-10">
         <h2 className="text-2xl font-extrabold">Shop by Category</h2>
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           {CATS.map((c) => (
             <a key={c.slug} href={`/category/${c.slug}`} className="card">
               <img src={c.img} alt={c.name} className="h-28 w-full object-cover" loading="lazy" />

@@ -7,7 +7,7 @@ items are the operator inputs listed under *Needs your inputs* (photos, VPS, liv
 SMTP/SMS, store identity) — none of which is code work.
 
 Evidence at this HEAD: `verify-all` **6/6**, backend **323** tests, storefront **112** tests,
-browser E2E **51/51** (Chromium), self-audit **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap
+browser E2E **52/52** (Chromium), self-audit **3/3** (44/44 routes, 17/17 pages, 108/108 sitemap
 URLs), production build **35 routes**.
 
 ## Accounts, messaging & operations (added in this pass)
@@ -23,7 +23,8 @@ URLs), production build **35 routes**.
 | Courier / AWB tracking | ✅ admin records courier + AWB + tracking URL on the order; Track Order shows it and links to the carrier |
 | Order notes | ✅ optional delivery notes at checkout, persisted with the order and shown to the admin |
 | FAQ | ✅ `/faq` with 12 answers and FAQPage JSON-LD; linked from footer and sitemap |
-| Product gallery | ✅ three images per SKU and clickable thumbnails that switch the main image |
+| Product gallery | ✅ three images per SKU and clickable thumbnails that switch the main image; the six Gracewood furniture listings use ten real workshop photos |
+| Handcrafted furniture catalogue | ✅ **Furniture** category with six Gracewood teak products (beds, L-shape sofa, carved wardrobes, carved door, mirror), nested subcategories, real photos, prices/HSN/specs and sitemap entries |
 | Admin customers & outbox | ✅ Customers tab (orders + lifetime value), Emails tab (status, requeue, send now) |
 | Webhook hardening | ✅ event-id dedupe + transactional order lock (a replayed `payment.failed` can’t restock twice), late captures flagged for manual refund, retried payments re-reserve stock, partial refunds tracked without closing/restocking the order, coupon uses released on failure, shipped/delivered refunds recorded even when the gateway is unavailable |
 | Abuse/security fixes | ✅ `X-Forwarded-For` spoofing closed (`TRUST_PROXY`, nginx overwrites the header), placeholder Razorpay keys no longer take the live path, default admin tokens warned, CSV formula injection neutralised, malformed bodies/ids return 4xx, free-text quotes resolve to catalogue SKUs |
@@ -130,7 +131,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-pnpm test:e2e                  # 51/51 browser tests against a running stack
+pnpm test:e2e                  # 52/52 browser tests against a running stack
 node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue data)
                                # + built storefront + smoke + page audit + sitemap crawl, cleaned up
                                # automatically — the reproducible end-to-end check (3/3)
@@ -148,7 +149,7 @@ node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug
 ```
 
 Last run against the pushed HEAD: `verify-all` **6/6** (323 backend, 112 storefront, build 35 routes),
-`self-audit` **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap URLs), browser E2E **51/51**,
+`self-audit` **3/3** (44/44 routes, 17/17 pages, 108/108 sitemap URLs), browser E2E **52/52**,
 `verify-fresh` **5/5** on a fresh checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
@@ -168,7 +169,7 @@ self-healing storage, wishlist dedupe + stock, store contact config + wa.me link
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
 Build: `cd apps/storefront && npm run build` must compile all 35 routes.
-Smoke: `BASE_URL=... node scripts/smoke.mjs` — 43 routes (38 pages/endpoints + 5 real 404s).
+Smoke: `BASE_URL=... node scripts/smoke.mjs` — 44 checks (39 pages/endpoints + 5 real 404s; 43 by default, +1 with INVOICE_RECEIPT).
 
 Fresh-checkout check (do this before trusting a deploy): check out into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.

@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { P, watchErrors, clearCartState } = require('./helpers');
 
 const PUBLIC_ROUTES = [
-  '/', '/category/all', '/category/power-tools', '/category/pumps/submersible',
+  '/', '/category/all', '/category/power-tools', '/category/pumps/submersible', '/category/furniture',
   `/product/${P.grinder}`, '/brands', '/brand/Bosch', '/deals', '/cart', '/checkout',
   '/wishlist', '/compare', '/my-orders', '/track-order', '/returns', '/bulk-quote',
   '/bulk-orders', '/emi-options', '/faq', '/about-us', '/contact-us', '/shipping-policy',

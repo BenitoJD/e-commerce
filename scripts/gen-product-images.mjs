@@ -56,6 +56,9 @@ function svgFor(p, i, variant = 1) {
 fs.mkdirSync(outDir, { recursive: true });
 let count = 0;
 for (const p of products) {
+  // Photo-backed products keep their real images; only generate SVG placeholders for SKUs
+  // that still reference the generated catalogue art.
+  if ((p.images || []).some((src) => !String(src).endsWith('.svg'))) continue;
   // Three views per product so the PDP gallery has something real to switch between.
   for (let variant = 1; variant <= 3; variant += 1) {
     const suffix = variant === 1 ? '' : `-${variant}`;

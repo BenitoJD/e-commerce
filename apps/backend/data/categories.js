@@ -67,6 +67,17 @@ const CATEGORIES = [
       { slug: 'engines', label: 'Engines' },
     ],
   },
+  {
+    slug: 'furniture',
+    label: 'Furniture',
+    children: [
+      { slug: 'beds', label: 'Beds' },
+      { slug: 'sofas', label: 'Sofa Sets' },
+      { slug: 'wardrobes', label: 'Wardrobes' },
+      { slug: 'doors', label: 'Doors' },
+      { slug: 'mirrors', label: 'Mirrors' },
+    ],
+  },
 ];
 
 const BY_PARENT = new Map(CATEGORIES.map((c) => [c.slug, c]));

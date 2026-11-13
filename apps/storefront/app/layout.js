@@ -13,10 +13,10 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   icons: { icon: '/favicon.svg' },
   title: {
-    default: `${STORE.name} — India's Machinery & Power Tools Store`,
+    default: `${STORE.name} — Machinery, Tools & Handcrafted Furniture`,
     template: '%s'
   },
-  description: 'Buy power tools, motors, agriculture equipment, welding machines & cleaning equipment online in India. GST invoice, EMI, UPI & bulk quotes.'
+  description: 'Buy power tools, motors, agriculture equipment, cleaning machines and handcrafted teak furniture online in India. GST invoice, EMI, UPI & bulk quotes.'
 };
 
 export default function RootLayout({ children }) {
@@ -69,6 +69,7 @@ export default function RootLayout({ children }) {
               <a href="/category/pumps" className="hover:text-orange-400">Pumps</a>
               <a href="/category/welding" className="hover:text-orange-400">Welding</a>
               <a href="/category/cleaning" className="hover:text-orange-400">Cleaning</a>
+              <a href="/category/furniture" className="hover:text-orange-400">Furniture</a>
               <a href="/category/all" className="hover:text-orange-400">All Products</a>
               <a href="/deals" className="text-amber-400 font-bold hover:text-amber-300">🔥 Deals</a>
               <a href="/brands" className="hover:text-orange-400">Brands</a>
@@ -82,7 +83,7 @@ export default function RootLayout({ children }) {
           <div className="max-w-7xl mx-auto px-4 py-10 grid sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm">
             <div>
               <div className="text-white font-extrabold text-lg mb-2">{storeName}</div>
-              <p>India&apos;s machinery store. Genuine brands, GST invoice on every order, pan-India delivery.</p>
+              <p>Machinery, tools and handcrafted furniture. GST invoice on every order, pan-India delivery.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="badge bg-white/10 text-white">GST Invoice</span>
                 <span className="badge bg-white/10 text-white">Razorpay</span>
@@ -100,6 +101,7 @@ export default function RootLayout({ children }) {
                 <li><a className="hover:text-white" href="/category/pumps">Pumps</a></li>
                 <li><a className="hover:text-white" href="/category/welding">Welding</a></li>
                 <li><a className="hover:text-white" href="/category/cleaning">Cleaning</a></li>
+                <li><a className="hover:text-white" href="/category/furniture">Furniture</a></li>
                 <li><a className="hover:text-white font-bold text-amber-400" href="/deals">🔥 Deals of the Day</a></li>
                 <li><a className="hover:text-white" href="/brands">All Brands</a></li>
                 <li><a className="hover:text-white" href="/track-order">Track Order</a></li>

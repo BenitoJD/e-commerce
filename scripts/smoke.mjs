@@ -17,6 +17,7 @@ const ROUTES = [
   `/category/all`,
   `/category/${CATEGORY}`,
   '/category/pumps/submersible',
+  '/category/furniture',
   `/product/${PRODUCT}`,
   '/brands',
   `/brand/${BRAND}`,

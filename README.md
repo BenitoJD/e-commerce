@@ -14,7 +14,7 @@ Feature parity matrix: [`docs/PARITY.md`](docs/PARITY.md).
 ```
 e-commerce/
   apps/backend/       Express + Postgres + Razorpay
-    data/             30-product catalog + seeded coupons (source of truth)
+    data/             36-product catalog (30 tools + 6 teak furniture pieces) + seeded coupons (source of truth)
     sql/schema.sql    idempotent schema (safe to run on every boot)
     src/routes/       products, search, checkout, webhooks, quotes, engage,
                       service, invoice, admin, sitemap, auth
@@ -26,10 +26,10 @@ e-commerce/
                       tracking, invoice, returns, admin, account/login/register,
                       FAQ, policies…
     components/       client views (ProductView, CategoryView, BrandView, HomeView…)
-    public/images/    90 generated placeholder images (3 views × 30 products, SVG)
+    public/images/    90 generated tool placeholders + 10 Gracewood furniture photos
     lib/              api client, cart, wishlist, store config, server API base
     test/             112 client-logic tests (no install needed)
-  e2e/                51 Playwright browser tests (every customer + admin flow)
+  e2e/                52 Playwright browser tests (every customer + admin flow)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
   scripts/            smoke.mjs, validate-compose.cjs, gen-product-images.mjs
@@ -149,7 +149,7 @@ pnpm test:e2e                # every customer flow + admin console in Chromium
 
 # After a build: the live end-to-end audit. Boots a fixture backend serving the REAL
 # catalogue, starts the built storefront against it, then runs three suites and cleans up:
-#   43/43 routes · 17/17 pages · 95/95 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
+#   44/44 routes · 17/17 pages · 108/108 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
 node scripts/self-audit.mjs   # 3/3 suites
 
 # CI (.github/workflows/verify.yml) runs exactly these on every push to main and every PR:
@@ -184,9 +184,10 @@ every route (home, product, returns, admin, robots.txt, sitemap rewrite).
 Seed is **repeatable**: `npm run seed` refreshes names/prices/images/specs/videos and
 coupon terms, but never overwrites live `stock` or coupon `used_count`/`active`.
 
-Product images are generated placeholders (`scripts/gen-product-images.mjs`); a test
-fails if any catalog image path has no file behind it. Replace with real photography by
-overwriting `apps/storefront/public/images/<slug>.svg` (or pointing `images[]` at your files).
+Tool images are generated placeholders (`scripts/gen-product-images.mjs`); the six
+Gracewood furniture listings use real photos supplied from the workshop. A test fails if
+any catalog image path has no file behind it. Replace tool placeholders by overwriting
+`apps/storefront/public/images/<slug>.svg` or pointing `images[]` at your own files.
 
 Fresh-checkout check before trusting a deploy: check out into an empty directory and run
 the suites there — that is how the missing-catalog-files bug was caught.
@@ -195,7 +196,7 @@ Route smoke test and SEO audit (need the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 43/43 routes (38 pages/endpoints + 5 real 404s)
+  node scripts/smoke.mjs        # 44/44 checks (39 pages/endpoints + 5 real 404s; 43 by default, +1 with INVOICE_RECEIPT)
 node scripts/audit-pages.mjs http://localhost:3000 bosch-gsb-13-re-drill power-tools Bosch
 node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
 ```

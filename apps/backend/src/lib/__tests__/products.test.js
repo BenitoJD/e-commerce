@@ -3,8 +3,8 @@ const assert = require('node:assert');
 const products = require('../../../data/products');
 
 describe('products catalog', () => {
-  it('has 30 items', () => {
-    assert.strictEqual(products.length, 30);
+  it('has 36 items', () => {
+    assert.strictEqual(products.length, 36);
   });
 
   it('has unique slugs', () => {

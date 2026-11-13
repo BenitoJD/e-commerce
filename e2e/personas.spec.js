@@ -290,6 +290,37 @@ test.describe('Persona journeys', () => {
     expect(status.json.return.status).toBe('approved');
   });
 
+
+  test('homeowner furnishing a room: browses the Gracewood furniture photos and gallery', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Furniture', exact: true }).first().click();
+    await expect(page).toHaveURL(/\/category\/furniture/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Furniture/i);
+
+    const cards = page.locator('a.card');
+    await expect(cards).toHaveCount(6);
+    const broken = await cards.locator('img').evaluateAll((imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.getAttribute('src')));
+    expect(broken, `broken furniture images: ${broken.join(', ')}`).toEqual([]);
+
+    // Wardrobe has three real photos; the thumbnails must switch the main image.
+    await page.locator('a.card').filter({ hasText: 'Carved Teak Wardrobe' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/Carved Teak Wardrobe/i);
+    await expect(page.getByRole('button', { name: /View image 3 of 3/i })).toBeVisible();
+    const main = page.locator('main img').first();
+    await expect(main).toHaveAttribute('src', /gracewood-carved-wardrobe\.jpg/);
+    await page.getByRole('button', { name: /View image 2 of 3/i }).click();
+    await expect(main).toHaveAttribute('src', /gracewood-carved-wardrobe-2\.jpg/);
+
+    await page.goto('/category/furniture/doors');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/Doors/i);
+    await page.locator('a.card').filter({ hasText: 'Hand-Carved Teak Door' }).click();
+    await expect(page.locator('main img').first()).toHaveAttribute('src', /gracewood-carved-door\.jpg/);
+    await page.getByRole('button', { name: /^Add to Cart$/ }).click();
+    await page.getByRole('link', { name: /^Cart/ }).first().click();
+    await expect(page.getByText(/Hand-Carved Teak Door/i)).toBeVisible();
+    await expect(page.getByText('₹34,999').first()).toBeVisible();
+  });
+
   test('attacker: cannot tamper prices, forge payments, guess OTPs, oversell stock or reach admin', async ({ page }) => {
     // No token / wrong token cannot read the admin API.
     expect((await api('/admin/orders')).status).toBe(401);

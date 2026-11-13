@@ -54,7 +54,7 @@ function sign(raw) { return crypto.createHmac('sha256', SECRET).update(raw).dige
   ok(!homeHtml.includes('NaN'), 'no ₹NaN on the home page');
 
   const products = await j('GET', '/store/products?limit=100');
-  ok(products.json.total === 30, 'catalogue seeded with 30 products', products.json.total);
+  ok(products.json.total === PRODUCTS.length, `catalogue seeded with ${PRODUCTS.length} products`, products.json.total);
 
   // ---- COD order lifecycle
   const before = await j('GET', `/store/products/${PRODUCT}`);

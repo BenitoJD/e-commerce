@@ -103,6 +103,9 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
+node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue data)
+                               # + built storefront + smoke + page audit, all cleaned up
+                               # automatically — the reproducible end-to-end check (2/2)
 node scripts/smoke.mjs         # live routes, needs running servers (36/36 incl. four real 404s)
                                #   + scans visible text for ₹NaN / undefined / Invalid Date artefacts
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)

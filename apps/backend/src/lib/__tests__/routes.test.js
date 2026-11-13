@@ -1723,6 +1723,45 @@ test('admin order detail: items enriched with names, customer and payment ids', 
   assert.equal(missing.status, 404);
 });
 
+test('production without Razorpay keys refuses online checkout instead of faking a payment', async () => {
+  const saved = {
+    NODE_ENV: process.env.NODE_ENV,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    ALLOW_MOCK_PAYMENTS: process.env.ALLOW_MOCK_PAYMENTS,
+  };
+  const stockBefore = fake.products.get('drill-a').stock;
+  const ordersBefore = fake.orders.length;
+  process.env.NODE_ENV = 'production';
+  delete process.env.RAZORPAY_KEY_ID;
+  delete process.env.RAZORPAY_KEY_SECRET;
+  delete process.env.ALLOW_MOCK_PAYMENTS;
+  try {
+    const res = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }],
+      customer: { name: 'Online Buyer', phone: '9812300777', pincode: '560001' },
+      payMode: 'online',
+    });
+    assert.equal(res.status, 503);
+    assert.equal(res.json.code, 'PAYMENTS_NOT_CONFIGURED');
+    assert.equal(fake.orders.length, ordersBefore, 'no order should be created');
+    assert.equal(fake.products.get('drill-a').stock, stockBefore, 'stock must not be reserved');
+
+    // Cash on Delivery still works — the shopper gets an alternative, not a dead end.
+    const cod = await api('POST', '/store/checkout/create', {
+      items: [{ slug: 'drill-a', qty: 1 }],
+      customer: { name: 'Online Buyer', phone: '9812300777', pincode: '560001' },
+      payMode: 'cod',
+    });
+    assert.equal(cod.status, 200);
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+});
+
 test('admin product CRUD: create, update, validation, delete', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const payload = {

@@ -1,8 +1,10 @@
 const express = require('express');
 const db = require('../db');
 const { applyCoupon } = require('../lib/pricing');
-const { withTransaction, reserveItems } = require('../lib/stock');
+const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
+const { releaseCouponUse } = require('../lib/couponRelease');
+const { onlinePaymentMode } = require('../lib/payments');
 const { makeReceipt } = require('../lib/receipt');
 const { clampText, normalizePhone, normalizeGstin, isValidGstin } = require('../lib/validate');
 const { resolveState } = require('../../data/states');
@@ -142,6 +144,19 @@ router.post('/create', async (req, res) => {
       });
     }
 
+    // Decide payment handling BEFORE reserving stock: a production deploy without Razorpay
+    // keys must refuse the order with a clear message, not create a mock one that holds stock.
+    let paymentMode = 'cod';
+    if (payMode !== 'cod') {
+      paymentMode = onlinePaymentMode(process.env);
+      if (paymentMode === 'error') {
+        return res.status(503).json({
+          error: 'Online payment is not available yet. Please choose Cash on Delivery or contact us on WhatsApp.',
+          code: 'PAYMENTS_NOT_CONFIGURED',
+        });
+      }
+    }
+
     const receipt = makeReceipt();
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
     const orderStatus = payMode === 'cod' ? 'cod_pending' : 'pending';
@@ -201,7 +216,7 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    // Razorpay order (or mock fallback)
+    // Razorpay order — or, in development, a mock one.
     let razorpayOrderId;
     const client = razorpayClient();
     if (client) {
@@ -209,7 +224,20 @@ router.post('/create', async (req, res) => {
         const rzp = await client.orders.create({ amount, currency: 'INR', receipt });
         razorpayOrderId = rzp.id;
       } catch (e) {
-        console.error('[checkout] razorpay error, falling back to mock:', e.message);
+        console.error('[checkout] razorpay error:', e.message);
+        if (paymentMode !== 'mock') {
+          // Production: don't pretend the payment started. Release the reservation, mark the
+          // order failed and free the coupon so the shopper can retry cleanly.
+          await withTransaction(async (tx) => {
+            await releaseItems(tx, lineItems);
+            await tx.query("UPDATE orders SET status = 'failed' WHERE id = $1", [orderId]);
+            if (couponCode) await releaseCouponUse(tx, couponCode);
+          }).catch((releaseErr) => console.error('[checkout] cleanup after payment failure:', releaseErr.message));
+          return res.status(502).json({
+            error: 'Could not start the payment. Please retry, or choose Cash on Delivery.',
+            code: 'PAYMENT_START_FAILED',
+          });
+        }
         razorpayOrderId = `order_mock_${Date.now()}`;
       }
     } else {

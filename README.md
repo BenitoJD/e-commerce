@@ -113,10 +113,15 @@ Everything that runs without Docker/Postgres, in one command:
 ```bash
 node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
+
+# After a build: the live end-to-end audit. Boots a fixture backend serving the REAL
+# catalogue, starts the built storefront against it, then runs three suites and cleans up:
+#   36/36 routes · 17/17 pages · 74/74 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
+node scripts/self-audit.mjs   # 3/3 suites
 ```
 
 Individually:
-cd apps/backend && npm test        # 285 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 286 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
@@ -142,18 +147,24 @@ overwriting `apps/storefront/public/images/<slug>.svg` (or pointing `images[]` a
 Fresh-clone check before trusting a deploy: clone into an empty directory and run the
 suites there — that is how the missing-catalog-files bug was caught.
 
-Route smoke test (needs the site running):
+Route smoke test and SEO audit (need the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
   node scripts/smoke.mjs        # 36/36 routes (32 pages/endpoints + 4 real 404s)
+node scripts/audit-pages.mjs http://localhost:3000 bosch-gsb-13-re-drill power-tools Bosch
+node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
 ```
 
 ## Razorpay
 
-Test keys work out of the box (mock order fallback when keys are placeholders).
-Live keys + webhook secret go in the backend env; enable UPI, cards, netbanking, EMI,
-payment links (B2B advance) and Route (if multi-vendor). Full steps: `docs/RAZORPAY.md`.
+Development needs no keys: without them checkout issues a mock order id so the UI can be
+exercised. **Production is different** — a missing key makes online checkout return 503
+instead of faking a payment, and payment webhooks are rejected outright unless
+`RAZORPAY_WEBHOOK_SECRET` is set (otherwise anyone could post a fake `payment.captured`).
+Both are reported in the boot log. Live keys + webhook secret go in the backend env; enable
+UPI, cards, netbanking, EMI, payment links (B2B advance) and Route (if multi-vendor).
+Full steps: `docs/RAZORPAY.md`.
 
 ## What still needs your inputs
 

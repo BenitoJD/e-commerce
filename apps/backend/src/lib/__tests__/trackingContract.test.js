@@ -12,7 +12,9 @@ const TRACK_PAGE = path.join(ROOT, 'apps', 'storefront', 'app', 'track-order', '
 const ORDERS_PAGE = path.join(ROOT, 'apps', 'storefront', 'app', 'my-orders', 'page.js');
 
 function blockAfter(marker) {
-  const src = fs.readFileSync(SERVICE, 'utf8');
+  // Normalise line endings: the repo may be checked out with CRLF on Windows, and a marker
+  // containing "\n" would then never match — the failure only showed up on a fresh clone.
+  const src = fs.readFileSync(SERVICE, 'utf8').replace(/\r\n/g, '\n');
   const start = src.indexOf(marker);
   assert.ok(start > -1, `marker not found: ${marker}`);
   const objStart = src.indexOf('{', start);

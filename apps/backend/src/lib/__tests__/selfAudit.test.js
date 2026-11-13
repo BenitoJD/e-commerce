@@ -27,6 +27,13 @@ test('self-audit listens where the build baked its sitemap rewrite', () => {
   assert.match(src, /BUILD_ID/, 'refuse to run before a build exists');
 });
 
+test('contract tests normalise line endings before matching multi-line markers', () => {
+  // A fresh clone on Windows checks out CRLF, so a marker containing "\n" never matched —
+  // a failure that only appeared in verify-clone, never locally.
+  const src = fs.readFileSync(path.join(ROOT, 'apps', 'backend', 'src', 'lib', '__tests__', 'trackingContract.test.js'), 'utf8');
+  assert.match(src, /replace\(\/\\r\\n\/g, '\\n'\)/, 'multi-line marker matching must normalise CRLF');
+});
+
 test('fixture backend serves the real catalogue rather than invented data', () => {
   const src = fs.readFileSync(FIXTURE, 'utf8');
   for (const dataFile of ['products.js', 'categories.js', 'states.js']) {

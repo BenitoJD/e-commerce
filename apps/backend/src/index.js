@@ -14,6 +14,7 @@ const engagementRouter = require('./routes/engagement');
 const serviceRouter = require('./routes/service');
 const invoiceRouter = require('./routes/invoice');
 const brandsRouter = require('./routes/brands');
+const categoriesRouter = require('./routes/categories');
 const dealsRouter = require('./routes/deals');
 const sitemapHandler = require('./routes/sitemap');
 const db = require('./db');
@@ -87,6 +88,7 @@ app.use('/store/search/suggest', suggestLimit);
 
 app.use('/store/products', productsRouter);
 app.use('/store/brands', brandsRouter);
+app.use('/store/categories', categoriesRouter);
 app.use('/store/deals', dealsRouter);
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);

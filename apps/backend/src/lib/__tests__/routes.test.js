@@ -118,6 +118,10 @@ function makeFakeDb() {
         const min = Number(args[idx++]);
         conds.push((p) => p.price_paise >= min);
       }
+      if (t.includes('subcategory = $')) {
+        const leaf = String(args[idx++] || '');
+        conds.push((p) => String(p.subcategory || '') === leaf);
+      }
       let rows = [...products.values()].filter((p) => conds.every((fn) => fn(p)));
       // ORDER BY is inlined (allowlisted) — apply the same intent here.
       if (t.includes('price_paise ASC')) rows.sort((a, b) => a.price_paise - b.price_paise);
@@ -359,7 +363,7 @@ function makeFakeDb() {
     if (t.includes('FROM products') && t.includes('GROUP BY brand')) {
       return { rows: [{ brand: 'DrillCo', count: 1 }] };
     }
-    if (t.includes('FROM products') && t.includes('GROUP BY category')) {
+    if (t.includes('FROM products') && t.includes('GROUP BY category') && !t.includes('subcategory')) {
       return { rows: [{ category: 'power-tools', count: 1 }] };
     }
     if (t.startsWith('SELECT * FROM orders WHERE id =')) {
@@ -444,6 +448,18 @@ function makeFakeDb() {
         .map((o) => ({ id: o.id, receipt: o.receipt, status: o.status, created_at: o.created_at }));
       return { rows };
     }
+    if (t.includes('COALESCE(subcategory') && t.includes('GROUP BY category')) {
+      const counts = new Map();
+      for (const p of products.values()) {
+        const key = `${p.category}||${p.subcategory || ''}`;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      const rows = [...counts.entries()].map(([key, count]) => {
+        const [category, subcategory] = key.split('||');
+        return { category, subcategory, count };
+      });
+      return { rows };
+    }
     if (t.startsWith('SELECT status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')
       || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code FROM orders WHERE id')
       || t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id FROM orders WHERE id')) {
@@ -492,6 +508,7 @@ app.use('/webhooks', express.raw({ type: '*/*' }), require('../../routes/webhook
 app.use(express.json({ limit: '1mb' }));
 app.use('/store/products', require('../../routes/products'));
 app.use('/store/brands', require('../../routes/brands'));
+app.use('/store/categories', require('../../routes/categories'));
 app.use('/store/deals', require('../../routes/deals'));
 app.use('/store/checkout', require('../../routes/checkout'));
 app.use('/store/quotes', require('../../routes/quotes'));
@@ -1414,6 +1431,53 @@ test('stale pending holds can be released, and only the old ones', async () => {
   // minutes is clamped, and the endpoint requires the admin token.
   const noAuth = await api('POST', '/admin/orders/release-stale');
   assert.equal(noAuth.status, 401);
+});
+
+test('nested categories: tree counts and parent/child product filtering', async () => {
+  // Seed three pumps across two subcategories plus a drill.
+  fake.products.set('pump-sub-1', {
+    slug: 'pump-sub-1', name: 'Submersible One', brand: 'CRI', category: 'pumps', subcategory: 'submersible',
+    price_paise: 500000, mrp_paise: 600000, hsn: '8413', stock: 5, specs: {}, images: [],
+  });
+  fake.products.set('pump-mono-1', {
+    slug: 'pump-mono-1', name: 'Monoblock One', brand: 'Kirloskar', category: 'pumps', subcategory: 'monoblock',
+    price_paise: 400000, mrp_paise: 500000, hsn: '8413', stock: 5, specs: {}, images: [],
+  });
+  fake.products.set('drill-cat-1', {
+    slug: 'drill-cat-1', name: 'Drill One', brand: 'Bosch', category: 'power-tools', subcategory: 'drills',
+    price_paise: 300000, mrp_paise: 400000, hsn: '8467', stock: 5, specs: {}, images: [],
+  });
+
+  const treeRes = await api('GET', '/store/categories');
+  assert.equal(treeRes.status, 200);
+  const pumps = treeRes.json.categories.find((c) => c.slug === 'pumps');
+  assert.ok(pumps, 'pumps present in the tree');
+  assert.ok(pumps.count >= 2, 'parent count includes its children');
+  const sub = pumps.children.find((c) => c.slug === 'submersible');
+  assert.ok(sub.count >= 1);
+  assert.equal(sub.path, 'pumps/submersible');
+
+  // Parent listing returns every product in the category.
+  const parent = await api('GET', '/store/products?category=pumps&limit=50');
+  const parentSlugs = parent.json.products.map((p) => p.slug);
+  assert.ok(parentSlugs.includes('pump-sub-1') && parentSlugs.includes('pump-mono-1'));
+  assert.ok(!parentSlugs.includes('drill-cat-1'), 'other categories stay out');
+
+  // Child listing narrows to the subcategory...
+  const childPath = await api('GET', '/store/products?category=pumps/monoblock&limit=50');
+  assert.deepEqual(childPath.json.products.map((p) => p.slug), ['pump-mono-1']);
+
+  // ...and a bare child slug works too, so old links keep working.
+  const bareChild = await api('GET', '/store/products?category=submersible&limit=50');
+  assert.ok(bareChild.json.products.some((p) => p.slug === 'pump-sub-1'));
+  assert.ok(!bareChild.json.products.some((p) => p.slug === 'pump-mono-1'));
+
+  // The explicit subcategory param behaves the same way.
+  const viaParam = await api('GET', '/store/products?subcategory=submersible&limit=50');
+  assert.ok(viaParam.json.products.some((p) => p.slug === 'pump-sub-1'));
+
+  // Leave the shared fixture as we found it (other tests assert absolute counts).
+  for (const slug of ['pump-sub-1', 'pump-mono-1', 'drill-cat-1']) fake.products.delete(slug);
 });
 
 test('bulk status update ships many orders and reports skips', async () => {

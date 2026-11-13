@@ -60,6 +60,7 @@ const ROUTER_FILES = {
   serviceRouter: 'service.js',
   invoiceRouter: 'invoice.js',
   brandsRouter: 'brands.js',
+  categoriesRouter: 'categories.js',
   dealsRouter: 'deals.js',
 };
 

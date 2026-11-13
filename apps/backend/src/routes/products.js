@@ -1,13 +1,14 @@
 const express = require('express');
 const db = require('../db');
 const { escapeLike, clampInt, sortClause } = require('../lib/text');
+const { resolveCategory } = require('../../data/categories');
 
 const router = express.Router();
 
 // GET /store/products?q=&brand=&category=&maxPrice=&limit=&offset=
 router.get('/', async (req, res) => {
   try {
-    const { q, brand, category, maxPrice, minPrice, sort } = req.query;
+    const { q, brand, category, subcategory, maxPrice, minPrice, sort } = req.query;
     const limit = clampInt(req.query.limit, 50, 1, 100);
     const offset = clampInt(req.query.offset, 0, 0, 10000);
 
@@ -23,8 +24,25 @@ router.get('/', async (req, res) => {
       conds.push(`brand ILIKE $${params.length}`);
     }
     if (category) {
-      params.push(category);
-      conds.push(`category ILIKE $${params.length}`);
+      // Accepts "pumps", "pumps/submersible" or a bare child slug. A child path narrows to
+      // that subcategory; a parent keeps using the category column.
+      const resolved = resolveCategory(category);
+      if (resolved && resolved.child) {
+        params.push(resolved.child.slug);
+        conds.push(`subcategory = $${params.length}`);
+      } else if (resolved) {
+        params.push(resolved.parent.slug);
+        conds.push(`category ILIKE $${params.length}`);
+      } else {
+        params.push(category);
+        conds.push(`category ILIKE $${params.length}`);
+      }
+    }
+    if (subcategory) {
+      const resolved = resolveCategory(subcategory);
+      const leaf = resolved && resolved.child ? resolved.child.slug : String(subcategory);
+      params.push(leaf);
+      conds.push(`subcategory = $${params.length}`);
     }
     if (maxPrice) {
       // maxPrice in rupees -> convert to paise

@@ -17,10 +17,22 @@ export function pushRecent(list, item, { max = 8 } = {}) {
   return [entry, ...withoutDupes].slice(0, max);
 }
 
+function sanitizeRecent(x) {
+  if (!x || typeof x !== 'object' || !x.slug) return null;
+  const price = Number(x.price);
+  return {
+    slug: String(x.slug),
+    name: String(x.name || x.slug),
+    price: Number.isFinite(price) && price >= 0 ? price : 0,
+    image: String(x.image || ''),
+    brand: String(x.brand || ''),
+  };
+}
+
 export function parseRecent(raw) {
   try {
     const parsed = JSON.parse(raw || '[]');
-    return Array.isArray(parsed) ? parsed.filter((x) => x && x.slug) : [];
+    return Array.isArray(parsed) ? parsed.map(sanitizeRecent).filter(Boolean) : [];
   } catch {
     return [];
   }

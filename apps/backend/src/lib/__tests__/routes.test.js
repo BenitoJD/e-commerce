@@ -12,6 +12,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const express = require('express');
+const { issueOrderToken } = require('../../lib/auth');
 
 const db = require('../../db');
 
@@ -24,6 +25,9 @@ function makeFakeDb() {
     ['SAVE10', { code: 'SAVE10', pct_off: 10, max_discount_paise: 50000, min_order_paise: 50000, active: true }],
   ]);
   const orders = [];
+  const webhookEvents = new Set();
+  const notifications = [];
+  let notificationSeq = 1;
   let seq = 1;
   const quotes = [];
   let quoteSeq = 1;
@@ -161,7 +165,7 @@ function makeFakeDb() {
       return { rows: [] };
     }
     if (t.startsWith('INSERT INTO orders')) {
-      const [receipt, status, items, amount, customer, coupon, discount, payMode, shipping] = params;
+      const [receipt, status, items, amount, customer, coupon, discount, payMode, shipping, email, userId] = params;
       const row = {
         id: seq++, receipt, status,
         items: typeof items === 'string' ? JSON.parse(items) : items,
@@ -170,11 +174,48 @@ function makeFakeDb() {
         coupon_code: coupon ?? null, discount_paise: discount ?? 0,
         pay_mode: payMode ?? null,
         shipping_paise: shipping ?? 0,
+        customer_email: email ?? null,
+        user_id: userId ?? null,
+        refunded_paise: 0,
         razorpay_order_id: null, razorpay_payment_id: null,
         created_at: new Date().toISOString(),
       };
       orders.push(row);
       return { rows: [{ id: row.id, receipt: row.receipt }] };
+    }
+    if (t.startsWith('INSERT INTO webhook_events')) {
+      const [id] = params;
+      if (webhookEvents.has(id)) return { rows: [] };
+      webhookEvents.add(id);
+      return { rows: [{ id }] };
+    }
+    if (t.startsWith('INSERT INTO notifications')) {
+      const [to, subject, body, type, dedupe, receipt] = params;
+      if (dedupe && notifications.some((n) => n.dedupe_key === dedupe)) return { rows: [] };
+      const row = {
+        id: notificationSeq++, to_email: to, subject, body, type,
+        dedupe_key: dedupe, order_receipt: receipt, status: 'queued',
+        attempts: 0, error: null, created_at: new Date().toISOString(), sent_at: null,
+      };
+      notifications.push(row);
+      return { rows: [{ id: row.id }] };
+    }
+    if (t.startsWith('SELECT id, to_email, subject, body FROM notifications')) {
+      return { rows: notifications.filter((n) => n.status === 'queued').slice(0, Number(params[0]) || 25) };
+    }
+    if (t.startsWith("UPDATE notifications SET status = 'logged'")) {
+      const n = notifications.find((x) => x.id === Number(params[0]));
+      if (n) { n.status = 'logged'; n.attempts += 1; n.sent_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
+    if (t.startsWith("UPDATE notifications SET status = 'sent'")) {
+      const n = notifications.find((x) => x.id === Number(params[0]));
+      if (n) { n.status = 'sent'; n.attempts += 1; n.sent_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
+    if (t.startsWith('SELECT id, to_email, subject, body, type, status, attempts')) {
+      const status = t.includes('WHERE status = $1') ? params[0] : null;
+      return { rows: notifications.filter((n) => !status || n.status === status).slice(-Number(params[params.length - 1] || 100)) };
     }
     if (t.startsWith('UPDATE orders SET razorpay_order_id')) {
       const o = orders.find((x) => x.id === params[1]);
@@ -216,7 +257,7 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null, shipping_paise: o.shipping_paise || 0 }] : [] };
     }
-    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at FROM orders') && t.includes('WHERE receipt =')) {
+    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at') && t.includes('WHERE receipt =')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return {
         rows: o ? [{
@@ -229,6 +270,9 @@ function makeFakeDb() {
           pay_mode: o.pay_mode || null,
           delivered_at: o.delivered_at || null,
           refunded_at: o.refunded_at || null,
+          awb: o.awb || null,
+          courier: o.courier || null,
+          tracking_url: o.tracking_url || null,
         }] : [],
       };
     }
@@ -291,6 +335,68 @@ function makeFakeDb() {
         }));
       return { rows };
     }
+    if (t.startsWith('SELECT receipt, status, items, amount_paise, razorpay_payment_id, coupon_code')) {
+      const o = orders.find((x) => String(x.id) === String(params[0]));
+      return { rows: o ? [{ ...o }] : [] };
+    }
+    if (t.startsWith('SELECT id, receipt, status, amount_paise, items, coupon_code, customer, customer_email, pay_mode, refunded_paise FROM orders WHERE razorpay_order_id')) {
+      const o = orders.find((x) => x.razorpay_order_id === params[0]);
+      return { rows: o ? [{ ...o }] : [] };
+    }
+    if (t.startsWith("UPDATE orders SET status = 'paid', razorpay_payment_id = $1 WHERE id = $2")) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) { o.status = 'paid'; o.razorpay_payment_id = params[0]; }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET razorpay_payment_id = COALESCE($1, razorpay_payment_id)')) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o && params[0]) o.razorpay_payment_id = params[0];
+      return { rows: [] };
+    }
+    if (t.startsWith("UPDATE orders SET status = 'failed' WHERE id")) {
+      const o = orders.find((x) => x.id === Number(params[0]));
+      if (o) o.status = 'failed';
+      return { rows: [] };
+    }
+    if (t.startsWith("UPDATE orders SET status = 'refunded', razorpay_payment_id")) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) { o.status = 'refunded'; o.razorpay_payment_id = params[0]; o.refund_mode = 'manual'; o.refunded_paise = o.amount_paise; }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET razorpay_payment_id = $1, refund_mode')) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) { o.razorpay_payment_id = params[0]; o.refund_mode = 'manual'; o.refunded_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET refunded_paise = GREATEST')) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) o.refunded_paise = Math.max(o.refunded_paise || 0, Number(params[0]) || 0);
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET refunded_paise = $1 WHERE id')) {
+      const o = orders.find((x) => x.id === Number(params[1]));
+      if (o) o.refunded_paise = Number(params[0]) || 0;
+      return { rows: [] };
+    }
+    if (t.startsWith("UPDATE orders SET status = 'refunded', refunded_paise")) {
+      const o = orders.find((x) => x.id === Number(params[0]));
+      if (o) { o.status = 'refunded'; o.refunded_paise = o.amount_paise; o.refund_mode = o.refund_mode || 'auto'; o.refunded_at = new Date().toISOString(); }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET refund_mode = $1, refunded_at = NOW(), refunded_paise')) {
+      const o = orders.find((x) => x.id === Number(params[2]));
+      if (o) { o.refund_mode = params[0]; o.refunded_at = new Date().toISOString(); if (params[1] === 'refunded') o.refunded_paise = o.amount_paise; }
+      return { rows: [] };
+    }
+    if (t.startsWith('UPDATE orders SET refunded_paise = amount_paise WHERE id')) {
+      const o = orders.find((x) => x.id === Number(params[0]));
+      if (o) o.refunded_paise = o.amount_paise;
+      return { rows: [] };
+    }
+    if (t.startsWith('DELETE FROM webhook_events')) {
+      webhookEvents.delete(params[0]);
+      return { rows: [] };
+    }
     if (t.startsWith('SELECT id, receipt, status, amount_paise, items FROM orders WHERE razorpay_order_id')) {
       const o = orders.find((x) => x.razorpay_order_id === params[0]);
       return { rows: o ? [{ id: o.id, receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items }] : [] };
@@ -315,6 +421,11 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       if (o) o.status = 'cancelled';
       return { rows: o ? [{ receipt: o.receipt, status: o.status }] : [] };
+    }
+    if (t.startsWith('SELECT slug FROM products WHERE slug = $1 OR LOWER(name) = LOWER($1)')) {
+      const candidate = String(params[0] || '').toLowerCase();
+      const found = [...products.values()].find((p) => p.slug.toLowerCase() === candidate || p.name.toLowerCase() === candidate || p.name.toLowerCase().includes(candidate));
+      return { rows: found ? [{ slug: found.slug }] : [] };
     }
     if (t.startsWith('SELECT slug, price_paise FROM products WHERE slug =')) {
       const p = products.get(params[0]);
@@ -485,6 +596,11 @@ function makeFakeDb() {
       if (!c) return { rows: [] };
       c.used_count = Math.max(0, (c.used_count || 0) - 1);
       return { rows: [{ code, used_count: c.used_count }] };
+    }
+    if (t.startsWith('UPDATE orders SET delivered_at = COALESCE(delivered_at, NOW())')) {
+      const o = orders.find((x) => String(x.id) === String(params[0]));
+      if (o) o.delivered_at = o.delivered_at || new Date().toISOString();
+      return { rows: o ? [o] : [] };
     }
     if (t.startsWith('UPDATE orders SET status = $1 WHERE id = $2')) {
       const o = orders.find((x) => x.id === Number(params[1]));
@@ -761,19 +877,22 @@ test('bulk quote lookup is scoped to the caller phone (no PII leak)', async () =
   });
   assert.equal(created.status, 201);
 
-  const mine = await api('GET', '/store/quotes?phone=9876500011');
+  const quoteAccess = { 'x-order-access': issueOrderToken('9876500011') };
+  const mine = await api('GET', '/store/quotes?phone=9876500011', undefined, quoteAccess);
   assert.equal(mine.status, 200);
   assert.equal(mine.json.quotes.length, 1);
   assert.equal(mine.json.quotes[0].product_slug, 'drill-a');
   assert.equal(mine.json.quotes[0].status, 'new');
 
   // formatting differences still match the same person
-  const formatted = await api('GET', '/store/quotes?phone=%2B91%2098765%2000011');
+  const formatted = await api('GET', '/store/quotes?phone=%2B91%2098765%2000011', undefined, quoteAccess);
   assert.equal(formatted.json.quotes.length, 1);
 
-  // someone else sees nothing, and no phone at all is rejected
+  // someone else cannot list quotes without proving this phone, and no phone at all is rejected
   const other = await api('GET', '/store/quotes?phone=9000000000');
-  assert.deepEqual(other.json.quotes, []);
+  assert.equal(other.status, 401);
+  const anonymous = await api('GET', '/store/quotes?phone=9876500011');
+  assert.equal(anonymous.status, 401);
   const missing = await api('GET', '/store/quotes');
   assert.equal(missing.status, 400);
 });
@@ -1878,7 +1997,8 @@ test('my orders includes item names, capped at five lines', async () => {
   });
   assert.equal(created.status, 200);
 
-  const list = await api('GET', '/store/service/orders?phone=9812345678');
+  const access = { 'x-order-access': issueOrderToken('9812345678') };
+  const list = await api('GET', '/store/service/orders?phone=9812345678', undefined, access);
   assert.equal(list.status, 200);
   const order = list.json.orders.find((o) => o.receipt === created.json.receipt);
   assert.ok(order, 'order should be listed');
@@ -1890,7 +2010,7 @@ test('my orders includes item names, capped at five lines', async () => {
   assert.equal(order.payMode, 'online');
 
   // phone formatting still matches
-  const formatted = await api('GET', '/store/service/orders?phone=%2B91%2098123%2045678');
+  const formatted = await api('GET', '/store/service/orders?phone=%2B91%2098123%2045678', undefined, access);
   assert.ok(formatted.json.orders.some((o) => o.receipt === created.json.receipt));
 });
 

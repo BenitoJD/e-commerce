@@ -1,12 +1,11 @@
 // Razorpay refund helper: decides + executes refunds for cancelled/failed-charge flows.
 // The SDK is required lazily inside execution so decision logic stays dependency-free
 // (and unit-testable without network or installed gateway packages).
-function keysConfigured() {
-  const id = process.env.RAZORPAY_KEY_ID || '';
-  const secret = process.env.RAZORPAY_KEY_SECRET || '';
+const { paymentsConfigured } = require('./payments');
+
+function keysConfigured(env = process.env) {
   // Never touch the gateway with placeholder/demo credentials.
-  const bad = /(placeholder|xxxx)/i;
-  return Boolean(id && secret && !bad.test(id) && !bad.test(secret));
+  return paymentsConfigured(env);
 }
 
 // Pure: should we attempt an automatic gateway refund for this order?

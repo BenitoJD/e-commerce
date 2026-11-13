@@ -6,6 +6,7 @@ const { clampText } = require('../lib/validate');
 const { codMaxPaise, codAvailableFor } = require('../lib/policy');
 const { returnWindow, WINDOW_DAYS } = require('../lib/returns');
 const { releaseCouponUse } = require('../lib/couponRelease');
+const { verifyOrderToken, sessionUser, bearerToken } = require('../lib/auth');
 
 const router = express.Router();
 
@@ -71,7 +72,7 @@ router.get('/track', async (req, res) => {
     if (!receipt) return res.status(400).json({ error: 'receipt required' });
     if (!phone) return res.status(400).json({ error: 'phone required' });
     const { rows } = await db.query(
-      'SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at, awb, courier, tracking_url FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });
@@ -112,6 +113,9 @@ router.get('/track', async (req, res) => {
       receipt: order.receipt,
       status: order.status,
       amount_paise: order.amount_paise,
+      awb: order.awb || null,
+      courier: order.courier || null,
+      trackingUrl: order.tracking_url || null,
       items,
       timeline: buildTimeline(order),
     });
@@ -139,6 +143,9 @@ router.post('/subscribe', async (req, res) => {
 });
 
 // GET /store/service/orders?phone=
+// Listing every order for a phone number was an authentication bypass: phone numbers are
+// enumerable, and a receipt from this list unlocks the invoice. Require either a signed-in
+// account or a short-lived token issued after an OTP proves control of the phone.
 router.get('/orders', async (req, res) => {
   try {
     const phone = digits(req.query.phone);
@@ -146,11 +153,22 @@ router.get('/orders', async (req, res) => {
       return res.status(400).json({ error: 'valid phone (at least 10 digits) required' });
     }
     const last10 = phone.slice(-10);
+    const user = await sessionUser(db, bearerToken(req)).catch(() => null);
+    const access = user ? null : verifyOrderToken(req.headers['x-order-access']);
+    if (!user && (!access || access.phone.slice(-10) !== last10)) {
+      return res.status(401).json({
+        error: 'Verify your phone number to view order history',
+        code: 'OTP_REQUIRED',
+      });
+    }
     const { rows } = await db.query(
-      `SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders
-       WHERE RIGHT(regexp_replace(COALESCE(customer->>'phone', ''), '\\D', '', 'g'), 10) = $1
-       ORDER BY created_at DESC LIMIT 20`,
-      [last10]
+      user
+        ? `SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders
+            WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`
+        : `SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders
+            WHERE RIGHT(regexp_replace(COALESCE(customer->>'phone', ''), '\\D', '', 'g'), 10) = $1
+            ORDER BY created_at DESC LIMIT 20`,
+      [user ? user.id : last10]
     );
 
     // Attach product names so "My Orders" can show what was bought, not just a count.

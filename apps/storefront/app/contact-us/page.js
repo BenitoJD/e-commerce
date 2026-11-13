@@ -54,7 +54,7 @@ export default function ContactUs() {
               <div><label className="label">Name</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" aria-label="Your name" autoComplete="name" /></div>
               <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" autoComplete="tel" /></div>
             </div>
-            <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="How can we help?" /></div>
+            <div><label className="label">Message</label><textarea aria-label="Your message" className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="How can we help?" /></div>
             {err ? <p role="alert" className="text-xs text-red-600 font-semibold">{err}</p> : null}
             <button className="btn-primary disabled:opacity-60" disabled={busy}>{busy ? 'Sending...' : 'Send Message'}</button>
           </>

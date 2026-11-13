@@ -6,14 +6,16 @@ Two routing choices. **A1 single domain through the bundled nginx** (recommended
 
 ```bash
 apt update && apt install -y docker.io docker-compose-plugin
-git clone https://github.com/BenitoJD/toolsvilla-clone.git
-cd toolsvilla-clone
+git clone https://github.com/BenitoJD/e-commerce.git
+cd e-commerce
 nano .env
 #   NEXT_PUBLIC_BACKEND_URL=/api          <-- single domain behind nginx (compose default)
 #   BACKEND_INTERNAL_URL=http://backend:9000  <-- used by SSR + /sitemap.xml rewrite
 #   FRONTEND_URL=https://yourdomain.com
 #   RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET / RAZORPAY_WEBHOOK_SECRET
 #   ADMIN_TOKEN=<long random string>
+#   AUTH_SECRET=<32+ random bytes>          # required by compose
+#   SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM  # order emails (optional)
 docker compose up -d --build
 docker compose exec backend npm run seed
 ufw allow 22,80,443/tcp && ufw enable
@@ -68,7 +70,7 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 ## Option B — Coolify (Vercel-like on VPS)
 1. Install: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash` → open http://VPS_IP:8000
 2. Add Project → Postgres plugin (note the connection URL).
-3. Service 1 Backend: repo `BenitoJD/toolsvilla-clone`, base dir `apps/backend`, Dockerfile, port 9000, envs DATABASE_URL/RAZORPAY_*/FRONTEND_URL/ADMIN_TOKEN.
+3. Service 1 Backend: repo `BenitoJD/e-commerce`, base dir `apps/backend`, Dockerfile, port 9000, envs DATABASE_URL/RAZORPAY_*/FRONTEND_URL/ADMIN_TOKEN.
 4. Service 2 Storefront: base dir `apps/storefront`, port 3000, envs NEXT_PUBLIC_*,
    PLUS the same three values as Docker build args (Coolify → Service → Build → Build Arguments):
    `NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com` etc. Without them the bundle bakes in localhost.

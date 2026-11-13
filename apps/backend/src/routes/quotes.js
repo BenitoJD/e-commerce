@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { clampText, clampInt, normalizePhone } = require('../lib/validate');
+const { verifyOrderToken, sessionUser, bearerToken } = require('../lib/auth');
 
 const router = express.Router();
 
@@ -17,15 +18,21 @@ router.post('/', async (req, res) => {
     // Accept a catalog slug (product_slug) or free text (product): resolve slugs/names to catalog.
     const rawSlug = String((req.body && req.body.product_slug) || '').trim();
     const rawText = String((req.body && (req.body.product ?? req.body.product_name)) || '').trim();
-    let slug = rawSlug;
+    let slug = '';
     let productName = '';
-    if (!slug && rawText) {
+    // The product form is free text. Resolve either field against the catalogue so a quote
+    // for "Bosch GSB 13 RE Drill" links to the real SKU instead of becoming an unmatchable
+    // "slug" that the admin convert action can never find.
+    const candidate = rawSlug || rawText;
+    if (candidate) {
       const { rows: found } = await db.query(
-        'SELECT slug FROM products WHERE slug = $1 OR LOWER(name) = LOWER($1) LIMIT 1',
-        [rawText]
+        `SELECT slug FROM products
+          WHERE slug = $1 OR LOWER(name) = LOWER($1) OR name ILIKE $2
+          ORDER BY (slug = $1) DESC, LENGTH(name) ASC LIMIT 1`,
+        [candidate, `%${candidate.slice(0, 100)}%`]
       );
       if (found.length) slug = found[0].slug;
-      else productName = rawText.slice(0, 200);
+      else productName = candidate.slice(0, 200);
     }
     const { rows } = await db.query(
       `INSERT INTO bulk_quotes (name, phone, product_slug, product_name, qty, message)
@@ -50,6 +57,12 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'phone required (at least 10 digits)' });
     }
     const last10 = phone.slice(-10);
+    // Quote requests contain names and messages; require the same OTP proof as orders.
+    const user = await sessionUser(db, bearerToken(req)).catch(() => null);
+    const access = user ? null : verifyOrderToken(req.headers['x-order-access']);
+    if (!user && (!access || access.phone.slice(-10) !== last10)) {
+      return res.status(401).json({ error: 'Verify your phone number to view quotes', code: 'OTP_REQUIRED' });
+    }
     const { rows } = await db.query(
       `SELECT id, name, product_slug, product_name, qty, message, status, order_receipt, created_at
          FROM bulk_quotes

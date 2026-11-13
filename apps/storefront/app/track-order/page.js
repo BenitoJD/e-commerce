@@ -79,8 +79,10 @@ export default function TrackOrderPage() {
       let msg = `Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`;
       if (r.refund === 'auto') msg += ' Refund initiated to source (3–5 working days).';
       else if (wasPaid) msg += ` Our team will process your refund; contact ${STORE.email} with your receipt.`;
-      setNotice(msg);
+      // Refresh the timeline first: lookup() clears the notice at its start, so setting the
+      // confirmation before it would silently disappear (the order cancelled with no feedback).
       await lookup(data?.receipt || receipt, phone);
+      setNotice(msg);
     } catch (e2) {
       setErr(e2.message || `Could not cancel this order. Contact ${STORE.email}.`);
     } finally {
@@ -141,6 +143,18 @@ export default function TrackOrderPage() {
               <p className="text-xs text-gray-500 mt-1 text-center">COD & unpaid orders can be cancelled here. Paid-order refunds reach source in 3–5 working days.</p>
             </div>
           )}
+
+          {data.awb || data.courier ? (
+            <div className="mt-4 border-t pt-4 text-sm bg-gray-50 rounded-lg px-3 py-2">
+              <b>Shipment</b>
+              <div className="text-gray-700 mt-1">
+                {data.courier ? `Courier: ${data.courier}` : ''}{data.courier && data.awb ? ' • ' : ''}{data.awb ? `AWB: ${data.awb}` : ''}
+              </div>
+              {data.trackingUrl ? (
+                <a href={data.trackingUrl} target="_blank" rel="noreferrer" className="text-[#F97316] font-bold underline text-xs">Track with courier →</a>
+              ) : null}
+            </div>
+          ) : null}
 
           {Array.isArray(data.timeline) && data.timeline.length > 0 && (
             <div className="mt-5 border-t pt-4 space-y-2">

@@ -41,7 +41,17 @@ export function toggleCompare(list, item, { max = COMPARE_MAX } = {}) {
 export function parseCompare(raw) {
   try {
     const parsed = JSON.parse(raw || '[]');
-    return Array.isArray(parsed) ? parsed.filter((x) => x && x.slug).slice(0, COMPARE_MAX) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((x) => x && x.slug)
+      .map((x) => ({
+        slug: String(x.slug),
+        name: String(x.name || x.slug),
+        price: Number.isFinite(Number(x.price)) ? Number(x.price) : 0,
+        image: String(x.image || ''),
+        brand: String(x.brand || ''),
+      }))
+      .slice(0, COMPARE_MAX);
   } catch {
     return [];
   }

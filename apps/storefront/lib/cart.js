@@ -5,10 +5,12 @@ function sanitizeItem(i) {
   const qty = Math.max(0, parseInt(i.qty, 10) || 0);
   const price = Number(i.price);
   return {
-    slug,
-    name: i.name || slug,
+    slug: String(slug),
+    // Coerce display fields: a corrupted object here used to crash React with
+    // "Objects are not valid as a React child" and there was no way out of the page.
+    name: String(i.name || slug),
     price: Number.isFinite(price) && price >= 0 ? price : 0,
-    image: i.image || (i.images && i.images[0]) || '',
+    image: String(i.image || (Array.isArray(i.images) && i.images[0]) || ''),
     qty,
   };
 }
@@ -42,8 +44,8 @@ export function addToCart(product, qty = 1) {
   } else {
     const price = Number(product.price);
     items.push({
-      slug: id,
-      name: product.name || id,
+      slug: String(id),
+      name: String(product.name || id),
       price: Number.isFinite(price) && price >= 0 ? price : 0,
       image: product.image || (product.images && product.images[0]) || '',
       qty: Math.min(99, n)

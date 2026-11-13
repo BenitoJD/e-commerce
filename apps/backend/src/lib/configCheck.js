@@ -9,6 +9,7 @@ const { webhookWarning } = require('./webhookAuth');
 const { paymentsConfigured, mockPaymentsAllowed } = require('./payments');
 
 const MIN_ADMIN_TOKEN = 16;
+const DEFAULT_ADMIN_TOKENS = new Set(['change-me-long-random-string', 'changeme', 'please-change-me', 'admin', 'admin123', 'toolsvilla']);
 
 function configWarnings(env = process.env) {
   const production = String(env.NODE_ENV || '') === 'production';
@@ -21,6 +22,8 @@ function configWarnings(env = process.env) {
     warnings.push('[config] ADMIN_TOKEN is not set — the admin console is disabled (all /admin routes return 503).');
   } else if (token.length < MIN_ADMIN_TOKEN) {
     warnings.push(`[config] ADMIN_TOKEN is shorter than ${MIN_ADMIN_TOKEN} characters — use a long random value; the admin API is reachable from the internet.`);
+  } else if (DEFAULT_ADMIN_TOKENS.has(token.toLowerCase())) {
+    warnings.push('[config] ADMIN_TOKEN still uses a well-known default — change it before exposing the admin console.');
   }
 
   if (!paymentsConfigured(env)) {
@@ -34,6 +37,16 @@ function configWarnings(env = process.env) {
 
   const webhook = webhookWarning(env);
   if (webhook) warnings.push(webhook);
+
+  if (!env.AUTH_SECRET) {
+    warnings.push('[config] AUTH_SECRET is not set — session and OTP tokens fall back to a development secret. Set a long random value.');
+  }
+  if (!(env.SMTP_HOST && env.SMTP_FROM)) {
+    warnings.push('[config] SMTP is not configured — order emails are recorded in the admin outbox but not delivered.');
+  }
+  if (!(env.SMS_PROVIDER && env.SMS_API_KEY)) {
+    warnings.push('[config] No SMS provider is configured — phone OTP order lookup is unavailable; customers should create an account.');
+  }
 
   return warnings;
 }

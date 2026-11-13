@@ -13,6 +13,7 @@ const searchRouter = require('./routes/search');
 const engagementRouter = require('./routes/engagement');
 const serviceRouter = require('./routes/service');
 const invoiceRouter = require('./routes/invoice');
+const authRouter = require('./routes/auth');
 const brandsRouter = require('./routes/brands');
 const categoriesRouter = require('./routes/categories');
 const statesRouter = require('./routes/states');
@@ -27,12 +28,26 @@ const { requestId } = require('./lib/requestId');
 const { createShutdown } = require('./lib/shutdown');
 const { seedOnBoot } = require('./lib/firstRunSeed');
 const { configWarnings } = require('./lib/configCheck');
+const { flushNotifications } = require('./lib/notify');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
 
 app.disable('x-powered-by');
-app.set('trust proxy', true); // behind nginx: needed for req.secure / req.ip
+// Trust exactly the configured number of proxy hops. `true` trusted every hop, so an
+// attacker could rotate X-Forwarded-For and bypass every per-IP rate limit. Composer/nginx
+// deploys set TRUST_PROXY=1 and nginx overwrites the header with the real client address.
+const trustProxy = process.env.TRUST_PROXY;
+app.set(
+  'trust proxy',
+  trustProxy === undefined || trustProxy === '' || trustProxy === 'false'
+    ? false
+    : trustProxy === 'true'
+      ? true
+      : /^\d+$/.test(trustProxy)
+        ? Number(trustProxy)
+        : trustProxy
+);
 
 const allowedOrigins = corsOrigin(process.env);
 app.use(securityHeaders);
@@ -61,6 +76,13 @@ const writeLimit = createRateLimiter({
   max: Number(process.env.RATE_LIMIT_MAX) || 30,
 });
 app.use(['/store/checkout/create', '/store/quotes', '/store/service'], writeLimit);
+// Auth endpoints are the most attractive brute-force target: separate, tight budget.
+const authLimit = createRateLimiter({
+  windowMs: 60000,
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 30,
+  message: 'Too many sign-in attempts, please wait a minute.',
+});
+app.use('/store/auth', authLimit);
 app.use('/store/engage', (req, res, next) => {
   if (req.method === 'GET') return next();
   return writeLimit(req, res, next);
@@ -97,6 +119,7 @@ app.use('/store/brands', brandsRouter);
 app.use('/store/categories', categoriesRouter);
 app.use('/store/states', statesRouter);
 app.use('/store/deals', dealsRouter);
+app.use('/store/auth', authRouter);
 app.use('/store/checkout', checkoutRouter);
 app.use('/store/quotes', quotesRouter);
 app.use('/store/search', searchRouter);
@@ -112,6 +135,10 @@ app.use((req, res) => res.status(404).json({ error: 'Not found', requestId: req.
 // JSON error responses (body-parser failures default to HTML otherwise).
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  // body-parser errors carry a `type` (entity.too.large, entity.parse.failed) and a status.
+  if (err && (err.type === 'entity.too.large' || err.status === 413)) {
+    return res.status(413).json({ error: 'Request body too large', requestId: req.id || null });
+  }
   const rid = req && req.id ? req.id : 'no-id';
   if (err && (err.type === 'entity.parse.failed' || err.status === 400)) {
     return res.status(400).json({ error: 'Invalid JSON body', requestId: rid });
@@ -125,6 +152,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 let sweepTimer = null;
+let notifyTimer = null;
 
 const server = app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
@@ -151,11 +179,27 @@ const server = app.listen(PORT, () => {
     if (sweepTimer.unref) sweepTimer.unref();
     console.log(`[backend] stale-hold sweep every ${sweepMinutes}m`);
   }
+
+  // Deliver queued transactional email. Without SMTP configured messages are recorded as
+  // `logged` in the admin console, which keeps local/CI runs deterministic.
+  const notifySeconds = parseInt(process.env.NOTIFY_INTERVAL_SECONDS, 10);
+  const interval = Number.isFinite(notifySeconds) && notifySeconds >= 0 ? notifySeconds : 30;
+  if (process.env.NODE_ENV !== 'test' && interval > 0) {
+    const flush = () => flushNotifications()
+      .then((s2) => {
+        if (s2.sent || s2.failed) console.log(`[notify] sent=${s2.sent} logged=${s2.logged} failed=${s2.failed}`);
+      })
+      .catch((e) => console.error('[notify] flush error:', e.message));
+    notifyTimer = setInterval(flush, interval * 1000);
+    if (notifyTimer.unref) notifyTimer.unref();
+    flush();
+    console.log(`[backend] email outbox flush every ${interval}s`);
+  }
 });
 
 // Redeploys send SIGTERM: finish in-flight checkouts/webhooks before exiting instead of
 // cutting them off mid-transaction, and drain the Postgres pool.
-const shutdown = createShutdown({ server, pool: db.pool, interval: sweepTimer, timeoutMs: Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000 });
+const shutdown = createShutdown({ server, pool: db.pool, interval: sweepTimer, intervals: [sweepTimer, notifyTimer].filter(Boolean), timeoutMs: Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000 });
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => { shutdown(signal); });
 }

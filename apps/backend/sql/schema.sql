@@ -153,3 +153,105 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_contact_status ON contact_messages(status);
+
+-- Wave 210: customer accounts, sessions, saved addresses -------------------------------
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL DEFAULT '',
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT NOT NULL DEFAULT '',
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS addresses (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  label TEXT NOT NULL DEFAULT 'Home',
+  name TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  address TEXT NOT NULL DEFAULT '',
+  pincode TEXT NOT NULL DEFAULT '',
+  state_code TEXT NOT NULL DEFAULT '',
+  state TEXT NOT NULL DEFAULT '',
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_addresses_user ON addresses(user_id);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Passwordless proof of phone ownership for guest order history / cancellation.
+-- Only a hash of the 6-digit code is stored, it expires in 5 minutes and allows 5 attempts.
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id SERIAL PRIMARY KEY,
+  phone TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  consumed BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone, created_at DESC);
+
+-- Link orders to an account (nullable: guest checkout stays first-class) and store the
+-- buyer email so transactional notifications have somewhere to go.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id INTEGER;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email TEXT;
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_phone ON orders((customer->>'phone'));
+
+-- Refund accounting: a partial refund must not close the order or restock the goods.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_paise INTEGER NOT NULL DEFAULT 0;
+
+-- Webhook idempotency: Razorpay retries and concurrent duplicate deliveries must not
+-- release stock or refund twice.
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id TEXT PRIMARY KEY,
+  event TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Transactional email outbox. Notifications are written in the same transaction as the
+-- state change, then delivered by a small worker (SMTP when configured, logged otherwise).
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  to_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT 'transactional',
+  status TEXT NOT NULL DEFAULT 'queued',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  error TEXT,
+  dedupe_key TEXT UNIQUE,
+  order_receipt TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);
+CREATE INDEX IF NOT EXISTS idx_notifications_receipt ON notifications(order_receipt);
+
+-- Wave 211: free-text delivery notes captured at checkout.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;
+
+-- Wave 212: courier / AWB tracking captured by the warehouse at dispatch.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS awb TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS courier TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url TEXT;

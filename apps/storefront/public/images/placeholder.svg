@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400" role="img" aria-label="Product image placeholder">
+  <rect width="600" height="400" fill="#F3F4F6"/>
+  <rect x="0" y="0" width="600" height="8" fill="#F97316"/>
+  <circle cx="300" cy="170" r="64" fill="#ffffff" stroke="#E5E7EB"/>
+  <path d="M270 190l20-24 14 16 18-24 28 36z" fill="#F97316"/>
+  <circle cx="282" cy="150" r="9" fill="#F97316"/>
+  <text x="300" y="290" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#374151">E-Commerce</text>
+  <text x="300" y="320" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">Product image coming soon</text>
+</svg>

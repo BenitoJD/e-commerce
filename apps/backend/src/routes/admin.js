@@ -13,8 +13,16 @@ const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
 const { summarizeRecentOrders } = require('../lib/stats');
+const { flushNotifications, notifyStockBack, queueEmail, isEmail } = require('../lib/notify');
 
 const router = express.Router();
+
+// Every :id in this router is a database integer. Handing pg "abc" used to surface as an
+// opaque 500; answer 400 instead.
+router.param('id', (req, res, next, id) => {
+  if (!/^\d+$/.test(String(id))) return res.status(400).json({ error: 'id must be a number' });
+  next();
+});
 
 const ORDER_STATUSES = ['paid', 'shipped', 'delivered', 'cancelled', 'refunded', 'cod_pending'];
 const QUOTE_STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
@@ -118,7 +126,14 @@ router.get('/orders/export.csv', async (req, res) => {
       'taxable_value_inr', 'gst_inr', 'gst_rate',
       'coupon', 'customer', 'phone', 'pincode', 'state', 'gstin', 'payment_id',
     ];
-    const csvEscape = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    // Excel/Sheets evaluate a quoted cell that starts with = + - @ as a formula. Buyer
+    // names are attacker-controlled, so neutralise the leading character with an apostrophe.
+    const csvCell = (v) => {
+      let text = String(v == null ? '' : v);
+      if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const csvEscape = csvCell;
     const GST_RATE = 18;
     const lines = rows.map((o) => {
       const c = o.customer || {};
@@ -225,6 +240,25 @@ router.post('/orders/release-stale', async (req, res) => {
   }
 });
 
+// PATCH /admin/orders/:id/shipping {awb, courier, tracking_url}
+router.patch('/orders/:id/shipping', async (req, res) => {
+  try {
+    const awb = clampText((req.body || {}).awb, 60);
+    const courier = clampText((req.body || {}).courier, 80);
+    const rawUrl = String((req.body || {}).tracking_url || '').trim();
+    const trackingUrl = rawUrl && /^https?:\/\//i.test(rawUrl) ? rawUrl.slice(0, 500) : null;
+    const { rows } = await db.query(
+      'UPDATE orders SET awb = $1, courier = $2, tracking_url = $3 WHERE id = $4 RETURNING receipt, awb, courier, tracking_url',
+      [awb || null, courier || null, trackingUrl, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    res.json({ ok: true, shipping: rows[0] });
+  } catch (err) {
+    console.error('[admin] shipping update error:', err.message);
+    res.status(500).json({ error: 'Failed to save shipping details' });
+  }
+});
+
 // GET /admin/orders/:id — full order for packing slips, disputes and support calls
 router.get('/orders/:id', async (req, res) => {
   // The id is numeric; without this a receipt or slug reaches Postgres and surfaces as a 500
@@ -271,6 +305,11 @@ router.get('/orders/:id', async (req, res) => {
         payMode: order.pay_mode || (String(order.status) === 'cod_pending' ? 'cod' : 'online'),
         refundMode: order.refund_mode || null,
         refundedAt: order.refunded_at || null,
+        notes: order.notes || null,
+        customerEmail: order.customer_email || null,
+        awb: order.awb || null,
+        courier: order.courier || null,
+        trackingUrl: order.tracking_url || null,
         customer: order.customer || {},
         items,
       },
@@ -327,13 +366,30 @@ router.patch('/products/:slug/stock', async (req, res) => {
     if (!Number.isInteger(stock) || stock < 0) {
       return res.status(400).json({ error: 'stock must be an integer >= 0' });
     }
+    const before = await db.query('SELECT slug, name, stock FROM products WHERE slug = $1', [req.params.slug]);
+    if (!before.rows.length) return res.status(404).json({ error: 'Product not found' });
     const { rows } = await db.query(
-      'UPDATE products SET stock = $1 WHERE slug = $2 RETURNING slug, stock',
+      'UPDATE products SET stock = $1 WHERE slug = $2 RETURNING slug, name, stock',
       [stock, req.params.slug]
     );
-    if (!rows.length) return res.status(404).json({ error: 'Product not found' });
-    console.log(`[admin] stock ${rows[0].slug} -> ${rows[0].stock}`);
-    res.json({ product: rows[0] });
+    // Restock notifications: the "notify me" list used to be write-only. When stock
+    // returns from zero, email everyone waiting and mark the request as notified.
+    let restock = null;
+    if (Number(before.rows[0].stock) === 0 && stock > 0) {
+      const alerts = await db.query(
+        'SELECT id, email FROM stock_alerts WHERE product_slug = $1 AND notified = FALSE',
+        [rows[0].slug]
+      );
+      for (const alert of alerts.rows) {
+        const queued = await notifyStockBack(alert.email, rows[0].name, rows[0].slug);
+        if (queued.queued) {
+          await db.query('UPDATE stock_alerts SET notified = TRUE WHERE id = $1', [alert.id]);
+        }
+      }
+      restock = alerts.rows.length;
+    }
+    console.log(`[admin] stock ${rows[0].slug} -> ${rows[0].stock}${restock ? ` (notified ${restock})` : ''}`);
+    res.json({ product: rows[0], restockNotified: restock || 0 });
   } catch (err) {
     console.error('[admin] stock update error:', err.message);
     res.status(500).json({ error: 'Failed to update stock' });
@@ -349,20 +405,32 @@ router.post('/quotes/:id/convert', async (req, res) => {
     if (quote.order_receipt) {
       return res.json({ ok: true, receipt: quote.order_receipt, reused: true });
     }
-    if (!quote.product_slug) {
-      return res.status(400).json({ error: 'Quote has no product linked' });
+    let productSlug = quote.product_slug;
+    if (!productSlug && quote.product_name) {
+      // Older free-text quotes: resolve the name at conversion time.
+      const { rows: match } = await db.query(
+        'SELECT slug FROM products WHERE LOWER(name) = LOWER($1) OR name ILIKE $2 ORDER BY LENGTH(name) ASC LIMIT 1',
+        [quote.product_name, `%${String(quote.product_name).slice(0, 100)}%`]
+      );
+      if (match.length) {
+        productSlug = match[0].slug;
+        await db.query('UPDATE bulk_quotes SET product_slug = $1 WHERE id = $2', [productSlug, quote.id]);
+      }
+    }
+    if (!productSlug) {
+      return res.status(400).json({ error: 'Quote has no catalogue product linked — edit the quote to attach one' });
     }
     const { rows: prows } = await db.query(
       'SELECT slug, price_paise FROM products WHERE slug = $1',
-      [quote.product_slug]
+      [productSlug]
     );
-    if (!prows.length) return res.status(400).json({ error: `Product not found: ${quote.product_slug}` });
+    if (!prows.length) return res.status(400).json({ error: `Product not found: ${productSlug}` });
     const qty = Math.max(1, parseInt(quote.qty, 10) || 1);
     const override = parseInt(req.body && req.body.unit_price_paise, 10) || 0;
     const unitPaise = override > 0 ? override : prows[0].price_paise;
     if (unitPaise < 100) return res.status(400).json({ error: 'Agreed unit price too small' });
     const amountPaise = unitPaise * qty;
-    const lineItems = [{ slug: quote.product_slug, qty, unit_price_paise: unitPaise }];
+    const lineItems = [{ slug: productSlug, qty, unit_price_paise: unitPaise }];
     const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 
     const created = await withTransaction(async (tx) => {
@@ -575,6 +643,74 @@ router.delete('/products/:slug', async (req, res) => {
   } catch (err) {
     console.error('[admin] product delete error:', err.message);
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// GET /admin/notifications?status=&limit=
+router.get('/notifications', async (req, res) => {
+  try {
+    const status = String(req.query.status || '').trim();
+    const limit = clampInt(req.query.limit, 100, 1, 500);
+    const params = [];
+    let where = '';
+    if (status) {
+      params.push(status);
+      where = `WHERE status = $${params.length}`;
+    }
+    params.push(limit);
+    const { rows } = await db.query(
+      `SELECT id, to_email, subject, body, type, status, attempts, error, order_receipt, created_at, sent_at
+         FROM notifications ${where} ORDER BY created_at DESC, id DESC LIMIT $${params.length}`,
+      params
+    );
+    res.json({ notifications: rows });
+  } catch (err) {
+    console.error('[admin] notifications error:', err.message);
+    res.status(500).json({ error: 'Failed to list notifications' });
+  }
+});
+
+// POST /admin/notifications/flush — deliver queued mail now (the worker also runs on a timer)
+router.post('/notifications/flush', async (req, res) => {
+  try {
+    const summary = await flushNotifications({ limit: 100 });
+    res.json({ ok: true, ...summary });
+  } catch (err) {
+    console.error('[admin] notification flush error:', err.message);
+    res.status(500).json({ error: 'Failed to send notifications' });
+  }
+});
+
+// POST /admin/notifications/:id/resend
+router.post('/notifications/:id/resend', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      "UPDATE notifications SET status = 'queued', attempts = 0, error = NULL WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Notification not found' });
+    res.json({ ok: true, id: rows[0].id });
+  } catch (err) {
+    console.error('[admin] notification resend error:', err.message);
+    res.status(500).json({ error: 'Failed to resend' });
+  }
+});
+
+// GET /admin/customers — registered buyers with their order totals.
+router.get('/customers', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT u.id, u.name, u.email, u.phone, u.created_at,
+              COUNT(o.id)::int AS order_count,
+              COALESCE(SUM(CASE WHEN o.status IN ('paid','shipped','delivered','cod_pending') THEN o.amount_paise ELSE 0 END), 0)::bigint AS lifetime_paise,
+              MAX(o.created_at) AS last_order_at
+         FROM users u LEFT JOIN orders o ON o.user_id = u.id
+        GROUP BY u.id ORDER BY u.created_at DESC LIMIT 200`
+    );
+    res.json({ customers: rows });
+  } catch (err) {
+    console.error('[admin] customers error:', err.message);
+    res.status(500).json({ error: 'Failed to list customers' });
   }
 });
 

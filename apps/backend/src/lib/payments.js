@@ -10,8 +10,19 @@ function mockPaymentsAllowed(env = process.env) {
   return String(env.NODE_ENV || '') !== 'production';
 }
 
+// Placeholder values shipped in .env.example / docker-compose must never count as
+// configured: they take the "live" path, then the Razorpay client refuses and checkout
+// silently creates a mock order that can never be paid.
+const PLACEHOLDER_RE = /(placeholder|xxxx|change[-_]?me|your[-_]?key|rzp_test_xxxx)/i;
+
+function isPlaceholder(value) {
+  return PLACEHOLDER_RE.test(String(value || ''));
+}
+
 function paymentsConfigured(env = process.env) {
-  return Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
+  const id = env.RAZORPAY_KEY_ID || '';
+  const secret = env.RAZORPAY_KEY_SECRET || '';
+  return Boolean(id && secret && !isPlaceholder(id) && !isPlaceholder(secret));
 }
 
 // What the checkout should do for an online payment, decided before touching stock.
@@ -27,4 +38,4 @@ function isMockId(id) {
   return String(id || '').startsWith(MOCK_ID_PREFIX);
 }
 
-module.exports = { mockPaymentsAllowed, paymentsConfigured, onlinePaymentMode, isMockId, MOCK_ID_PREFIX };
+module.exports = { mockPaymentsAllowed, paymentsConfigured, onlinePaymentMode, isMockId, MOCK_ID_PREFIX, isPlaceholder };

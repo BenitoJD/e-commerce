@@ -11,6 +11,7 @@ const STATIC_PAGES = [
   '/bulk-quote',
   '/bulk-orders',
   '/emi-options',
+  '/faq',
   '/contact-us',
   '/about-us',
   '/shipping-policy',

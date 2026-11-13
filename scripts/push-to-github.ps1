@@ -1,5 +1,5 @@
 param(
-  [string]$RepoName = "toolsvilla-clone",
+  [string]$RepoName = "e-commerce",
   [string]$Owner = "BenitoJD",
   [string]$Branch = "main"
 )

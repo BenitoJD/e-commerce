@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 
     if (q) {
       params.push(`%${escapeLike(q)}%`);
-      conds.push(`(name ILIKE $${params.length} ESCAPE '\\' OR brand ILIKE $${params.length} ESCAPE '\\' OR category ILIKE $${params.length} ESCAPE '\\')`);
+      conds.push(`(name ILIKE $${params.length} ESCAPE '\\' OR brand ILIKE $${params.length} ESCAPE '\\' OR category ILIKE $${params.length} ESCAPE '\\' OR slug ILIKE $${params.length} ESCAPE '\\')`);
     }
     if (brand) {
       params.push(brand);
@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     if (maxPrice) {
       // maxPrice in rupees -> convert to paise
       const paise = Math.round(parseFloat(maxPrice) * 100);
-      if (!Number.isNaN(paise)) {
+      if (Number.isFinite(paise) && paise >= 0 && paise <= 1e11) {
         params.push(paise);
         conds.push(`price_paise <= $${params.length}`);
       }

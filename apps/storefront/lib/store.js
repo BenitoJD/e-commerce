@@ -68,10 +68,10 @@ export const STORE = {
   phoneDigits: PHONE_DIGITS,
   phoneDisplay: displayPhone(PHONE_DIGITS),
   email: process.env.NEXT_PUBLIC_STORE_EMAIL || 'care@ecommerce.in',
-  gstin: process.env.NEXT_PUBLIC_STORE_GSTIN || '00AAAAA0000A1Z5',
+  gstin: process.env.NEXT_PUBLIC_STORE_GSTIN || '27AAPFU0939F1ZV',
   address: process.env.NEXT_PUBLIC_STORE_ADDRESS || 'Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026',
   // GST state code of the seller. Drives the CGST/SGST vs IGST decision on invoices, so it
-  // must be explicit: the placeholder GSTIN above carries an unusable "00" code.
+  // must be explicit and match the GSTIN's first two digits.
   stateCode: process.env.NEXT_PUBLIC_STORE_STATE_CODE || '27',
 };
 

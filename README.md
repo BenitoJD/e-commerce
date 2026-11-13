@@ -1,31 +1,35 @@
 # E-Commerce — Machinery & Tools Store
 
-[![verify](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml/badge.svg)](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml)
+[![verify](https://github.com/BenitoJD/e-commerce/actions/workflows/verify.yml/badge.svg)](https://github.com/BenitoJD/e-commerce/actions/workflows/verify.yml)
 
 Production-shaped ecommerce monorepo for the Indian tools/machinery market:
-Next.js storefront + Express/Postgres backend + Razorpay payments, deployable on a single VPS.
+Next.js storefront + Express/Postgres backend + Razorpay payments, customer accounts,
+OTP guest order access, transactional email and a browser E2E suite — deployable on a
+single VPS.
 
 Feature parity matrix: [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Structure
 
 ```
-toolsvilla-clone/
+e-commerce/
   apps/backend/       Express + Postgres + Razorpay
     data/             30-product catalog + seeded coupons (source of truth)
     sql/schema.sql    idempotent schema (safe to run on every boot)
     src/routes/       products, search, checkout, webhooks, quotes, engage,
-                      service, invoice, admin, sitemap
+                      service, invoice, admin, sitemap, auth
     src/lib/          pricing, stock reservation, order state machine, refunds,
-                      rate limiting, security helpers, text helpers
+                      auth/sessions/OTP, email outbox, rate limiting, security, text
     src/lib/__tests__ unit + route-level integration suites (in-memory DB)
-  apps/storefront/    Next.js 14 App Router (29 routes)
+  apps/storefront/    Next.js 14 App Router (35 routes)
     app/              homepage, category, product, cart, checkout, orders,
-                      tracking, invoice, returns, admin, policies…
+                      tracking, invoice, returns, admin, account/login/register,
+                      FAQ, policies…
     components/       client views (ProductView, CategoryView, BrandView, HomeView…)
-    public/images/    30 generated placeholder product images (SVG)
+    public/images/    90 generated placeholder images (3 views × 30 products, SVG)
     lib/              api client, cart, wishlist, store config, server API base
-    test/             35 client-logic tests (no install needed)
+    test/             112 client-logic tests (no install needed)
+  e2e/                43 Playwright browser tests (every customer + admin flow)
   packages/shared/    INR / GST / EMI helpers
   infra/nginx.conf    reverse proxy (storefront + backend + webhooks)
   scripts/            smoke.mjs, validate-compose.cjs, gen-product-images.mjs
@@ -39,7 +43,7 @@ toolsvilla-clone/
 # 1. Backend (needs Postgres; DATABASE_URL in .env)
 cd apps/backend
 npm install
-cp .env.example .env      # DATABASE_URL + Razorpay test keys + ADMIN_TOKEN
+cp .env.example .env      # DATABASE_URL + Razorpay test keys + ADMIN_TOKEN + AUTH_SECRET
 npm run seed              # repeatable: refreshes catalogue, never resets stock
 npm run dev               # http://localhost:9000/health
 
@@ -56,7 +60,7 @@ Admin console: open `/admin`, paste your `ADMIN_TOKEN`.
 ## Quick start (VPS, one command)
 
 ```bash
-cp .env.example .env      # Razorpay live keys, ADMIN_TOKEN, domain
+cp .env.example .env      # Razorpay keys, ADMIN_TOKEN, AUTH_SECRET, SMTP (optional), domain
 #   NEXT_PUBLIC_BACKEND_URL=/api            (browser: same origin, nginx routes /api)
 #   BACKEND_INTERNAL_URL=http://backend:9000 (server: SSR + /sitemap.xml rewrite)
 #   NEXT_PUBLIC_SITE_URL=https://yourdomain.com
@@ -71,6 +75,27 @@ Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
 `NEXT_PUBLIC_*` values are baked in at **build** time — changing them requires a rebuild.
 
+## Accounts & notifications
+
+- **Accounts**: register / sign in / sign out, profile, **saved addresses** (default one
+  prefills checkout), full order history, password reset by emailed link (development
+  prints the link). Passwords are scrypt-hashed; session tokens are random 32-byte values
+  stored only as SHA-256 hashes; a reset revokes every session. Guest checkout remains the
+  default — an account is never required.
+- **Guest order access**: “My Orders”, quote status and the order list now require a
+  **6-digit OTP** bound to the phone (5-minute expiry, 5 attempts, one request/minute).
+  Knowing a phone number alone no longer reveals receipts or lets someone cancel orders.
+  Without an SMS provider, development returns the code in the response; production says
+  SMS is not configured and points at accounts.
+- **Transactional email**: order confirmation, paid, shipped, delivered, cancelled,
+  refunded, return updates, password reset and back-in-stock alerts are written to a
+  Postgres **outbox** in the same transaction as the state change and delivered by a
+  retrying worker (idempotent per receipt+event). SMTP is optional: without it messages are
+  marked `logged` and can be inspected/reset from **Admin → Emails**. Configure
+  `SMTP_HOST/SMTP_FROM/...` to deliver.
+- **Courier tracking**: the warehouse records courier/AWB/tracking URL in the admin order
+  panel; Track Order shows it to the customer.
+
 ## Storefront features
 
 Shopping: homepage strips (deals, brands, recently viewed) · category listing with
@@ -81,12 +106,14 @@ clear-all and coupons · Razorpay checkout (UPI/cards/netbanking/EMI) · COD cap
 `COD_MAX_PAISE` (default ₹20,000) and enforced server-side · optional buyer GSTIN for
 business invoices · server-authoritative totals.
 
-After the sale: order success with live status polling · track order + customer cancel ·
-my orders by phone with **reorder** and per-order WhatsApp help · printable GST invoice
-(buyer GSTIN, item lines, shipping, coupon, payment mode — totals reconcile) · returns/exchange form with **status lookup** · back-in-stock alerts.
+After the sale: order success with live status polling · track order with courier/AWB +
+customer cancel · account order history or OTP-verified guest lookup, both with **reorder**
+and per-order WhatsApp help · printable GST invoice (buyer GSTIN, item lines, shipping,
+coupon, payment mode — totals reconcile) · returns/exchange form with **status lookup** ·
+back-in-stock alerts that email the waiting list when stock returns.
 
-Trust: 9 policy pages, GST invoice messaging, pan-India delivery, newsletter
-(admin can list subscribers and export CSV).
+Trust: 10 policy pages, a searchable **FAQ** with FAQPage structured data, GST invoice
+messaging, pan-India delivery, newsletter (admin can list subscribers and export CSV).
 
 Hardening: security headers (nosniff, frame-deny, referrer, permissions, HSTS over
 HTTPS), `x-powered-by` off, CORS allowlist via `FRONTEND_URL`, per-IP limits on public
@@ -106,7 +133,8 @@ refund status, guarded status transitions, **date-range filters and CSV export f
 (create/edit/delete without touching seed files)** · Returns · Quotes (convert to order at
 an agreed price, WhatsApp customer) · Coupons (CRUD with expiry/usage caps) · Messages
 (+ **newsletter subscriber list and CSV export**, WhatsApp reply) · Reviews/Questions
-(verify, answer, delete) · Stock (update by slug).
+(verify, answer, delete) · Stock (update by slug) · **Customers** (accounts, orders,
+lifetime value) · **Emails** (transactional outbox, requeue and send-now).
 
 ## Tests
 
@@ -116,9 +144,12 @@ Everything that runs without Docker/Postgres, in one command:
 node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 node scripts/verify-fresh.mjs # checks a fresh checkout of the pushed repo (5 checks)
 
+# Browser end-to-end suite (43 tests). Requires the API + storefront + Postgres running:
+pnpm test:e2e                # every customer flow + admin console in Chromium
+
 # After a build: the live end-to-end audit. Boots a fixture backend serving the REAL
 # catalogue, starts the built storefront against it, then runs three suites and cleans up:
-#   37/37 routes · 17/17 pages · 94/94 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
+#   43/43 routes · 17/17 pages · 95/95 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
 node scripts/self-audit.mjs   # 3/3 suites
 
 # CI (.github/workflows/verify.yml) runs exactly these on every push to main and every PR:
@@ -133,14 +164,15 @@ ADMIN_TOKEN=<admin token> RAZORPAY_WEBHOOK_SECRET=<test secret> node scripts/e2e
 ```
 
 Individually:
-cd apps/backend && npm test        # 304 tests: pricing/GST/EMI, catalog, coupons,
-                                   # webhooks, transitions, refunds, rate limiting,
-                                   # security, sitemap, seed plan, API contract, health,
+cd apps/backend && npm test        # 314 tests: pricing/GST/EMI, catalog, coupons,
+                                   # webhooks (idempotent), transitions, refunds (partial
+                                   # too), auth/scrypt/session/OTP tokens, email templates,
+                                   # rate limiting, security, sitemap, API contract, health,
                                    # route-level integration on an in-memory DB
 cd apps/storefront && npm test     # 112 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
-cd apps/storefront && npm run build # must compile all 29 routes
+cd apps/storefront && npm run build # must compile all 35 routes
 cd apps/storefront && npm start     # production server (same thing the image runs)
 ```
 
@@ -163,7 +195,7 @@ Route smoke test and SEO audit (need the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 37/37 routes (32 pages/endpoints + 5 real 404s)
+  node scripts/smoke.mjs        # 43/43 routes (38 pages/endpoints + 5 real 404s)
 node scripts/audit-pages.mjs http://localhost:3000 bosch-gsb-13-re-drill power-tools Bosch
 node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
 ```
@@ -180,10 +212,11 @@ Full steps: `docs/RAZORPAY.md`.
 
 ## What still needs your inputs
 
-Real product photos (overwrite the placeholder SVGs), VPS + domain, Razorpay live keys,
-SMS gateway for OTP login, your GSTIN/phone/email (one place:
-`NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL`).
+Real product photography (overwrite the placeholder SVGs), VPS + domain, Razorpay live
+keys + webhook secret, an **SMTP provider** for order emails, an **SMS provider** for guest
+OTP lookup (accounts work without one), and your GSTIN/phone/email/address (one place:
+`NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL/ADDRESS`, plus `AUTH_SECRET`).
 
 ## Repository
 
-https://github.com/BenitoJD/toolsvilla-clone — push helper: `scripts/push-to-github.ps1`.
+https://github.com/BenitoJD/e-commerce — push helper: `scripts/push-to-github.ps1`.

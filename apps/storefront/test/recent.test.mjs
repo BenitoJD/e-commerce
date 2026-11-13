@@ -33,5 +33,5 @@ test('parseRecent never throws on corrupt storage', () => {
   assert.deepEqual(parseRecent(null), []);
   assert.deepEqual(parseRecent('not json'), []);
   assert.deepEqual(parseRecent('{"a":1}'), []);
-  assert.deepEqual(parseRecent('[{"slug":"a"},null,{"nope":1}]'), [{ slug: 'a' }]);
+  assert.deepEqual(parseRecent('[{"slug":"a"},null,{"nope":1}]'), [{ slug: 'a', name: 'a', price: 0, image: '', brand: '' }]);
 });

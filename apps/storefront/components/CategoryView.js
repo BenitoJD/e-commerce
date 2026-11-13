@@ -4,15 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchProducts, fetchBrands } from '../lib/api';
 import { STORE } from '../lib/store';
 
-const FALLBACK = [
-  { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70' },
-  { slug: 'stanley-angle-grinder', name: 'Stanley Angle Grinder 850W', price: 2899, mrp: 3950, brand: 'Stanley', category: 'power-tools', image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&q=70' },
-  { slug: 'crompton-1hp-motor', name: 'Crompton 1HP Single Phase Motor', price: 7299, mrp: 8999, brand: 'Crompton', category: 'motors', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=70' },
-  { slug: 'havells-water-pump', name: 'Havells 1.5HP Self-Priming Pump', price: 9499, mrp: 11500, brand: 'Havells', category: 'motors', image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&q=70' },
-  { slug: 'honda-agri-sprayer', name: 'Honda Type Power Sprayer', price: 12499, mrp: 14999, brand: 'Honda', category: 'agriculture', image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=70' },
-  { slug: 'ibell-arc-welder-200a', name: 'iBell ARC 200A Inverter Welder', price: 5499, mrp: 7999, brand: 'iBell', category: 'welding', image: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=600&q=70' },
-  { slug: 'karcher-hp-washer', name: 'Karcher Type Pressure Washer', price: 8999, mrp: 11999, brand: 'Karcher', category: 'cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?w=600&q=70' }
-];
+const FALLBACK = [];
 
 const PAGE_SIZE = 40;
 
@@ -27,6 +19,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
   const [hasMore, setHasMore] = useState((initialItems || []).length === PAGE_SIZE);
   // True match count from the API (the loaded page can be shorter than the total).
   const [total, setTotal] = useState(Number.isFinite(Number(initialTotal)) ? Number(initialTotal) : null);
+  const [loadError, setLoadError] = useState(false);
   const [brand, setBrand] = useState('All');
   const [sort, setSort] = useState('pop');
   const [q, setQ] = useState(initialQ);
@@ -65,12 +58,16 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
         });
         const list = Array.isArray(data) ? data : data.products || data.items || [];
         if (!alive) return;
-        setItems(list.length ? list : (filtersActive ? [] : FALLBACK.filter((p) => slug === 'all' || p.category === slug)));
+        setItems(list);
+        setLoadError(false);
         setHasMore(list.length === PAGE_SIZE);
         if (!Array.isArray(data) && data && Number.isFinite(Number(data.total))) setTotal(Number(data.total));
       } catch {
         if (alive) {
-          setItems(FALLBACK.filter((p) => slug === 'all' || p.category === slug));
+          // Never invent a catalogue when the API is down: fake products would 404 and
+          // prices would be wrong. Say the truth and offer a retry.
+          setItems([]);
+          setLoadError(true);
           setHasMore(false);
         }
       } finally {
@@ -132,11 +129,23 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
   const filtered = items;
 
   const clearFilters = () => {
+    // On a search results URL, server-rendered `initialItems` are the (possibly empty)
+    // matches. Restoring them is not "clearing" anything — go back to the full catalogue.
+    if (String(initialQ || '').trim()) {
+      window.location.href = '/category/all';
+      return;
+    }
     setBrand('All');
     setSort('pop');
     setQ('');
     setPriceMin('');
     setPriceMax('');
+    // Restore exactly what the server rendered for this URL. Without this the effect's
+    // "already server-rendered" early-return left the previous filtered rows on screen
+    // (and a zero-result filter became permanently empty).
+    setItems(Array.isArray(initialItems) ? initialItems : []);
+    setTotal(Number.isFinite(Number(initialTotal)) ? Number(initialTotal) : (initialItems || []).length);
+    setHasMore((initialItems || []).length === PAGE_SIZE);
   };
 
   return (
@@ -197,10 +206,10 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
 
       <div className="mt-4 flex flex-wrap gap-3 items-center">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" aria-label="Filter products in this category" />
-        <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input max-w-[180px]">
+        <select value={brand} onChange={(e) => setBrand(e.target.value)} className="input max-w-[180px]" aria-label="Filter by brand">
           {brands.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className="input max-w-[200px]">
+        <select value={sort} onChange={(e) => setSort(e.target.value)} className="input max-w-[200px]" aria-label="Sort products">
           <option value="pop">Sort: Newest first</option>
           <option value="low">Price: Low to High</option>
           <option value="high">Price: High to Low</option>
@@ -218,6 +227,15 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
 
       {loading ? (
         <p className="mt-8 text-gray-500">Loading products...</p>
+      ) : loadError ? (
+        <div className="card p-8 mt-8 text-center">
+          <p className="font-bold text-lg">We couldn&apos;t load products right now</p>
+          <p className="text-sm text-gray-600 mt-1">The catalogue is temporarily unavailable. Please retry, or contact us on WhatsApp.</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button onClick={() => setLoadError(false)} className="btn-primary" type="button">Retry</button>
+            <a href="/contact-us" className="btn-outline">Contact us</a>
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="card p-8 mt-8 text-center">
           <p className="font-bold text-lg">
@@ -242,7 +260,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
             return (
               <a key={p.slug || p.id} href={`/product/${p.slug || p.id}`} className={`card ${p.stock === 0 ? 'opacity-90' : ''}`}>
                 <div className="relative">
-                  <img src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
+                  <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
                   {off > 0 && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off}% OFF</span>}
                   {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
                 </div>
@@ -259,7 +277,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
           })}
         </div>
       )}
-      {!loading && (!filtersActive || hasQuery) && hasMore ? (
+      {!loading && hasMore ? (
         <div className="mt-8 text-center">
           <button onClick={loadMore} disabled={loadingMore} className="btn-outline disabled:opacity-60">
             {loadingMore ? 'Loading...' : 'Load more products'}

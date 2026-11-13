@@ -15,6 +15,7 @@ const SITEMAP = path.join(ROOT, 'apps', 'backend', 'src', 'routes', 'sitemap.js'
 const PRIVATE = new Set([
   '/cart', '/checkout', '/wishlist', '/compare', '/my-orders', '/track-order',
   '/order-success', '/returns', '/invoice', '/admin', '/admin/picking',
+  '/login', '/register', '/account', '/account/forgot', '/account/reset',
 ]);
 
 function pageRoutes(dir = APP, prefix = '') {

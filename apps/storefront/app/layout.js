@@ -1,6 +1,7 @@
 import './globals.css';
 import NewsletterForm from '../components/NewsletterForm';
 import SearchBox from '../components/SearchBox';
+import CartBadge from '../components/CartBadge';
 import { STORE, waLink } from '../lib/store';
 import { warnOnce } from '../lib/storeCheck';
 
@@ -41,16 +42,24 @@ export default function RootLayout({ children }) {
             </form>
             <nav aria-label="Account and cart" className="ml-auto flex items-center gap-3 text-sm font-semibold">
               <a href="/track-order" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">Track Order</a>
+              <a href="/account" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">Account</a>
               <a href="/wishlist" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">❤ Wishlist</a>
               <a href="/compare" className="hidden sm:inline-block text-gray-600 hover:text-[#F97316]">⇄ Compare</a>
               <a href="/bulk-quote" className="hidden sm:inline-block btn-outline !py-2">Bulk Quote</a>
-              <a href="/cart" className="btn-primary !py-2">Cart</a>
+              <CartBadge />
             </nav>
           </div>
           <div className="md:hidden px-4 pb-3">
             <form action="/category/all" method="get" className="flex">
               <SearchBox compact />
             </form>
+            {/* Wishlist/Compare were hidden at this breakpoint with no other route to them. */}
+            <div className="flex gap-4 mt-2 text-xs font-bold text-gray-600">
+              <a href="/wishlist" className="hover:text-[#F97316]">❤ Wishlist</a>
+              <a href="/compare" className="hover:text-[#F97316]">⇄ Compare</a>
+              <a href="/account" className="hover:text-[#F97316]">Account</a>
+              <a href="/my-orders" className="hover:text-[#F97316]">My Orders</a>
+            </div>
           </div>
           <div className="bg-gray-900 text-white text-xs">
             <div className="max-w-7xl mx-auto px-4 py-1.5 flex gap-4 overflow-x-auto whitespace-nowrap">
@@ -97,6 +106,9 @@ export default function RootLayout({ children }) {
                 <li><a className="hover:text-white" href="/my-orders">My Orders</a></li>
                 <li><a className="hover:text-white" href="/bulk-orders">Bulk Orders (B2B)</a></li>
                 <li><a className="hover:text-white" href="/emi-options">EMI Options</a></li>
+                <li><a className="hover:text-white" href="/wishlist">Wishlist</a></li>
+                <li><a className="hover:text-white" href="/compare">Compare</a></li>
+                <li><a className="hover:text-white" href="/account">My Account</a></li>
               </ul>
             </div>
             <div>
@@ -111,6 +123,7 @@ export default function RootLayout({ children }) {
                 <li><a className="hover:text-white" href="/terms-conditions">Terms & Conditions</a></li>
                 <li><a className="hover:text-white" href="/about-us">About Us</a></li>
                 <li><a className="hover:text-white" href="/contact-us">Contact Us</a></li>
+                <li><a className="hover:text-white" href="/faq">FAQ</a></li>
               </ul>
             </div>
             <div>

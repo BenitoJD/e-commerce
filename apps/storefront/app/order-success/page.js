@@ -41,8 +41,13 @@ function SuccessInner() {
   const mode = sp.get('mode') || 'Paid';
   const [verify, setVerify] = useState(null);
   const [attempts, setAttempts] = useState(0);
+  const [notFound, setNotFound] = useState(false);
+  const [phone, setPhone] = useState('');
 
   useEffect(() => {
+    try {
+      setPhone(new URLSearchParams(window.location.search).get('phone') || window.localStorage.getItem('tw_phone') || '');
+    } catch { /* ignore */ }
     if (!receipt || receipt === '—') return;
     let cancelled = false;
     let count = 0;
@@ -55,8 +60,13 @@ function SuccessInner() {
         const st = normStatus(data?.status);
         // stop early on terminal states
         if (TERMINAL.has(st)) return;
-      } catch {
-        // ignore transient errors, keep polling
+      } catch (e) {
+        // A 404 is authoritative: the receipt does not exist, so stop pretending it does.
+        if (!cancelled && String(e && e.message || '').toLowerCase().includes('not found')) {
+          setNotFound(true);
+          return;
+        }
+        // otherwise ignore transient errors, keep polling
       }
       count += 1;
       setAttempts(count);
@@ -77,6 +87,24 @@ function SuccessInner() {
     amountPaise != null
       ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(amountPaise) / 100)
       : null;
+
+  if (!receipt || receipt === '—' || notFound) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-14 text-center">
+        <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 grid place-items-center text-3xl">!</div>
+        <h1 className="text-3xl font-extrabold mt-4">We couldn&apos;t find that order</h1>
+        <p className="text-gray-600 mt-2">
+          {receipt && receipt !== '—' ? `No order exists for receipt ${receipt}.` : 'This page needs a receipt ID.'}{' '}
+          Check the link in your confirmation, or look the order up with your receipt and phone.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a href="/track-order" className="btn-primary">Track an order</a>
+          <a href="/my-orders" className="btn-outline">My orders</a>
+          <a href="/category/all" className="btn-outline">Continue shopping</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto px-4 py-14 text-center">
@@ -101,7 +129,7 @@ function SuccessInner() {
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <a href="/category/all" className="btn-outline">Continue Shopping</a>
         {receipt && receipt !== '—' ? (
-          <a href={`/track-order?receipt=${encodeURIComponent(receipt)}`} className="btn-outline">Track Order</a>
+          <a href={`/track-order?receipt=${encodeURIComponent(receipt)}${phone ? `&phone=${encodeURIComponent(phone)}` : ''}`} className="btn-outline">Track Order</a>
         ) : null}
         {receipt && receipt !== '—' ? (
           <a href={`/invoice/${encodeURIComponent(receipt)}`} className="btn-outline">GST Invoice</a>

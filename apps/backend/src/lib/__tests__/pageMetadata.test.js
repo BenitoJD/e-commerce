@@ -9,6 +9,7 @@ const APP = path.resolve(__dirname, '..', '..', '..', '..', '..', 'apps', 'store
 
 const PRIVATE_ROUTES = new Set([
   'admin', 'cart', 'checkout', 'wishlist', 'my-orders', 'track-order', 'returns', 'order-success',
+  'login', 'register', 'account', 'account/forgot', 'account/reset',
 ]);
 
 function walk(dir, out) {

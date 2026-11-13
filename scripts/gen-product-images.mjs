@@ -34,8 +34,8 @@ function wrap(text, max) {
   return lines.slice(0, 3);
 }
 
-function svgFor(p, i) {
-  const color = PALETTE[i % PALETTE.length];
+function svgFor(p, i, variant = 1) {
+  const color = PALETTE[(i + variant - 1) % PALETTE.length];
   const initials = (p.brand || p.name || '?').slice(0, 2).toUpperCase();
   const titleLines = wrap(p.name, 26);
   const title = titleLines
@@ -48,7 +48,7 @@ function svgFor(p, i) {
   <text x="300" y="168" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="800" fill="${color}">${esc(initials)}</text>
   <text x="40" y="200" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="#6B7280">${esc(p.brand || '')}</text>
   ${title}
-  <text x="40" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">Placeholder image — replace with real product photography</text>
+  <text x="40" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">View ${variant} of 3 — placeholder image, replace with real photography</text>
 </svg>
 `;
 }
@@ -56,8 +56,12 @@ function svgFor(p, i) {
 fs.mkdirSync(outDir, { recursive: true });
 let count = 0;
 for (const p of products) {
-  const file = path.join(outDir, `${p.slug}.svg`);
-  fs.writeFileSync(file, svgFor(p, count), 'utf8');
+  // Three views per product so the PDP gallery has something real to switch between.
+  for (let variant = 1; variant <= 3; variant += 1) {
+    const suffix = variant === 1 ? '' : `-${variant}`;
+    const file = path.join(outDir, `${p.slug}${suffix}.svg`);
+    fs.writeFileSync(file, svgFor(p, count, variant), 'utf8');
+  }
   count += 1;
 }
 console.log(`wrote ${count} placeholder images to apps/storefront/public/images`);

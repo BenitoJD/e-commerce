@@ -76,7 +76,10 @@ export default function ReturnsPage() {
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search).get('receipt');
-      if (p) setForm((f) => (f.receipt ? f : { ...f, receipt: p }));
+      if (p) {
+        setForm((f) => (f.receipt ? f : { ...f, receipt: p }));
+        setElig((e) => (e.receipt ? e : { ...e, receipt: p }));
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -173,14 +176,14 @@ export default function ReturnsPage() {
 
         <div>
           <label className="label">Reason</label>
-          <select className="input" value={form.reason} onChange={(e) => set('reason', e.target.value)}>
+          <select aria-label="Return reason" className="input" value={form.reason} onChange={(e) => set('reason', e.target.value)}>
             {REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </div>
 
         <div>
           <label className="label">What happened?</label>
-          <textarea className="input" rows={4} value={form.details} onChange={(e) => set('details', e.target.value)} placeholder="Describe the issue. For damage, mention you have unboxing photos/video." />
+          <textarea aria-label="Return details" className="input" rows={4} value={form.details} onChange={(e) => set('details', e.target.value)} placeholder="Describe the issue. For damage, mention you have unboxing photos/video." />
         </div>
 
         {state.ok && <p role="status" className="text-sm text-green-700 font-semibold">{state.ok}</p>}

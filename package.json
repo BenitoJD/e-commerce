@@ -2,15 +2,20 @@
   "name": "e-commerce",
   "version": "0.1.0",
   "private": true,
-  "description": "E-Commerce machinery & tools storefront — Next.js storefront + Node backend + Razorpay, VPS-ready monorepo",
+  "description": "E-Commerce machinery & tools storefront \u2014 Next.js storefront + Node backend + Razorpay, VPS-ready monorepo",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev:backend": "pnpm --filter ./apps/backend dev",
     "dev:storefront": "pnpm --filter ./apps/storefront dev",
     "build": "pnpm -r build",
-    "seed": "pnpm --filter ./apps/backend seed"
+    "seed": "pnpm --filter ./apps/backend seed",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright show-report e2e-report"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
   }
 }

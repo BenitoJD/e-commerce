@@ -9,6 +9,11 @@ const GOOD = {
   RAZORPAY_KEY_SECRET: 'secret',
   RAZORPAY_WEBHOOK_SECRET: 'whsec_realsecret',
   FRONTEND_URL: 'https://shop.test',
+  AUTH_SECRET: 'a'.repeat(40),
+  SMTP_HOST: 'smtp.test',
+  SMTP_FROM: 'care@shop.test',
+  SMS_PROVIDER: 'msg91',
+  SMS_API_KEY: 'sms-key',
 };
 
 test('a correctly configured production deploy warns about nothing', () => {
@@ -36,6 +41,19 @@ test('an unconfigured payment gateway is called out, distinctly for mock mode', 
 
   const mocked = configWarnings({ ...GOOD, RAZORPAY_KEY_ID: '', RAZORPAY_KEY_SECRET: '', ALLOW_MOCK_PAYMENTS: 'true' });
   assert.ok(mocked.some((w) => /mock orders/.test(w)));
+});
+
+test('a known default admin token is called out', () => {
+  const warnings = configWarnings({ ...GOOD, ADMIN_TOKEN: 'change-me-long-random-string' });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /well-known default/);
+});
+
+test('missing auth, SMTP and SMS are called out', () => {
+  const warnings = configWarnings({ ...GOOD, AUTH_SECRET: '', SMTP_HOST: '', SMS_PROVIDER: '' });
+  assert.ok(warnings.some((w) => /AUTH_SECRET/.test(w)));
+  assert.ok(warnings.some((w) => /SMTP/.test(w)));
+  assert.ok(warnings.some((w) => /SMS/.test(w)));
 });
 
 test('CORS and webhook misconfigurations are included', () => {

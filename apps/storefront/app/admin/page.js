@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   fetchProducts,
   getAdminStats,
   getAdminOrders,
   getAdminOrdersCsv,
+  getNotifications,
+  flushNotifications,
+  resendNotification,
+  getAdminCustomers,
+  saveOrderShipping,
   bulkUpdateOrderStatus,
   releaseStaleHolds,
   getAdminOrderDetail,
@@ -105,6 +110,14 @@ export default function AdminPage() {
   const [modAnswered, setModAnswered] = useState('false');
   const [returns, setReturns] = useState([]);
   const [returnFilter, setReturnFilter] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const [shipForm, setShipForm] = useState({ awb: '', courier: '', tracking_url: '' });
+  const [shipMsg, setShipMsg] = useState('');
+  // Monotonic request ids: a slow response for an older filter must never overwrite the
+  // results of the filter the operator just selected (the old review queue did exactly that).
+  const loadSeq = useRef({ orders: 0, returns: 0, messages: 0, reviews: 0 });
   const [catalog, setCatalog] = useState([]);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogHasMore, setCatalogHasMore] = useState(false);
@@ -171,6 +184,8 @@ export default function AdminPage() {
 
   async function runBulkStatus(status) {
     if (!selectedOrders.length || bulkBusy) return;
+    if (status === 'cancelled' && typeof window !== 'undefined'
+      && !window.confirm(`Cancel ${selectedOrders.length} selected order(s)? This cannot be undone.`)) return;
     setBulkBusy(true);
     setBulkMsg('');
     try {
@@ -197,6 +212,9 @@ export default function AdminPage() {
       const data = await getAdminOrders(token, orderFilter, orderSearch.trim(), { from: orderFrom, to: orderTo, offset });
       const list = Array.isArray(data) ? data : data.orders || data.items || [];
       setOrders((prev) => (append ? [...prev, ...list] : list));
+      // A new result set must not inherit checkboxes from a different filter/page:
+      // "26 selected" acted on rows the operator could no longer see.
+      if (!append) setSelectedOrders([]);
       setOrdersHasMore(list.length === 50);
     } catch (e) {
       setError(e.message);
@@ -230,6 +248,8 @@ export default function AdminPage() {
     if (tab === 'products') loadCatalog();
     if (tab === 'stock') loadStockAlerts();
     if (tab === 'reviews') loadModReviews();
+    if (tab === 'notifications') loadNotifications();
+    if (tab === 'customers') loadCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, tab]);
 
@@ -242,6 +262,73 @@ export default function AdminPage() {
     if (token && tab === 'quotes') loadQuotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quoteFilter]);
+
+  // These selects had state but no effect, so choosing a status changed nothing.
+  useEffect(() => {
+    if (token && tab === 'returns') loadReturns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returnFilter]);
+
+  useEffect(() => {
+    if (token && tab === 'messages') loadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msgFilter]);
+
+  useEffect(() => {
+    if (token && tab === 'reviews') loadModReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modVerified, modAnswered]);
+
+  async function loadNotifications() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getNotifications(token);
+      setNotifications(Array.isArray(data) ? data : data.notifications || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runNotificationFlush() {
+    setError('');
+    setNotifyBusy(true);
+    try {
+      await flushNotifications(token);
+      await loadNotifications();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setNotifyBusy(false);
+    }
+  }
+
+  async function resendMail(id) {
+    setError('');
+    try {
+      await resendNotification(token, id);
+      await loadNotifications();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function loadCustomers() {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getAdminCustomers(token);
+      setCustomers(Array.isArray(data) ? data : data.customers || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function loadCoupons() {
     if (!token) return;
@@ -351,15 +438,17 @@ export default function AdminPage() {
 
   async function loadReturns() {
     if (!token) return;
+    const req = ++loadSeq.current.returns;
     setLoading(true);
     setError('');
     try {
       const data = await getAdminReturns(token, returnFilter);
+      if (req !== loadSeq.current.returns) return;
       setReturns(Array.isArray(data) ? data : data.returns || data.items || []);
     } catch (e) {
-      setError(e.message);
+      if (req === loadSeq.current.returns) setError(e.message);
     } finally {
-      setLoading(false);
+      if (req === loadSeq.current.returns) setLoading(false);
     }
   }
 
@@ -375,6 +464,7 @@ export default function AdminPage() {
 
   async function loadMessages() {
     if (!token) return;
+    const req = ++loadSeq.current.messages;
     setLoading(true);
     setError('');
     try {
@@ -382,13 +472,14 @@ export default function AdminPage() {
         getAdminMessages(token, msgFilter),
         getAdminSubscribers(token).catch(() => null),
       ]);
+      if (req !== loadSeq.current.messages) return;
       setMessages(Array.isArray(md) ? md : md.messages || md.items || []);
       const subs = sd ? (sd.subscribers || sd.items || (Array.isArray(sd) ? sd : [])) : [];
       setSubscribers(Array.isArray(subs) ? subs : []);
     } catch (e) {
-      setError(e.message);
+      if (req === loadSeq.current.messages) setError(e.message);
     } finally {
-      setLoading(false);
+      if (req === loadSeq.current.messages) setLoading(false);
     }
   }
 
@@ -407,6 +498,7 @@ export default function AdminPage() {
 
   async function loadModReviews() {
     if (!token) return;
+    const req = ++loadSeq.current.reviews;
     setLoading(true);
     setError('');
     try {
@@ -414,12 +506,15 @@ export default function AdminPage() {
         getAdminReviews(token, modVerified, 100),
         listAdminQuestions(token, modAnswered, 100),
       ]);
+      // Discard a stale response: verifying a review triggers a reload, and an operator
+      // changing the filter at the same moment used to see the old queue win the race.
+      if (req !== loadSeq.current.reviews) return;
       setModReviews(Array.isArray(rd) ? rd : rd.reviews || rd.items || []);
       setModQuestions(Array.isArray(qd) ? qd : qd.questions || qd.items || []);
     } catch (e) {
-      setError(e.message);
+      if (req === loadSeq.current.reviews) setError(e.message);
     } finally {
-      setLoading(false);
+      if (req === loadSeq.current.reviews) setLoading(false);
     }
   }
 
@@ -437,7 +532,15 @@ export default function AdminPage() {
     setError('');
     try {
       await setReviewVerified(token, id, verified);
-      await loadModReviews();
+      // Update locally instead of refetching. A refetch created a race with the filter
+      // select: the verify handler's closure still had the old filter and could overwrite
+      // the "All" results with the unverified queue.
+      setModReviews((prev) => {
+        const next = prev.map((r) => (String(r.id) === String(id) ? { ...r, verified } : r));
+        if (modVerified === 'true' && !verified) return next.filter((r) => String(r.id) !== String(id));
+        if (modVerified === 'false' && verified) return next.filter((r) => String(r.id) !== String(id));
+        return next;
+      });
     } catch (e) {
       setError(e.message);
     }
@@ -483,7 +586,10 @@ export default function AdminPage() {
     setError('');
     try {
       const r = await getAdminOrderDetail(token, id);
-      setOrderDetail(r.order || r);
+      const detail = r.order || r;
+      setOrderDetail(detail);
+      setShipForm({ awb: detail.awb || '', courier: detail.courier || '', tracking_url: detail.trackingUrl || '' });
+      setShipMsg('');
     } catch (e) {
       setError(e.message);
     }
@@ -505,8 +611,23 @@ export default function AdminPage() {
     }
   }
 
+  async function onSaveShipping(id) {
+    setError('');
+    setShipMsg('');
+    try {
+      await saveOrderShipping(token, id, shipForm);
+      setShipMsg('Shipping details saved.');
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   async function onOrderAction(id, status) {
     setError('');
+    if ((status === 'cancelled' || status === 'refunded') && typeof window !== 'undefined') {
+      const label = status === 'refunded' ? 'refund' : 'cancel';
+      if (!window.confirm(`Really ${label} this order? This cannot be undone.`)) return;
+    }
     try {
       await updateOrderStatus(token, id, status);
       await loadOrders();
@@ -596,7 +717,9 @@ export default function AdminPage() {
     ['coupons', 'Coupons'],
     ['messages', 'Messages'],
     ['reviews', 'Reviews'],
-    ['stock', 'Stock']
+    ['stock', 'Stock'],
+    ['customers', 'Customers'],
+    ['notifications', 'Emails']
   ];
 
   return (
@@ -618,7 +741,7 @@ export default function AdminPage() {
       </div>
 
       {!token ? (
-        <p className="text-sm text-gray-500 mt-4">Enter the admin token to continue. It is stored only in this tab (sessionStorage as <code>tk_admin</code>).</p>
+        <p className="text-sm text-gray-500 mt-4">Enter the admin token to continue. It is stored in this browser (localStorage as <code>tk_admin</code>) so the picking list opens authenticated in a new tab.</p>
       ) : (
         <>
           <nav aria-label="Admin sections" className="flex gap-2 mt-6 flex-wrap">
@@ -871,6 +994,18 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div className="border-t mt-3 pt-3">
+                    <div className="font-bold text-sm mb-2">Courier &amp; AWB</div>
+                    <div className="grid sm:grid-cols-3 gap-2">
+                      <input className="input" placeholder="Courier (e.g. Delhivery)" aria-label="Courier name" value={shipForm.courier} onChange={(e) => setShipForm({ ...shipForm, courier: e.target.value })} />
+                      <input className="input" placeholder="AWB / tracking number" aria-label="AWB number" value={shipForm.awb} onChange={(e) => setShipForm({ ...shipForm, awb: e.target.value })} />
+                      <input className="input" placeholder="Tracking URL (https://…)" aria-label="Tracking URL" value={shipForm.tracking_url} onChange={(e) => setShipForm({ ...shipForm, tracking_url: e.target.value })} />
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={() => onSaveShipping(orderDetail.id)} className="btn-outline !py-1 !px-3 text-xs">Save shipping</button>
+                      {shipMsg ? <span className="text-xs text-green-700 font-semibold">{shipMsg}</span> : null}
+                    </div>
+                  </div>
                   <div className="grid sm:grid-cols-2 gap-4 mt-3 text-sm">
                     <div>
                       <div className="font-bold mb-1">Ship to</div>
@@ -885,7 +1020,7 @@ export default function AdminPage() {
                       <div>Pay mode: <b className="text-gray-800">{orderDetail.payMode === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}</b></div>
                       {orderDetail.refundMode ? (
                         <div className={orderDetail.refundMode === 'manual' ? 'text-red-600 font-bold' : 'text-green-700'}>
-                          Refund: {orderDetail.refundMode === 'manual' ? 'manual — not yet paid out' : 'auto (gateway)'}
+                          Refund: {orderDetail.refundMode === 'manual' ? 'manual — not yet paid out' : orderDetail.refundMode === 'auto' ? 'auto (gateway)' : 'none'}
                         </div>
                       ) : null}
                       <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
@@ -1356,6 +1491,68 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {tab === 'customers' && (
+            <div className="card p-4 mt-4">
+              <div className="flex items-center justify-between">
+                <b>Registered customers ({customers.length})</b>
+                <button onClick={loadCustomers} className="btn-outline !py-1 !px-3 text-xs">Reload</button>
+              </div>
+              {customers.length === 0 ? <p className="text-sm text-gray-500 mt-3">No accounts yet.</p> : (
+                <div className="overflow-x-auto mt-3">
+                  <table className="w-full text-sm">
+                    <thead><tr className="text-left text-gray-500 border-b">
+                      <th className="py-2">Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Lifetime value</th><th>Joined</th>
+                    </tr></thead>
+                    <tbody>
+                      {customers.map((c) => (
+                        <tr key={c.id} className="border-b last:border-0">
+                          <td className="py-2 font-semibold">{c.name}</td>
+                          <td>{c.email}</td>
+                          <td>{c.phone || '—'}</td>
+                          <td>{c.order_count}</td>
+                          <td>₹{Math.round(Number(c.lifetime_paise || 0) / 100).toLocaleString('en-IN')}</td>
+                          <td>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === 'notifications' && (
+            <div className="card p-4 mt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <b>Email outbox ({notifications.length})</b>
+                <div className="flex gap-2">
+                  <button onClick={loadNotifications} className="btn-outline !py-1 !px-3 text-xs">Reload</button>
+                  <button onClick={runNotificationFlush} disabled={notifyBusy} className="btn-primary !py-1 !px-3 text-xs disabled:opacity-50">
+                    {notifyBusy ? 'Sending...' : 'Send queued now'}
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Without SMTP configured, messages are marked “logged” here instead of being delivered.</p>
+              {notifications.length === 0 ? <p className="text-sm text-gray-500 mt-3">No emails yet.</p> : (
+                <div className="mt-3 space-y-2">
+                  {notifications.map((n) => (
+                    <div key={n.id} className="border rounded-lg p-3 text-sm">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <b>{n.subject}</b>
+                        <span className={`badge ${n.status === 'sent' ? 'bg-green-100 text-green-800' : n.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>{n.status}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">{n.to_email} • {n.type} • {new Date(n.created_at).toLocaleString('en-IN')}{n.order_receipt ? ` • ${n.order_receipt}` : ''}</p>
+                      <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap line-clamp-3">{n.body}</p>
+                      <div className="flex gap-2 mt-2">
+                        {n.status !== 'sent' && <button onClick={() => resendMail(n.id)} className="text-xs font-bold text-[#F97316] underline">Requeue</button>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

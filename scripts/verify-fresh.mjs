@@ -16,7 +16,7 @@ import path from 'node:path';
 
 const args = process.argv.slice(2);
 const repoArg = args.indexOf('--repo');
-const REPO = repoArg !== -1 ? args[repoArg + 1] : 'https://github.com/BenitoJD/toolsvilla-clone.git';
+const REPO = repoArg !== -1 ? args[repoArg + 1] : 'https://github.com/BenitoJD/e-commerce.git';
 const KEEP = args.includes('--keep');
 
 const localRoot = process.cwd();

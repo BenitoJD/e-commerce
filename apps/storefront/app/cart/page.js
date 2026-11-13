@@ -8,7 +8,14 @@ import { SHIPPING_FEE_RUPEES, shippingFor, shippingHint } from '../../lib/store'
 function readCoupon() {
   if (typeof window === 'undefined') return null;
   try {
-    return JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+    const raw = JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+    if (!raw || typeof raw !== 'object') return null;
+    // Coerce before rendering: a corrupted object in `code` used to crash the page with
+    // "Objects are not valid as a React child", and "Try again" re-rendered the same crash.
+    const code = typeof raw.code === 'string' ? raw.code.trim().toUpperCase() : '';
+    const discountPaise = Number(raw.discountPaise);
+    if (!code || !Number.isFinite(discountPaise) || discountPaise < 0) return null;
+    return { code, discountPaise };
   } catch {
     return null;
   }
@@ -27,7 +34,7 @@ export default function CartPage() {
   useEffect(() => {
     setItems(getCart());
     setCoupon(readCoupon());
-    const sync = () => setItems(getCart());
+    const sync = () => { setItems(getCart()); setCoupon(readCoupon()); };
     window.addEventListener('cart-updated', sync);
     window.addEventListener('storage', sync);
     return () => {
@@ -59,6 +66,7 @@ export default function CartPage() {
     return () => { alive = false; };
   }, [pincode, subtotal]);
 
+  const unitCount = items.reduce((n, i) => n + (Number(i.qty) || 0), 0);
   const discount = coupon ? Math.min(Number(coupon.discountPaise || 0) / 100, subtotal) : 0;
   const payable = Math.max(0, subtotal - discount);
   // Same rule the server charges with, so the cart total can't disagree with checkout.
@@ -147,7 +155,7 @@ export default function CartPage() {
         <div className="grid md:grid-cols-3 gap-6 mt-6">
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">{items.length} item{items.length === 1 ? '' : 's'} in cart</span>
+              <span className="text-sm text-gray-500">{unitCount} item{unitCount === 1 ? '' : 's'} in cart</span>
               <button
                 onClick={() => {
                   if (typeof window !== 'undefined' && !window.confirm('Remove all items from your cart?')) return;

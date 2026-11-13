@@ -9,16 +9,16 @@ import { pushRecent, parseRecent } from '../lib/recent';
 import { toggleCompare, parseCompare, COMPARE_KEY } from '../lib/compare';
 
 const FALLBACK = {
-  slug: 'bosch-gsb-13-re-drill',
-  name: 'Bosch GSB 13 RE Impact Drill 600W',
+  slug: 'bosch-gws-600-grinder',
+  name: 'Bosch GWS 600 670W 100mm Angle Grinder',
   price: 3499,
-  mrp: 4995,
+  mrp: 4295,
   brand: 'Bosch',
   category: 'power-tools',
-  image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80',
-  images: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80'],
-  specs: { Power: '600W', Chuck: '13mm', Speed: '0-2800 RPM', Warranty: '6 months', 'In the box': 'Drill, chuck key, manual' },
-  description: 'Genuine Bosch impact drill for masonry, wood & metal. GST invoice included.'
+  image: '/images/bosch-gws-600-grinder.svg',
+  images: ['/images/bosch-gws-600-grinder.svg', '/images/bosch-gws-600-grinder-2.svg', '/images/bosch-gws-600-grinder-3.svg'],
+  specs: { Power: '670W', Voltage: '230V', Warranty: '6 months' },
+  description: 'Genuine Bosch angle grinder for masonry, metal and workshop use. GST invoice included.'
 };
 
 function Stars({ value = 0, size = 'text-base' }) {
@@ -35,9 +35,11 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
   const slug = slugProp;
   const [p, setP] = useState(initialProduct || null);
   const [qty, setQty] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
   const [wished, setWished] = useState(false);
   const [comparing, setComparing] = useState(false);
+  const [compareMsg, setCompareMsg] = useState('');
   const [alertEmail, setAlertEmail] = useState('');
   const [alertBusy, setAlertBusy] = useState(false);
   const [alertMsg, setAlertMsg] = useState('');
@@ -62,6 +64,8 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
 
   // related
   const [related, setRelated] = useState([]);
+
+  useEffect(() => { setActiveImage(0); }, [slug]);
 
   useEffect(() => {
     let alive = true;
@@ -138,6 +142,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
   if (!p) return <div className="max-w-7xl mx-auto px-4 py-10 text-gray-500">Loading product...</div>;
 
   const images = p.images && p.images.length ? p.images : [p.image || FALLBACK.image];
+  const mainImage = images[Math.min(activeImage, images.length - 1)] || FALLBACK.image;
   const videos = safeVideoUrls(p.videos);
   const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
   const emi = (m) => Math.round(Number(p.price) / m);
@@ -274,11 +279,20 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
       </nav>
       <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <img src={images[0]} alt={p.name} className="rounded-2xl border w-full h-96 object-cover" />
+          <img src={mainImage} alt={p.name} className="rounded-2xl border w-full h-96 object-cover" />
           {images.length > 1 && (
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Product images">
               {images.slice(0, 4).map((src, i) => (
-                <img key={i} src={src} alt="" className="h-20 w-full object-cover rounded-lg border" loading="lazy" />
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`View image ${i + 1} of ${Math.min(images.length, 4)}`}
+                  aria-pressed={i === activeImage}
+                  className={`rounded-lg border overflow-hidden ${i === activeImage ? 'ring-2 ring-[#F97316]' : 'hover:border-[#F97316]'}`}
+                >
+                  <img src={src} alt="" className="h-20 w-full object-cover" loading="lazy" />
+                </button>
               ))}
             </div>
           )}
@@ -368,13 +382,19 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             </button>
             <button
               onClick={() => {
-                const next = toggleCompare(parseCompare(localStorage.getItem(COMPARE_KEY)), {
+                setCompareMsg('');
+                const current = parseCompare(localStorage.getItem(COMPARE_KEY));
+                const next = toggleCompare(current, {
                   slug: p.slug || slug,
                   name: p.name,
                   price: p.price,
                   image: p.image || (p.images && p.images[0]) || '',
                   brand: p.brand || '',
                 });
+                const alreadyIn = current.some((x) => String(x.slug) === String(p.slug || slug));
+                if (!alreadyIn && next.length === current.length && current.length >= 4) {
+                  setCompareMsg('You can compare up to 4 products — remove one to add another.');
+                }
                 try { localStorage.setItem(COMPARE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
                 window.dispatchEvent(new Event('compare-updated'));
                 setComparing(next.some((x) => String(x.slug) === String(p.slug || slug)));
@@ -387,10 +407,11 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             {comparing ? (
               <a href="/compare" className="text-xs font-bold text-[#F97316] underline self-center">See comparison</a>
             ) : null}
+            {compareMsg ? <p role="status" className="text-xs font-semibold text-amber-700 w-full">{compareMsg}</p> : null}
             <a
               href={waShareLink(
                 `${p.name} — ₹${Number(p.price || 0).toLocaleString('en-IN')}`,
-                typeof window !== 'undefined' ? window.location.href : `/product/${p.slug || slug}`
+                `${process.env.NEXT_PUBLIC_SITE_URL || ''}/product/${encodeURIComponent(p.slug || slug)}`
               )}
               target="_blank"
               rel="noreferrer"
@@ -464,7 +485,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
               </select>
             </div>
             <div><label className="label">Title</label><input className="input" value={rForm.title} onChange={(e) => setRForm({ ...rForm, title: e.target.value })} placeholder="Great drill for the price" aria-label="Review title" /></div>
-            <div><label className="label">Review</label><textarea className="input" rows={3} value={rForm.body} onChange={(e) => setRForm({ ...rForm, body: e.target.value })} placeholder="Build quality, performance..." /></div>
+            <div><label className="label">Review</label><textarea className="input" rows={3} value={rForm.body} onChange={(e) => setRForm({ ...rForm, body: e.target.value })} placeholder="Build quality, performance..." aria-label="Review" /></div>
             {rMsg && <p className="text-xs font-semibold text-gray-700">{rMsg}</p>}
             <button disabled={rBusy} className="btn-primary w-full disabled:opacity-60">{rBusy ? 'Submitting...' : 'Submit Review'}</button>
           </form>
@@ -497,7 +518,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           <p className="text-xs text-gray-500 mt-1">Ask about compatibility, warranty, installation.</p>
           <form onSubmit={submitQuestion} className="mt-3 space-y-3">
             <div><label className="label">Your name</label><input className="input" value={qForm.name} onChange={(e) => setQForm({ ...qForm, name: e.target.value })} placeholder="Your name" aria-label="Your name" /></div>
-            <div><label className="label">Question</label><textarea className="input" rows={3} value={qForm.question} onChange={(e) => setQForm({ ...qForm, question: e.target.value })} placeholder="Is this suitable for 8-hour daily workshop use?" /></div>
+            <div><label className="label">Question</label><textarea className="input" rows={3} value={qForm.question} onChange={(e) => setQForm({ ...qForm, question: e.target.value })} placeholder="Is this suitable for 8-hour daily workshop use?" aria-label="Your question" /></div>
             {qMsg && <p className="text-xs font-semibold text-gray-700">{qMsg}</p>}
             <button disabled={qBusy} className="btn-outline w-full disabled:opacity-60">{qBusy ? 'Submitting...' : 'Ask Question'}</button>
           </form>

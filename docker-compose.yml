@@ -28,8 +28,24 @@ services:
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_xxxx}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-xxxx}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-whsec_xxxx}
-      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me-long-random-string}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in .env (long random string)}
+      # Signs account sessions and guest order-access tokens. Required in production.
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (32+ random bytes)}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-30}
+      ALLOW_DEV_OTP: ${ALLOW_DEV_OTP:-false}
+      # Optional integrations; when unset the app records email in the admin outbox instead.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-E-Commerce <care@ecommerce.in>}
+      NOTIFY_INTERVAL_SECONDS: ${NOTIFY_INTERVAL_SECONDS:-30}
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      SMS_API_KEY: ${SMS_API_KEY:-}
       PORT: 9000
+      # Exactly one reverse-proxy hop (nginx). X-Forwarded-For is overwritten by nginx.
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       # CORS allowlist for the storefront origin(s); comma-separated for www + apex.
       FRONTEND_URL: ${FRONTEND_URL:-${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}}
       STOREFRONT_URL: ${STOREFRONT_URL:-${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}}
@@ -56,7 +72,7 @@ services:
         NEXT_PUBLIC_STORE_NAME: ${NEXT_PUBLIC_STORE_NAME:-E-Commerce}
         NEXT_PUBLIC_STORE_PHONE: ${NEXT_PUBLIC_STORE_PHONE:-919999999999}
         NEXT_PUBLIC_STORE_EMAIL: ${NEXT_PUBLIC_STORE_EMAIL:-care@ecommerce.in}
-        NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-00AAAAA0000A1Z5}
+        NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-27AAPFU0939F1ZV}
         NEXT_PUBLIC_STORE_ADDRESS: ${NEXT_PUBLIC_STORE_ADDRESS:-Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026}
         NEXT_PUBLIC_STORE_STATE_CODE: ${NEXT_PUBLIC_STORE_STATE_CODE:-27}
         BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}
@@ -73,7 +89,7 @@ services:
       NEXT_PUBLIC_STORE_NAME: ${NEXT_PUBLIC_STORE_NAME:-E-Commerce}
       NEXT_PUBLIC_STORE_PHONE: ${NEXT_PUBLIC_STORE_PHONE:-919999999999}
       NEXT_PUBLIC_STORE_EMAIL: ${NEXT_PUBLIC_STORE_EMAIL:-care@ecommerce.in}
-      NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-00AAAAA0000A1Z5}
+      NEXT_PUBLIC_STORE_GSTIN: ${NEXT_PUBLIC_STORE_GSTIN:-27AAPFU0939F1ZV}
       NEXT_PUBLIC_STORE_ADDRESS: ${NEXT_PUBLIC_STORE_ADDRESS:-Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026}
       NEXT_PUBLIC_STORE_STATE_CODE: ${NEXT_PUBLIC_STORE_STATE_CODE:-27}
       BACKEND_INTERNAL_URL: ${BACKEND_INTERNAL_URL:-http://backend:9000}

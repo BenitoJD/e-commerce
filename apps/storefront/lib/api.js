@@ -121,12 +121,21 @@ export async function fetchProduct(slug) {
   return normalizeProduct(data);
 }
 
-export async function createCheckout(payload) {
+export async function createCheckout(payload, token = '') {
   const res = await fetch(`${BASE}/store/checkout/create`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify(payload),
     cache: 'no-store'
+  });
+  return handle(res);
+}
+
+export async function completeMockPayment(receipt) {
+  const res = await fetch(`${BASE}/store/checkout/mock-pay`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ receipt }),
   });
   return handle(res);
 }
@@ -150,9 +159,12 @@ export async function getReturnStatus(receipt, phone) {
   return handle(res);
 }
 
-export async function getMyQuotes(phone) {
+export async function getMyQuotes(phone, orderToken = '') {
   const q = new URLSearchParams({ phone: String(phone || '').trim() });
-  const res = await fetch(`${BASE}/store/quotes?${q.toString()}`, { cache: 'no-store' });
+  const res = await fetch(`${BASE}/store/quotes?${q.toString()}`, {
+    cache: 'no-store',
+    headers: orderToken ? { 'x-order-access': orderToken } : {},
+  });
   return handle(res);
 }
 
@@ -202,7 +214,7 @@ export async function releaseStaleHolds(token, minutes = 30) {
 export async function bulkUpdateOrderStatus(token, ids, status) {
   const res = await fetch(`${BASE}/admin/orders/bulk-status`, {
     method: 'POST',
-    headers: adminHeaders(token),
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
     body: JSON.stringify({ ids, status }),
   });
   return handle(res);
@@ -219,10 +231,20 @@ export async function getAdminOrdersCsv(token, status = '', { from = '', to = ''
     cache: 'no-store'
   });
   if (!res.ok) {
-    const msg = await parseErrorMessage(res);
+    const msg = parseErrorMessage(res.status, await res.text().catch(() => ''));
     throw new Error(msg);
   }
   return res.text();
+}
+
+export async function saveOrderShipping(token, id, payload) {
+  const res = await fetch(`${BASE}/admin/orders/${encodeURIComponent(id)}/shipping`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(token) },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+  return handle(res);
 }
 
 export async function getAdminOrderDetail(token, id) {
@@ -484,9 +506,12 @@ export function asList(data) {
 }
 
 // ---- Service: my orders / cancel / invoice ----
-export async function getMyOrders(phone) {
+export async function getMyOrders(phone, orderToken = '') {
   const q = new URLSearchParams({ phone: phone || '' });
-  const res = await fetch(`${BASE}/store/service/orders?${q.toString()}`, { cache: 'no-store' });
+  const res = await fetch(`${BASE}/store/service/orders?${q.toString()}`, {
+    cache: 'no-store',
+    headers: orderToken ? { 'x-order-access': orderToken } : {},
+  });
   return handle(res);
 }
 
@@ -585,3 +610,106 @@ export async function updateReturnStatus(token, id, status) {
 export async function getInvoice(receipt) {
   const res = await fetch(`${BASE}/store/invoice/${encodeURIComponent(receipt)}`, { cache: 'no-store' });
   return handle(res);}
+
+// ---- Customer accounts, addresses and OTP order access ---------------------------------
+
+function authHeader(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function registerAccount(payload) {
+  const res = await fetch(`${BASE}/store/auth/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
+
+export async function loginAccount(payload) {
+  const res = await fetch(`${BASE}/store/auth/login`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
+
+export async function logoutAccount(token) {
+  const res = await fetch(`${BASE}/store/auth/logout`, { method: 'POST', headers: authHeader(token) });
+  return handle(res);
+}
+
+export async function fetchMe(token) {
+  const res = await fetch(`${BASE}/store/auth/me`, { headers: authHeader(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function requestPasswordReset(email) {
+  const res = await fetch(`${BASE}/store/auth/forgot-password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+  });
+  return handle(res);
+}
+
+export async function resetPassword(payload) {
+  const res = await fetch(`${BASE}/store/auth/reset-password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
+
+export async function requestOrderOtp(phone) {
+  const res = await fetch(`${BASE}/store/auth/otp/request`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }),
+  });
+  return handle(res);
+}
+
+export async function verifyOrderOtp(phone, code) {
+  const res = await fetch(`${BASE}/store/auth/otp/verify`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, code }),
+  });
+  return handle(res);
+}
+
+export async function fetchAccountOrders(token) {
+  const res = await fetch(`${BASE}/store/auth/orders`, { headers: authHeader(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function fetchAddresses(token) {
+  const res = await fetch(`${BASE}/store/auth/addresses`, { headers: authHeader(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function saveAddress(token, payload, id = null) {
+  const res = await fetch(`${BASE}/store/auth/addresses${id ? `/${id}` : ''}`, {
+    method: id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+    body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
+
+export async function deleteAddress(token, id) {
+  const res = await fetch(`${BASE}/store/auth/addresses/${id}`, { method: 'DELETE', headers: authHeader(token) });
+  return handle(res);
+}
+
+export async function getNotifications(token, status = '') {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/admin/notifications${qs}`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}
+
+export async function flushNotifications(token) {
+  const res = await fetch(`${BASE}/admin/notifications/flush`, { method: 'POST', headers: adminHeaders(token) });
+  return handle(res);
+}
+
+export async function resendNotification(token, id) {
+  const res = await fetch(`${BASE}/admin/notifications/${id}/resend`, { method: 'POST', headers: adminHeaders(token) });
+  return handle(res);
+}
+
+export async function getAdminCustomers(token) {
+  const res = await fetch(`${BASE}/admin/customers`, { headers: adminHeaders(token), cache: 'no-store' });
+  return handle(res);
+}

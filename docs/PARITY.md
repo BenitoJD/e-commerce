@@ -6,9 +6,28 @@ How this build compares with the reference store (toolsvilla.com), feature by fe
 items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
 SMTP/SMS, store identity) — none of which is code work.
 
-Evidence at this HEAD: **CI green** on Ubuntu/Node 20 (`verify-all` + the live `self-audit`),
-backend **304** tests, storefront **112** tests, self-audit **3/3** (37/37 routes, 17/17 pages,
-94/94 sitemap URLs), fresh-checkout check **5/5**, production build **28 routes**.
+Evidence at this HEAD: `verify-all` **6/6**, backend **314** tests, storefront **112** tests,
+browser E2E **43/43** (Chromium), self-audit **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap
+URLs), production build **35 routes**.
+
+## Accounts, messaging & operations (added in this pass)
+
+| Capability | Status |
+|---|---|
+| Customer accounts | ✅ register / login / logout, scrypt-hashed passwords (fresh salt each), 30-day session tokens stored only as SHA-256 hashes, profile page, password reset by time-limited emailed link (30 min, single-use, revokes all sessions) |
+| Saved addresses | ✅ CRUD from `/account`, one default address, checkout prefill and a “use a saved address” selector; guest checkout stays available |
+| Order history tied to an account | ✅ orders bind to the signed-in user at checkout; `/api/auth/orders` returns enriched line items; `/account` shows receipt, status, total, invoice and tracking links |
+| Guest order access | ✅ **phone OTP** (6 digits, 5-minute expiry, 5 attempts, one request/min, SHA-256 HMAC code hash) issues a signed 30-minute order token required by the order-history and quote-status endpoints. Knowing a phone number alone is no longer enough to read receipts or cancel orders |
+| Transactional email | ✅ Postgres outbox written in the same transaction as the order state change, idempotent `receipt:event` keys, retrying worker, SMTP via nodemailer when configured (otherwise `logged` and visible in Admin → Emails): placed/paid/shipped/delivered/cancelled/refunded/return + password reset + back-in-stock |
+| Back-in-stock automation | ✅ restocking from 0 emails everyone waiting (`stock_alerts.notified` now flips) |
+| Courier / AWB tracking | ✅ admin records courier + AWB + tracking URL on the order; Track Order shows it and links to the carrier |
+| Order notes | ✅ optional delivery notes at checkout, persisted with the order and shown to the admin |
+| FAQ | ✅ `/faq` with 12 answers and FAQPage JSON-LD; linked from footer and sitemap |
+| Product gallery | ✅ three images per SKU and clickable thumbnails that switch the main image |
+| Admin customers & outbox | ✅ Customers tab (orders + lifetime value), Emails tab (status, requeue, send now) |
+| Webhook hardening | ✅ event-id dedupe + transactional order lock (a replayed `payment.failed` can’t restock twice), late captures flagged for manual refund, retried payments re-reserve stock, partial refunds tracked without closing/restocking the order, coupon uses released on failure, shipped/delivered refunds recorded even when the gateway is unavailable |
+| Abuse/security fixes | ✅ `X-Forwarded-For` spoofing closed (`TRUST_PROXY`, nginx overwrites the header), placeholder Razorpay keys no longer take the live path, default admin tokens warned, CSV formula injection neutralised, malformed bodies/ids return 4xx, free-text quotes resolve to catalogue SKUs |
+| Development mock payments | ✅ when no gateway is configured locally the checkout explicitly offers **Simulate successful payment** (dev only) instead of opening an unusable Razorpay sheet |
 
 ## Storefront
 
@@ -97,9 +116,9 @@ backend **304** tests, storefront **112** tests, self-audit **3/3** (37/37 route
 | Real product photos | Placeholders exist and are auto-checked; replace with your shoot/vendor photos by overwriting `apps/storefront/public/images/<slug>.svg` (or edit `data/products.js` + rerun `scripts/gen-product-images.mjs`) |
 | VPS + domain | Any Mumbai/Bangalore 4vCPU/8GB → `docs/VPS-DEPLOY.md` |
 | Razorpay live keys | Dashboard → backend `.env`, webhook URL |
-| OTP-SMS login | MSG91/equivalent key → account auth can be added on top of phone-based orders |
+| SMS for guest OTP | MSG91/equivalent key (`SMS_PROVIDER`, `SMS_API_KEY`). Accounts and guest checkout work without it; guest order lookup falls back to accounts when SMS is absent. |
 | Real product videos | Replace demo embed URLs in `apps/backend/data/products.js` with your own (YouTube/Vimeo embeds work today) |
-| Email / SMS notifications | No mailer or SMS gateway is wired up, and no copy promises one (a test enforces this). Supply SMTP or MSG91 credentials to add order-confirmation emails/OTP login. |
+| SMTP provider | Order emails are generated into a durable outbox today; set `SMTP_HOST/PORT/USER/PASS/FROM` to deliver them. Without it the admin Emails tab shows each message as `logged`. |
 | Seller GSTIN + phone/email | Set `NEXT_PUBLIC_STORE_GSTIN/PHONE/EMAIL` in `.env` (one place: `lib/store.js`) |
 | Social preview image (og:image) | WhatsApp/Facebook don't render SVG, so supply a 1200×630 **PNG** (logo + tagline). Product pages currently share as text + link; the WhatsApp Share button is already live. |
 
@@ -111,6 +130,7 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
+pnpm test:e2e                  # 43/43 browser tests against a running stack
 node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue data)
                                # + built storefront + smoke + page audit + sitemap crawl, cleaned up
                                # automatically — the reproducible end-to-end check (3/3)
@@ -127,12 +147,12 @@ node scripts/verify-fresh.mjs # fresh checkout of the pushed repo: 2 suites + au
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (304 backend, 112 storefront, build 28 routes),
-`self-audit` **3/3** (37/37 routes, 17/17 pages, 94/94 sitemap URLs), `verify-fresh` **5/5** on a fresh
-checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
+Last run against the pushed HEAD: `verify-all` **6/6** (314 backend, 112 storefront, build 35 routes),
+`self-audit` **3/3** (43/43 routes, 17/17 pages, 95/95 sitemap URLs), browser E2E **43/43**,
+`verify-fresh` **5/5** on a fresh checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
-Backend: `cd apps/backend && npm test` — 304 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 314 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline), production config audit**, **nginx routing/caching rules**, CI workflow shape, coupon expiry/usage caps, webhook state machine + signature (fails closed in production), LIKE escaping, CORS policy (no wildcard in production), status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
@@ -147,8 +167,8 @@ JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 29 routes.
-Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
+Build: `cd apps/storefront && npm run build` must compile all 35 routes.
+Smoke: `BASE_URL=... node scripts/smoke.mjs` — 43 routes (38 pages/endpoints + 5 real 404s).
 
 Fresh-checkout check (do this before trusting a deploy): check out into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.

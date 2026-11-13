@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
+import { getToken } from '../../lib/auth';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { isValidGstin } from '../../lib/gstin';
-import { createCheckout, validateCoupon, getStates } from '../../lib/api';
+import { createCheckout, completeMockPayment, validateCoupon, getStates, fetchMe } from '../../lib/api';
 import { normalizeStates, stateFieldRequired, stateForPayload } from '../../lib/stateOptions';
 import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor, STORE } from '../../lib/store';
 
@@ -24,7 +25,14 @@ function loadRazorpay() {
 function readCoupon() {
   if (typeof window === 'undefined') return null;
   try {
-    return JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+    const raw = JSON.parse(localStorage.getItem('tw_coupon') || 'null');
+    if (!raw || typeof raw !== 'object') return null;
+    // Coerce before rendering: a corrupted object in `code` used to crash the page with
+    // "Objects are not valid as a React child", and "Try again" re-rendered the same crash.
+    const code = typeof raw.code === 'string' ? raw.code.trim().toUpperCase() : '';
+    const discountPaise = Number(raw.discountPaise);
+    if (!code || !Number.isFinite(discountPaise) || discountPaise < 0) return null;
+    return { code, discountPaise };
   } catch {
     return null;
   }
@@ -33,11 +41,16 @@ function readCoupon() {
 export default function CheckoutPage() {
   const [items, setItems] = useState([]);
   const [coupon, setCoupon] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', address: '', pincode: '', stateCode: '', gstin: '', payMode: 'UPI' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', pincode: '', stateCode: '', gstin: '', payMode: 'UPI', notes: '' });
   const [states, setStates] = useState([]);
+  const [saved, setSaved] = useState([]);
+  const [prefilled, setPrefilled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [serverTotal, setServerTotal] = useState(null); // authoritative total returned by backend
+  // Development mock gateway: the backend returns a mock order id when Razorpay keys are
+  // absent, and this lets the buyer finish that payment instead of being stuck.
+  const [mockOrder, setMockOrder] = useState(null);
 
   useEffect(() => {
     setItems(getCart());
@@ -48,6 +61,28 @@ export default function CheckoutPage() {
     getStates()
       .then((r) => { if (alive) setStates(normalizeStates(r)); })
       .catch(() => { /* keep the form usable without the list */ });
+    // Signed-in shoppers get their name/email and default address filled in for them.
+    const token = getToken();
+    if (token) {
+      fetchMe(token)
+        .then((r) => {
+          if (!alive || !r || !r.user) return;
+          setSaved(Array.isArray(r.addresses) ? r.addresses : []);
+          const def = (r.addresses || []).find((a) => a.is_default) || (r.addresses || [])[0];
+          setForm((f) => ({
+            ...f,
+            name: f.name || r.user.name || '',
+            email: f.email || r.user.email || '',
+            phone: f.phone || (def && def.phone) || r.user.phone || '',
+            address: f.address || (def && def.address) || '',
+            pincode: f.pincode || (def && def.pincode) || '',
+            stateCode: f.stateCode || (def && def.state_code) || '',
+            gstin: f.gstin || '',
+          }));
+          setPrefilled(true);
+        })
+        .catch(() => { /* guest checkout stays available */ });
+    }
     return () => { alive = false; };
   }, []);
 
@@ -80,6 +115,27 @@ export default function CheckoutPage() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Accept the formats people actually paste: +91 98765 43210, 098765 43210, spaces/dashes.
+  const normalizePhoneInput = (raw) => {
+    let digits = String(raw || '').replace(/\D/g, '');
+    if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+    if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+    return digits.slice(-10);
+  };
+
+  const applySavedAddress = (id) => {
+    const a = saved.find((x) => String(x.id) === String(id));
+    if (!a) return;
+    setForm((f) => ({
+      ...f,
+      name: a.name || f.name,
+      phone: a.phone || f.phone,
+      address: a.address || f.address,
+      pincode: a.pincode || f.pincode,
+      stateCode: a.state_code || f.stateCode,
+    }));
+  };
+
   // If the basket grows past the COD cap (quantity change, coupon removed), don't leave
   // the buyer on an option the server will reject.
   useEffect(() => {
@@ -93,6 +149,21 @@ export default function CheckoutPage() {
     try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
   };
 
+  async function payMock() {
+    if (!mockOrder) return;
+    setErr('');
+    setBusy(true);
+    try {
+      await completeMockPayment(mockOrder.receipt);
+      clearCart();
+      clearCoupon();
+      window.location.href = `/order-success?receipt=${encodeURIComponent(mockOrder.receipt)}&mode=${encodeURIComponent(mockOrder.mode)}`;
+    } catch (e2) {
+      setErr(e2.message || 'Mock payment failed. Is the backend running?');
+      setBusy(false);
+    }
+  }
+
   async function placeOrder(e) {
     e.preventDefault();
     setErr('');
@@ -102,8 +173,10 @@ export default function CheckoutPage() {
       setErr('Please fill name, phone, address and pincode.');
       return;
     }
-    if (!/^[6-9]\d{9}$/.test(form.phone.replace(/\D/g, ''))) { setErr('Enter a valid 10-digit mobile number.'); return; }
+    const normalizedPhone = normalizePhoneInput(form.phone);
+    if (!/^[6-9]\d{9}$/.test(normalizedPhone)) { setErr('Enter a valid 10-digit mobile number.'); return; }
     if (!/^\d{6}$/.test(form.pincode)) { setErr('Enter a valid 6-digit pincode.'); return; }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setErr('Enter a valid email address for order updates.'); return; }
     // GSTIN is optional, but a wrong one prints a tax invoice the buyer cannot use.
     if (form.gstin.trim() && !isValidGstin(form.gstin)) {
       setErr('That GSTIN looks invalid — check the 15-character number on your GST certificate.');
@@ -113,23 +186,33 @@ export default function CheckoutPage() {
     setBusy(true);
     try {
       const payload = {
-        customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode, stateCode: stateForPayload(states, form.stateCode), gstin: form.gstin.trim() || null },
+        customer: { name: form.name, email: form.email.trim(), phone: normalizedPhone, address: form.address, pincode: form.pincode, stateCode: stateForPayload(states, form.stateCode), gstin: form.gstin.trim() || null },
         items: items.map((i) => ({ slug: i.slug, qty: i.qty, price: i.price })),
-        payMode: form.payMode,
+        // API contract is lowercase; the label is only for display.
+        payMode: form.payMode === 'COD' ? 'cod' : 'online',
         amount: total,
         subtotal,
         couponCode: coupon ? coupon.code : undefined,
-        discount: discount || 0
+        discount: discount || 0,
+        notes: form.notes.trim().slice(0, 500),
       };
-      const res = await createCheckout(payload);
+      const res = await createCheckout(payload, getToken());
       const receipt = res.receipt || res.receiptId || res.orderId || Date.now().toString();
       const razorpayOrderId = res.razorpayOrderId || res.razorpay_order_id || res.order_id;
-      try { if (typeof window !== 'undefined') window.localStorage.setItem('tw_phone', form.phone.trim()); } catch { /* ignore */ }
+      try { if (typeof window !== 'undefined') window.localStorage.setItem('tw_phone', normalizedPhone); } catch { /* ignore */ }
 
       if (form.payMode === 'COD' || !razorpayOrderId) {
         clearCart();
         clearCoupon();
         window.location.href = `/order-success?receipt=${encodeURIComponent(receipt)}&mode=COD`;
+        return;
+      }
+
+      // No gateway configured locally: show the explicit simulation step rather than a
+      // Razorpay sheet that can never succeed with a placeholder key.
+      if (res.mock) {
+        setMockOrder({ receipt, amount: Number(res.amount_paise || 0) / 100, mode: form.payMode });
+        setBusy(false);
         return;
       }
 
@@ -171,6 +254,12 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Checkout</h1>
+      {items.length === 0 && (
+        <div role="alert" className="card p-4 mt-4 border-amber-300 bg-amber-50 text-sm">
+          <b>Your cart is empty — add a product before checking out.</b>
+          <a href="/category/all" className="block text-[#F97316] font-bold mt-2">Browse products →</a>
+        </div>
+      )}
       <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${shown.toLocaleString('en-IN')}` : ` • Total ₹${shown.toLocaleString('en-IN')}`}{serverTotal != null ? ' (updated live)' : ''}</p>
       {couponNotice && (
         <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800">{couponNotice}</div>
@@ -204,10 +293,20 @@ export default function CheckoutPage() {
         </div>
       )}
       <form onSubmit={placeOrder} className="card p-5 mt-5 space-y-4">
+        {saved.length > 0 && (
+          <div>
+            <label className="label" htmlFor="saved-address">Saved address</label>
+            <select id="saved-address" className="input" defaultValue="" onChange={(e) => applySavedAddress(e.target.value)} aria-label="Use a saved address">
+              <option value="">Enter a new address</option>
+              {saved.map((a) => <option key={a.id} value={a.id}>{a.label} — {a.address}, {a.pincode}</option>)}
+            </select>
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" aria-label="Full name" autoComplete="name" required /></div>
-          <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="numeric" aria-label="Phone number" autoComplete="tel" required /></div>
+          <div><label className="label" htmlFor="checkout-name">Full name</label><input className="input" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ravi Kumar" aria-label="Full name" autoComplete="name" required /></div>
+          <div><label className="label" htmlFor="checkout-phone">Phone</label><input id="checkout-phone" className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="98765 43210" inputMode="tel" aria-label="Phone number" autoComplete="tel" required /></div>
         </div>
+        <div><label className="label" htmlFor="checkout-email">Email <span className="text-gray-400 font-normal">(order confirmation & updates)</span></label><input id="checkout-email" className="input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="you@example.com" aria-label="Email for order updates" autoComplete="email" required /></div>
         <div><label className="label">Full address</label><textarea className="input" rows={3} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="House no, street, city, state" aria-label="Delivery address" autoComplete="street-address" required /></div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className="label">Pincode</label><input className="input" value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="110001" inputMode="numeric" aria-label="Pincode" autoComplete="postal-code" required /></div>
@@ -246,15 +345,18 @@ export default function CheckoutPage() {
                   key={m}
                   className={`border rounded-lg px-3 py-2.5 text-sm font-bold text-center ${blocked ? 'cursor-not-allowed opacity-50 text-gray-400' : 'cursor-pointer'} ${form.payMode === m ? 'border-[#F97316] bg-orange-50 text-[#EA580C]' : blocked ? '' : 'text-gray-600'}`}
                 >
-                  <input
-                    type="radio"
-                    name="payMode"
-                    className="hidden"
-                    checked={form.payMode === m}
-                    disabled={disabled}
-                    onChange={() => set('payMode', m)}
-                  />
-                  {m}
+                  <span className="inline-flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="payMode"
+                      className="h-4 w-4 accent-[#F97316]"
+                      checked={form.payMode === m}
+                      disabled={disabled}
+                      onChange={() => set('payMode', m)}
+                      aria-label={m}
+                    />
+                    {m}
+                  </span>
                 </label>
               );
             })}
@@ -265,6 +367,10 @@ export default function CheckoutPage() {
               COD is available up to ₹{COD_MAX_RUPEES.toLocaleString('en-IN')} — this order needs online payment.
             </p>
           ) : null}
+        </div>
+        <div>
+          <label className="label" htmlFor="checkout-notes">Order notes <span className="text-gray-400 font-normal">(optional)</span></label>
+          <textarea id="checkout-notes" className="input" rows={2} value={form.notes} onChange={(e) => set('notes', e.target.value.slice(0, 500))} placeholder="Delivery instructions, landmark, GST details…" aria-label="Order notes" />
         </div>
         <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
           <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
@@ -287,10 +393,26 @@ export default function CheckoutPage() {
             </div>
           );
         })()}
-        {err && <p role="alert" className="text-sm text-red-600 font-semibold">{err}</p>}
-        <button disabled={busy} className="btn-primary w-full disabled:opacity-60">
-          {busy ? 'Placing order...' : `Pay ₹${shown.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}
-        </button>
+        {mockOrder ? (
+          <div className="border border-amber-300 bg-amber-50 rounded-lg p-4" role="status">
+            <b className="text-sm">Development payment (Razorpay is not configured)</b>
+            <p className="text-xs text-gray-600 mt-1">
+              Order <b>{mockOrder.receipt}</b> for ₹{Number(mockOrder.amount).toLocaleString('en-IN')} is reserved.
+              Simulate the gateway callback to mark it paid and see the post-purchase flow.
+            </p>
+            <button type="button" onClick={payMock} disabled={busy} className="btn-primary w-full mt-3 disabled:opacity-60">
+              {busy ? 'Confirming...' : 'Simulate successful payment'}
+            </button>
+            <a href="/cart" className="block text-center text-xs font-bold text-[#F97316] mt-2">Back to cart</a>
+          </div>
+        ) : (
+          <>
+            {err && <p role="alert" className="text-sm text-red-600 font-semibold">{err}</p>}
+            <button disabled={busy || items.length === 0} className="btn-primary w-full disabled:opacity-60">
+              {busy ? 'Placing order...' : `Pay ₹${shown.toLocaleString('en-IN')} ${form.payMode === 'COD' ? '(COD)' : 'securely'}`}
+            </button>
+          </>
+        )}
       </form>
     </div>
   );

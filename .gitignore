@@ -21,3 +21,11 @@ Thumbs.db
 # Database dumps must never be committed (they contain customer PII)
 /backups/
 *.sql.gz
+
+# pnpm local store
+.pnpm-store/
+
+# Playwright artifacts
+test-results/
+e2e-report/
+playwright-report/

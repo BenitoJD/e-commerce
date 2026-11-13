@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import BrandView from '../../../components/BrandView';
 import { getBrandPage, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
@@ -23,6 +24,9 @@ export default async function BrandPage({ params }) {
   // Brand filter server-side: filtering a 100-product page would silently truncate large brands.
   // The first page size matches the client's PAGE constant so "Load more" lines up.
   const { items, total } = await getBrandPage(name, 40);
+  // An unknown brand used to render HTTP 200 with "No products found" — a soft 404 that
+  // search engines index. Real brands always have at least one product.
+  if (!items.length && !total) notFound();
   return (
     <>
       <script

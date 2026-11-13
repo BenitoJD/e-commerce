@@ -4,7 +4,7 @@
 // in-flight checkouts and webhooks mid-transaction, and the Postgres pool is never drained.
 // The sequence: stop accepting connections, let in-flight requests finish, drain the pool,
 // then exit. A hard deadline guarantees the process still dies if a request hangs.
-function createShutdown({ server, pool, interval, timeoutMs = 10000, log = console.log } = {}) {
+function createShutdown({ server, pool, interval, intervals = [], timeoutMs = 10000, log = console.log } = {}) {
   let started = false;
 
   return function shutdown(signal = 'SIGTERM', { exit = (code) => process.exit(code) } = {}) {
@@ -15,11 +15,12 @@ function createShutdown({ server, pool, interval, timeoutMs = 10000, log = conso
     started = true;
     log(`[shutdown] ${signal} received — draining`);
 
-    // Stop the background sweep first so it can't touch the DB while the pool drains.
-    if (interval && typeof interval === 'object' && typeof interval[Symbol.dispose] !== 'undefined') {
-      try { interval[Symbol.dispose](); } catch { /* ignore */ }
-    } else if (interval && typeof interval === 'object' && typeof interval.close === 'function') {
-      try { interval.close(); } catch { /* ignore */ }
+    // Stop background timers first so they can't touch the DB while the pool drains.
+    for (const timer of [interval, ...intervals].filter(Boolean)) {
+      try {
+        if (typeof timer.close === 'function') timer.close();
+        else if (typeof timer[Symbol.dispose] === 'function') timer[Symbol.dispose]();
+      } catch { /* ignore */ }
     }
 
     const hardStop = setTimeout(() => {

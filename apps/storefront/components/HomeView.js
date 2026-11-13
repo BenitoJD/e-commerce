@@ -5,22 +5,22 @@ import { fetchProducts, asList } from '../lib/api';
 import { parseRecent } from '../lib/recent';
 
 const FALLBACK = [
-  { slug: 'bosch-gsb-13-re-drill', name: 'Bosch GSB 13 RE Impact Drill 600W', price: 3499, mrp: 4995, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80' },
-  { slug: 'crompton-1hp-motor', name: 'Crompton 1HP Single Phase Motor', price: 7299, mrp: 8999, brand: 'Crompton', category: 'motors', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80' },
-  { slug: 'honda-agri-sprayer', name: 'Honda Type 4-Stroke Power Sprayer', price: 12499, mrp: 14999, brand: 'Honda', category: 'agriculture', image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=600&q=80' },
-  { slug: 'ibell-arc-welder-200a', name: 'iBell ARC 200A Inverter Welder', price: 5499, mrp: 7999, brand: 'iBell', category: 'welding', image: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=600&q=80' },
-  { slug: 'karcher-hp-washer', name: 'Karcher Type High Pressure Washer 1400W', price: 8999, mrp: 11999, brand: 'Karcher', category: 'cleaning', image: 'https://images.unsplash.com/photo-1558317374-067fb8f30001?w=600&q=80' },
-  { slug: 'stanley-angle-grinder', name: 'Stanley 4-inch Angle Grinder 850W', price: 2899, mrp: 3950, brand: 'Stanley', category: 'power-tools', image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=600&q=80' },
-  { slug: 'havells-water-pump', name: 'Havells 1.5HP Self-Priming Pump', price: 9499, mrp: 11500, brand: 'Havells', category: 'motors', image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600&q=80' },
-  { slug: 'bosch-plunge-router', name: 'Bosch Plunge Router 1200W', price: 7999, mrp: 10200, brand: 'Bosch', category: 'power-tools', image: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=600&q=80' }
+  { slug: 'bosch-gws-600-grinder', name: 'Bosch GWS 600 670W Angle Grinder', price: 3499, mrp: 4295, brand: 'Bosch', category: 'power-tools', image: '/images/bosch-gws-600-grinder.svg' },
+  { slug: 'makita-9553nb-grinder', name: 'Makita 9553NB 100mm Angle Grinder', price: 6899, mrp: 8250, brand: 'Makita', category: 'power-tools', image: '/images/makita-9553nb-grinder.svg' },
+  { slug: 'crompton-5hp-motor', name: 'Crompton 5HP 3-Phase Motor', price: 24999, mrp: 28999, brand: 'Crompton', category: 'motors', image: '/images/crompton-5hp-motor.svg' },
+  { slug: 'kirloskar-1hp-water-pump', name: 'Kirloskar 1HP Monoblock Pump', price: 9499, mrp: 11299, brand: 'Kirloskar', category: 'pumps', image: '/images/kirloskar-1hp-water-pump.svg' },
+  { slug: 'neptune-battery-sprayer', name: 'Neptune 16L Battery Sprayer', price: 3299, mrp: 4200, brand: 'Neptune', category: 'agriculture', image: '/images/neptune-battery-sprayer.svg' },
+  { slug: 'ibell-arc-250-welding', name: 'iBELL ARC 250 Inverter Welder', price: 8999, mrp: 12999, brand: 'iBELL', category: 'welding', image: '/images/ibell-arc-250-welding.svg' },
+  { slug: 'karcher-hd5-pressure-washer', name: 'Karcher HD 5/11 Pressure Washer', price: 27999, mrp: 32000, brand: 'Karcher', category: 'cleaning', image: '/images/karcher-hd5-pressure-washer.svg' },
+  { slug: 'bosch-gsh-11-vc-breaker', name: 'Bosch GSH 11 VC Demolition Hammer', price: 89999, mrp: 98500, brand: 'Bosch', category: 'power-tools', image: '/images/bosch-gsh-11-vc-breaker.svg' }
 ];
 
 const CATS = [
-  { slug: 'power-tools', name: 'Power Tools', img: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500&q=70' },
-  { slug: 'motors', name: 'Motors', img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&q=70' },
-  { slug: 'agriculture', name: 'Agriculture', img: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=500&q=70' },
-  { slug: 'welding', name: 'Welding', img: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?w=500&q=70' },
-  { slug: 'cleaning', name: 'Cleaning', img: 'https://images.unsplash.com/photo-1558317374-067fb8f30001?w=500&q=70' }
+  { slug: 'power-tools', name: 'Power Tools', img: '/images/bosch-gws-600-grinder.svg' },
+  { slug: 'motors', name: 'Motors', img: '/images/crompton-5hp-motor.svg' },
+  { slug: 'agriculture', name: 'Agriculture', img: '/images/neptune-battery-sprayer.svg' },
+  { slug: 'welding', name: 'Welding', img: '/images/ibell-arc-250-welding.svg' },
+  { slug: 'cleaning', name: 'Cleaning', img: '/images/karcher-hd5-pressure-washer.svg' }
 ];
 
 function off(p) {
@@ -32,7 +32,7 @@ function Card({ p }) {
   return (
     <a href={`/product/${p.slug || p.id}`} className="card">
       <div className="relative">
-        <img src={p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
+        <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
         {off(p) && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off(p)}% OFF</span>}
         {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
       </div>
@@ -93,7 +93,7 @@ export default function HomeView({ initialProducts = null }) {
             </div>
           </div>
           <div className="hidden md:block">
-            <img src="https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=800&q=80" alt="Machinery" className="rounded-2xl shadow-2xl" />
+            <img src="/images/bosch-gws-600-grinder.svg" alt="Machinery" className="rounded-2xl shadow-2xl" />
           </div>
         </div>
       </section>

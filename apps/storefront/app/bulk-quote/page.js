@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { createQuote, getMyQuotes } from '../../lib/api';
+import { createQuote, getMyQuotes, requestOrderOtp, verifyOrderOtp } from '../../lib/api';
 
 const QUOTE_STATUS_LABEL = {
   new: 'Received',
@@ -21,15 +21,28 @@ function QuoteInner() {
   const [status, setStatus] = useState({ busy: false, ok: '', err: '' });
   const [lookupPhone, setLookupPhone] = useState('');
   const [lookup, setLookup] = useState({ busy: false, rows: null, err: '' });
+  const [lookupStep, setLookupStep] = useState('phone');
+  const [lookupCode, setLookupCode] = useState('');
+  const [lookupNotice, setLookupNotice] = useState('');
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   async function findQuotes(e) {
     if (e) e.preventDefault();
     setLookup({ busy: true, rows: null, err: '' });
+    setLookupNotice('');
     try {
-      const r = await getMyQuotes(lookupPhone);
+      if (lookupStep === 'phone') {
+        const r = await requestOrderOtp(lookupPhone);
+        setLookupNotice(r.message || 'We sent you a 6-digit code.');
+        setLookupStep('code');
+        setLookup({ busy: false, rows: null, err: '' });
+        return;
+      }
+      const v = await verifyOrderOtp(lookupPhone, lookupCode.trim());
+      const r = await getMyQuotes(lookupPhone, v.orderToken || v.token || '');
       const rows = Array.isArray(r) ? r : r.quotes || [];
       setLookup({ busy: false, rows, err: rows.length ? '' : 'No quote requests found for that number.' });
+      setLookupNotice('');
     } catch (err2) {
       setLookup({ busy: false, rows: null, err: err2.message || 'Could not load your quotes.' });
     }
@@ -56,7 +69,7 @@ function QuoteInner() {
         </div>
         <div><label className="label">Product</label><input className="input" value={form.productName || form.product} onChange={(e) => setForm({ ...form, product: e.target.value, productName: '' })} placeholder="e.g. Bosch GSB 13 RE Drill" required aria-label="Product you need a quote for" /></div>
         <div><label className="label">Quantity</label><input type="number" min="1" className="input max-w-[160px]" value={form.qty} onChange={(e) => set('qty', e.target.value)} required aria-label="Quantity needed" /></div>
-        <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Delivery city, GST number, timeline..." /></div>
+        <div><label className="label">Message</label><textarea className="input" rows={4} value={form.message} onChange={(e) => set('message', e.target.value)} placeholder="Delivery city, GST number, timeline..." aria-label="Your message" /></div>
         {status.ok && <p role="status" className="text-sm text-green-700 font-semibold">{status.ok}</p>}
         {status.err && <p role="alert" className="text-sm text-red-600 font-semibold">{status.err}</p>}
         <button disabled={status.busy} className="btn-primary w-full disabled:opacity-60">{status.busy ? 'Sending...' : 'Send Quote Request'}</button>
@@ -64,12 +77,18 @@ function QuoteInner() {
 
       <div className="card p-5 mt-5">
         <h2 className="font-extrabold">Already asked for a quote?</h2>
-        <p className="text-xs text-gray-500 mt-1">Enter the phone number you used and we&apos;ll show its status.</p>
-        <form onSubmit={findQuotes} className="mt-3 flex gap-2">
-          <input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" className="input" aria-label="Phone number" />
-          <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
-            {lookup.busy ? 'Checking...' : 'Check status'}
-          </button>
+        <p className="text-xs text-gray-500 mt-1">We&apos;ll send a one-time code to the phone you used, then show its status.</p>
+        <form onSubmit={findQuotes} className="mt-3 space-y-2">
+          <div className="flex gap-2">
+            <input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="98765 43210" inputMode="numeric" className="input" aria-label="Phone number for quote lookup" disabled={lookupStep === 'code'} />
+            <button disabled={lookup.busy} className="btn-outline whitespace-nowrap disabled:opacity-60">
+              {lookup.busy ? 'Checking...' : lookupStep === 'phone' ? 'Send code' : 'Verify'}
+            </button>
+          </div>
+          {lookupStep === 'code' && (
+            <input value={lookupCode} onChange={(e) => setLookupCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="6-digit code" inputMode="numeric" className="input tracking-[0.3em] font-bold" aria-label="One-time code for quote lookup" />
+          )}
+          {lookupNotice && <p role="status" className="text-xs font-semibold text-green-700 break-words">{lookupNotice}</p>}
         </form>
         {lookup.err ? <p className="text-xs text-gray-600 font-semibold mt-2">{lookup.err}</p> : null}
         {Array.isArray(lookup.rows) && lookup.rows.length > 0 ? (

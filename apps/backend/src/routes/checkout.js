@@ -2,18 +2,19 @@ const express = require('express');
 const db = require('../db');
 const { applyCoupon } = require('../lib/pricing');
 const { withTransaction, reserveItems, releaseItems } = require('../lib/stock');
-const { keysConfigured } = require('../lib/refunds');
 const { releaseCouponUse } = require('../lib/couponRelease');
-const { onlinePaymentMode } = require('../lib/payments');
+const { onlinePaymentMode, mockPaymentsAllowed, isMockId, paymentsConfigured } = require('../lib/payments');
 const { makeReceipt } = require('../lib/receipt');
 const { clampText, normalizePhone, normalizeGstin, isValidGstin } = require('../lib/validate');
 const { resolveState } = require('../../data/states');
+const { normalizeEmail, isEmail, notifyOrder } = require('../lib/notify');
+const { userFromRequest } = require('../lib/auth');
 const { codMaxPaise, shippingFeePaise } = require('../lib/policy');
 
 const router = express.Router();
 
 function razorpayClient() {
-  if (!keysConfigured()) return null; // local dev / placeholder keys: use mock
+  if (!paymentsConfigured()) return null; // local dev / placeholder keys: use mock
   return new (require('razorpay'))({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -27,7 +28,16 @@ const MAX_QTY_PER_ITEM = 999;
 // POST /store/checkout/create
 router.post('/create', async (req, res) => {
   try {
-    const { items, customer, payMode } = req.body || {};
+    const { items, customer } = req.body || {};
+    // The storefront sends "COD"/"UPI"/"Card"/"EMI" (display labels). Normalise before
+    // comparing: a strict `payMode === 'cod'` check silently turned every COD order into an
+    // unpaid online order, holding stock and never collecting cash.
+    const payModeRaw = String((req.body || {}).payMode || '').trim().toLowerCase();
+    const allowedPayModes = new Set(['', 'cod', 'cash', 'online', 'upi', 'card', 'emi', 'netbanking']);
+    if (!allowedPayModes.has(payModeRaw)) {
+      return res.status(400).json({ error: 'Unknown payment mode', code: 'BAD_PAY_MODE' });
+    }
+    const isCod = payModeRaw === 'cod' || payModeRaw === 'cash';
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items[] with {slug, qty} required' });
     }
@@ -80,9 +90,18 @@ router.post('/create', async (req, res) => {
     if ((customer.stateCode || customer.state) && !state) {
       return res.status(400).json({ error: 'Unknown state — pick your delivery state from the list' });
     }
+    // Email is nullable for backwards compatibility, but a real store needs it for the
+    // order confirmation and shipping updates. A signed-in account supplies it implicitly.
+    const account = await userFromRequest(db, req).catch(() => null);
+    const rawEmail = String(customer.email || (account && account.email) || '').trim();
+    const buyerEmail = rawEmail ? normalizeEmail(rawEmail) : '';
+    if (buyerEmail && !isEmail(buyerEmail)) {
+      return res.status(400).json({ error: 'Enter a valid email address for order updates' });
+    }
     const buyer = {
       name: cleanName,
       phone: cleanPhone,
+      email: buyerEmail || null,
       address: clampText(customer.address, 500),
       pincode: rawPincode,
       gstin: buyerGstin || null,
@@ -136,7 +155,7 @@ router.post('/create', async (req, res) => {
     // COD policy: capped at COD_MAX_PAISE (default ₹20,000). High-value machinery has to
     // be prepaid — otherwise refused deliveries cost us freight both ways.
     const codMax = codMaxPaise();
-    if (payMode === 'cod' && amount > codMax) {
+    if (isCod && amount > codMax) {
       return res.status(400).json({
         error: `Cash on Delivery is available up to ₹${(codMax / 100).toLocaleString('en-IN')}. Please pay online for this order.`,
         code: 'COD_LIMIT',
@@ -147,7 +166,7 @@ router.post('/create', async (req, res) => {
     // Decide payment handling BEFORE reserving stock: a production deploy without Razorpay
     // keys must refuse the order with a clear message, not create a mock one that holds stock.
     let paymentMode = 'cod';
-    if (payMode !== 'cod') {
+    if (!isCod) {
       paymentMode = onlinePaymentMode(process.env);
       if (paymentMode === 'error') {
         return res.status(503).json({
@@ -159,7 +178,7 @@ router.post('/create', async (req, res) => {
 
     const receipt = makeReceipt();
     const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder';
-    const orderStatus = payMode === 'cod' ? 'cod_pending' : 'pending';
+    const orderStatus = isCod ? 'cod_pending' : 'pending';
 
     // Reserve stock + create order atomically (prevents overselling on concurrent checkouts)
     let created;
@@ -184,9 +203,9 @@ router.post('/create', async (req, res) => {
           }
         }
         const { rows } = await tx.query(
-          `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise, pay_mode, shipping_paise)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, receipt`,
-          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(buyer), couponCode, discountPaise, payMode === 'cod' ? 'cod' : 'online', shippingPaise]
+          `INSERT INTO orders (receipt, status, items, amount_paise, customer, coupon_code, discount_paise, pay_mode, shipping_paise, customer_email, user_id, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id, receipt`,
+          [receipt, orderStatus, JSON.stringify(lineItems), amount, JSON.stringify(buyer), couponCode, discountPaise, isCod ? 'cod' : 'online', shippingPaise, buyerEmail || null, account ? account.id : null, clampText((req.body || {}).notes, 500) || null]
         );
         return rows[0];
       });
@@ -201,7 +220,17 @@ router.post('/create', async (req, res) => {
     }
     const orderId = created.id;
 
-    if (payMode === 'cod') {
+    // Confirmation goes into the outbox (delivery is retried independently). No email on
+    // file means nothing is queued — the response still succeeds.
+    try {
+      if (buyerEmail) {
+        await notifyOrder(db, { receipt: created.receipt, items: lineItems, amount_paise: amount, customer: buyer, customer_email: buyerEmail, pay_mode: isCod ? 'cod' : 'online' }, 'placed');
+      }
+    } catch (notifyErr) {
+      console.error('[checkout] confirmation email failed to queue:', notifyErr.message);
+    }
+
+    if (isCod) {
       console.log(`[checkout] COD order ${created.receipt} amount=${amount} coupon=${couponCode || '-'}`);
       return res.json({
         orderId,
@@ -245,11 +274,51 @@ router.post('/create', async (req, res) => {
     }
 
     await db.query('UPDATE orders SET razorpay_order_id = $1 WHERE id = $2', [razorpayOrderId, orderId]);
+    const mock = isMockId(razorpayOrderId);
     console.log(`[checkout] order ${receipt} amount=${amount} coupon=${couponCode || '-'} rzp=${razorpayOrderId}`);
-    res.json({ orderId, receipt, amount_paise: amount, couponCode, discount_paise: discountPaise, shipping_paise: shippingPaise, razorpayOrderId, keyId });
+    res.json({ orderId, receipt, amount_paise: amount, couponCode, discount_paise: discountPaise, shipping_paise: shippingPaise, razorpayOrderId, keyId, mock });
   } catch (err) {
     console.error('[checkout] error:', err.message);
     res.status(500).json({ error: 'Checkout failed' });
+  }
+});
+
+// POST /store/checkout/mock-pay  { receipt }
+// Development-only completion for the mock Razorpay order id. Without this, a local
+// install has no way to finish an online checkout: the UI opens a payment sheet with a
+// placeholder key, the order stays pending and holds stock forever. Refuses in production
+// unless the operator explicitly opted into mock payments, and only ever touches mock ids.
+router.post('/mock-pay', async (req, res) => {
+  try {
+    if (!mockPaymentsAllowed(process.env)) {
+      return res.status(403).json({ error: 'Mock payments are disabled' });
+    }
+    const receipt = String((req.body || {}).receipt || '').trim();
+    if (!receipt) return res.status(400).json({ error: 'receipt required' });
+    const { rows } = await db.query(
+      'SELECT id, status, razorpay_order_id FROM orders WHERE receipt = $1',
+      [receipt]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
+    const order = rows[0];
+    if (!isMockId(order.razorpay_order_id)) {
+      return res.status(400).json({ error: 'This order is not a mock payment order' });
+    }
+    if (order.status === 'paid') {
+      return res.json({ ok: true, receipt, status: 'paid', already: true });
+    }
+    if (order.status !== 'pending') {
+      return res.status(409).json({ error: `Cannot pay an order in status '${order.status}'` });
+    }
+    await db.query(
+      "UPDATE orders SET status = 'paid', razorpay_payment_id = $1 WHERE id = $2",
+      [`pay_mock_${Date.now()}`, order.id]
+    );
+    console.log(`[checkout] mock payment captured for ${receipt}`);
+    res.json({ ok: true, receipt, status: 'paid' });
+  } catch (err) {
+    console.error('[checkout] mock-pay error:', err.message);
+    res.status(500).json({ error: 'Mock payment failed' });
   }
 });
 

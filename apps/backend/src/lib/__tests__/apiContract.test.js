@@ -63,6 +63,7 @@ const ROUTER_FILES = {
   categoriesRouter: 'categories.js',
   statesRouter: 'states.js',
   dealsRouter: 'deals.js',
+  authRouter: 'auth.js',
 };
 
 function backendRoutes() {

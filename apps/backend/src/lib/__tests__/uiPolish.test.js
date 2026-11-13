@@ -43,9 +43,13 @@ test('the admin product form can set every catalogue field the API stores', () =
 
 test('the header exposes the shopper tools (wishlist, compare, cart)', () => {
   const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'layout.js'), 'utf8');
-  for (const href of ['/wishlist', '/compare', '/cart']) {
+  for (const href of ['/wishlist', '/compare']) {
     assert.ok(src.includes(`href="${href}"`), `header is missing a ${href} link`);
   }
+  // Cart is a live-count client island; the href lives in CartBadge, rendered by the header.
+  assert.match(src, /<CartBadge\s*\/>/, 'header should render the cart badge');
+  const badge = fs.readFileSync(path.join(STOREFRONT, 'components', 'CartBadge.js'), 'utf8');
+  assert.ok(badge.includes('href="/cart"'), 'CartBadge should link to /cart');
   // Compare lives in localStorage, so a header entry point is the only way to reach it.
   assert.match(src, /href="\/compare"[^>]*>⇄ Compare/, 'compare link should be labelled for shoppers');
 });

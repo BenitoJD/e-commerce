@@ -136,6 +136,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_paise INTEGER NOT NULL DEFA
 -- Delivery timestamp: the 7-day return window published in the policy is measured from
 -- here, not from order creation.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
+-- Two-level categories: products carry a leaf slug; the tree lives in data/categories.js.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory TEXT;
+CREATE INDEX IF NOT EXISTS idx_products_subcategory ON products(subcategory);
 
 -- Wave 11: contact enquiries (persisted, admin-triaged)
 CREATE TABLE IF NOT EXISTS contact_messages (

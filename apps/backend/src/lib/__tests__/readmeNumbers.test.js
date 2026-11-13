@@ -26,7 +26,9 @@ function countSmokeChecks() {
   const src = fs.readFileSync(SMOKE, 'utf8');
   const start = src.indexOf('const ROUTES = [');
   const block = src.slice(start, src.indexOf('];', start));
-  const routes = block.split('\n').filter((l) => /^\s*['`]/.test(l)).length;
+  // Quoted entries are literal routes; a `...` line is a conditional entry (an extra route
+  // that exists when an env var is set, e.g. a real invoice receipt) and counts as one.
+  const routes = block.split('\n').filter((l) => /^\s*(['`]|\.\.\.)/.test(l)).length;
   const expected = (src.match(/EXPECTED_STATUS = \{[\s\S]*?\};/) || [''])[0]
     .split('\n').filter((l) => /^\s*['`]/.test(l)).length;
   return routes + expected;

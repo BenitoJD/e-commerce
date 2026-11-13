@@ -123,6 +123,9 @@ function sitemapXml() {
 }
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'fixture-admin-token';
+// Only this receipt has an invoice. Anything else must 404 exactly like the real API, so the
+// live smoke can assert both the working invoice and the unknown-receipt 404.
+const FIXTURE_RECEIPT = process.env.FIXTURE_RECEIPT || 'rcpt_fixture';
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://fixture');
@@ -171,7 +174,9 @@ const server = http.createServer((req, res) => {
   if (p === '/store/service/returns/eligibility') return send(200, { eligible: false, reason: 'Fixture' });
   if (p.startsWith('/store/invoice/')) {
     const receipt = decodeURIComponent(p.split('/').pop());
-    return receipt ? send(200, invoiceFor(receipt)) : send(400, { error: 'receipt required' });
+    if (!receipt) return send(400, { error: 'receipt required' });
+    if (receipt !== FIXTURE_RECEIPT) return send(404, { error: 'Order not found' });
+    return send(200, invoiceFor(receipt));
   }
   if (p.startsWith('/store/')) return send(200, { ok: true });
 

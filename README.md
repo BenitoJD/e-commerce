@@ -118,7 +118,7 @@ node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
 
 # After a build: the live end-to-end audit. Boots a fixture backend serving the REAL
 # catalogue, starts the built storefront against it, then runs three suites and cleans up:
-#   36/36 routes · 17/17 pages · 74/74 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
+#   37/37 routes · 17/17 pages · 74/74 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
 node scripts/self-audit.mjs   # 3/3 suites
 
 # CI (.github/workflows/verify.yml) runs exactly these on every push to main and every PR:
@@ -157,7 +157,7 @@ Route smoke test and SEO audit (need the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 36/36 routes (32 pages/endpoints + 4 real 404s)
+  node scripts/smoke.mjs        # 37/37 routes (32 pages/endpoints + 5 real 404s)
 node scripts/audit-pages.mjs http://localhost:3000 bosch-gsb-13-re-drill power-tools Bosch
 node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
 ```

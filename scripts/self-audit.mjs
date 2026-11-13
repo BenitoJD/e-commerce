@@ -127,6 +127,8 @@ async function main() {
     BASE_URL: base,
     PRODUCT_SLUG: first.slug,
     BRAND: first.brand,
+    // The fixture serves exactly this receipt, so the invoice page is exercised for real.
+    INVOICE_RECEIPT: 'rcpt_fixture',
   });
   const auditOk = await runScript('page audit (SEO + metadata)', 'audit-pages.mjs', [base, first.slug, first.category, first.brand], {});
   // Every advertised URL, not just the hand-listed ones.

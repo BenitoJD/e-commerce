@@ -7,7 +7,7 @@ items are the operator inputs listed under *Needs your inputs* (photos, VPS, liv
 SMTP/SMS, store identity) — none of which is code work.
 
 Evidence at this HEAD: **CI green** on Ubuntu/Node 20 (`verify-all` + the live `self-audit`),
-backend **298** tests, storefront **112** tests, self-audit **3/3** (36/36 routes, 17/17 pages,
+backend **298** tests, storefront **112** tests, self-audit **3/3** (37/37 routes, 17/17 pages,
 74/74 sitemap URLs), fresh-clone check **5/5**, production build **28 routes**.
 
 ## Storefront
@@ -19,7 +19,7 @@ backend **298** tests, storefront **112** tests, self-audit **3/3** (36/36 route
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); **search URLs server-render their own matches** (with the right total), use a query-specific heading/breadcrumb and are **noindex** |
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
-| Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one). **Every parent and child path is in the sitemap**, derived from the taxonomy, and the nested route is covered by the live smoke suite (36/36). The **admin product form assigns both levels**, validated server-side |
+| Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one). **Every parent and child path is in the sitemap**, derived from the taxonomy, and the nested route is covered by the live smoke suite (37/37). The **admin product form assigns both levels**, validated server-side |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, a **"You save ₹X (N% off MRP)"** line under the price, and a **long-form description** (column + seeded copy; the page had rendered this field against a column that never existed) |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
@@ -114,7 +114,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue data)
                                # + built storefront + smoke + page audit + sitemap crawl, cleaned up
                                # automatically — the reproducible end-to-end check (3/3)
-node scripts/smoke.mjs         # live routes, needs running servers (36/36 incl. four real 404s)
+node scripts/smoke.mjs         # live routes, needs running servers (37/37 incl. five real 404s)
                                #   + scans visible text for ₹NaN / undefined / Invalid Date artefacts
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
 
@@ -128,7 +128,7 @@ node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug
 ```
 
 Last run against the pushed HEAD: `verify-all` **6/6** (298 backend, 112 storefront, build 28 routes),
-`self-audit` **3/3** (36/36 routes, 17/17 pages, 74/74 sitemap URLs), `verify-clone` **5/5** on a fresh
+`self-audit` **3/3** (37/37 routes, 17/17 pages, 74/74 sitemap URLs), `verify-clone` **5/5** on a fresh
 clone of `BenitoJD/toolsvilla-clone`. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 

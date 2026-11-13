@@ -22,7 +22,7 @@ const db = require('./db');
 const { makeReadyHandler } = require('./lib/health');
 const { createRateLimiter } = require('./lib/rateLimit');
 const { sweepStaleHolds, sweepIntervalMinutes } = require('./lib/sweep');
-const { parseOrigins, securityHeaders } = require('./lib/security');
+const { parseOrigins, securityHeaders, corsOrigin, corsWarning } = require('./lib/security');
 const { requestId } = require('./lib/requestId');
 const { createShutdown } = require('./lib/shutdown');
 const { seedOnBoot } = require('./lib/firstRunSeed');
@@ -33,10 +33,12 @@ const PORT = process.env.PORT || 9000;
 app.disable('x-powered-by');
 app.set('trust proxy', true); // behind nginx: needed for req.secure / req.ip
 
-const allowedOrigins = parseOrigins(process.env.FRONTEND_URL);
+const allowedOrigins = corsOrigin(process.env);
 app.use(securityHeaders);
 app.use(requestId);
-app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : '*' }));
+// No wildcard in production: the single-domain deployment needs no CORS at all, and "*"
+// would let any website call the API from a browser.
+app.use(cors({ origin: allowedOrigins }));
 
 // Webhooks need the RAW body for signature verification -> mount before express.json
 app.use('/webhooks', express.raw({ type: '*/*' }), webhooksRouter);
@@ -127,6 +129,8 @@ const server = app.listen(PORT, () => {
   console.log(`[backend] listening on :${PORT}`);
   console.log(`[backend] health: http://localhost:${PORT}/health`);
   console.log(`[backend] admin token ${process.env.ADMIN_TOKEN ? 'set' : 'NOT set (admin disabled)'}`);
+  const warning = corsWarning(process.env);
+  if (warning) console.warn(warning);
 
   // Fresh volume: create the schema, then load the catalogue so the store isn't empty until
   // someone remembers `npm run seed`. Only ever runs against an empty table.

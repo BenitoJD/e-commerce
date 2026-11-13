@@ -17,3 +17,7 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database dumps must never be committed (they contain customer PII)
+/backups/
+*.sql.gz

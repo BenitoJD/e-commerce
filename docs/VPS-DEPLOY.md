@@ -82,7 +82,19 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
    content while preserving stock and coupon usage).
 
 ## Backups
-- Enable VPS snapshots + nightly `pg_dump` to S3/R2. Keep Meili key + webhook secret in Coolify secrets, never in git.
+- Enable VPS snapshots as the outer layer. Keep the Meili key + webhook secret in Coolify
+  secrets, never in git.
+- **Database dumps**: `./scripts/db-backup.sh` writes a timestamped, gzip-verified dump to
+  `backups/` and prunes older ones (`KEEP`, default 14). It uses `docker compose exec` against
+  the postgres service when available, otherwise `pg_dump` with `DATABASE_URL`.
+  A failed dump exits non-zero and deletes its partial file — an empty backup that looks fine
+  is worse than none.
+- Nightly cron on the VPS:
+  `15 1 * * * cd /srv/toolsvilla-clone && ./scripts/db-backup.sh >> /var/log/toolsvilla-backup.log 2>&1`
+- **Restore**: `RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/toolsvilla-<stamp>.sql.gz`
+  (it refuses without the variable because it replaces live data, and stops on the first SQL
+  error). Restart the backend afterwards so pooled connections see the restored data.
+- `backups/` and `*.sql.gz` are gitignored — dumps contain customer PII.
 
 ## Monitoring
 - Liveness: `GET /health` — process is up (always 200 while Node runs).

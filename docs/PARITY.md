@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 176 (product description column + seeded copy; page↔schema field guard).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 177 (tracking/my-orders field contracts, proven sensitive; 232 backend tests).
 
 ## Storefront
 
@@ -110,8 +110,8 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
 `smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 229 tests (pricing math, GST, EMI, catalog validity,
-category taxonomy + tree counts, state list, product field contract, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
+Backend: `cd apps/backend && npm test` — 232 tests (pricing math, GST, EMI, catalog validity,
+category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking), coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,

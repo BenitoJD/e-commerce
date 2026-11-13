@@ -119,9 +119,10 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (238 backend, 96 storefront, build 28 routes),
-`smoke` **36/36** live routes, `audit-pages` **17/17** pages, `verify-clone` **5/5** on a fresh clone
-of `BenitoJD/toolsvilla-clone`.
+Last run against the pushed HEAD: `verify-all` **6/6** (289 backend, 112 storefront, build 28 routes),
+`self-audit` **3/3** (36/36 routes, 17/17 pages, 74/74 sitemap URLs), `verify-clone` **5/5** on a fresh
+clone of `BenitoJD/toolsvilla-clone`. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
+pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
 Backend: `cd apps/backend && npm test` — 245 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline), production config audit**, **nginx routing/caching rules**, CI workflow shape, coupon expiry/usage caps, webhook state machine + signature (fails closed in production), LIKE escaping, CORS policy (no wildcard in production), status

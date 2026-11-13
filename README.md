@@ -1,5 +1,7 @@
 # ToolsKart — Toolsvilla-style Machinery & Tools Store
 
+[![verify](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml/badge.svg)](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml)
+
 Production-shaped ecommerce monorepo for the Indian tools/machinery market:
 Next.js storefront + Express/Postgres backend + Razorpay payments, deployable on a single VPS.
 

@@ -35,6 +35,19 @@ test('PARITY.md states the current verification wave and the overall status', ()
   assert.match(head, /(complete|remaining)/i);
 });
 
+test('the documented test counts agree with each other', () => {
+  // The header said 297 while the Tests section still said 245 — two places, one truth.
+  const src = fs.readFileSync(DOC, 'utf8');
+  const header = src.match(/backend \*\*(\d+)\*\* tests, storefront \*\*(\d+)\*\* tests/);
+  const section = src.match(/npm test` — (\d+) tests/);
+  const sectionFront = src.match(/Storefront:[\s\S]*?npm test` — (\d+) tests/);
+  assert.ok(header, 'header must state backend/storefront counts');
+  assert.ok(section, 'Tests section must state the backend count');
+  assert.ok(sectionFront, 'Tests section must state the storefront count');
+  assert.equal(header[1], section[1], 'backend counts disagree between header and Tests section');
+  assert.equal(header[2], sectionFront[1], 'storefront counts disagree between header and Tests section');
+});
+
 test('no section still carries an open-work marker', () => {
   // 🚧 means "still to do"; the user should never find one left behind without an explanation.
   const src = fs.readFileSync(DOC, 'utf8');

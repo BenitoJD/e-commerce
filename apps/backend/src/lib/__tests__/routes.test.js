@@ -613,6 +613,23 @@ test('verify + customer cancel releases stock', async () => {
   assert.equal(c.json.status, 'cancelled');
 });
 
+test('admin order routes reject a non-numeric id with 400, not a database error', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const get = await api('GET', '/admin/orders/rcpt_not_a_number', undefined, adminHeaders);
+  assert.equal(get.status, 400);
+  assert.match(get.json.error, /must be a number/);
+
+  const patch = await api('PATCH', '/admin/orders/rcpt_not_a_number', { status: 'shipped' }, adminHeaders);
+  assert.equal(patch.status, 400);
+  assert.match(patch.json.error, /must be a number/);
+});
+
+test('invoices cannot be rendered as an order id (real 404 path)', async () => {
+  const adminHeaders = { 'x-admin-token': 'test-admin-token' };
+  const res = await api('GET', '/admin/orders/99999', undefined, adminHeaders);
+  assert.equal(res.status, 404);
+});
+
 test('webhooks: production without a secret rejects unsigned events and cannot mark paid', async () => {
   const created = await api('POST', '/store/checkout/create', {
     items: [{ slug: 'drill-a', qty: 1 }],

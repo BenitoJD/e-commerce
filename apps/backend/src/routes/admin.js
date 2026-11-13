@@ -163,6 +163,9 @@ router.get('/orders/export.csv', async (req, res) => {
 
 // PATCH /admin/orders/:id {status}
 router.patch('/orders/:id', async (req, res) => {
+  if (!/^\d+$/.test(String(req.params.id || ''))) {
+    return res.status(400).json({ error: 'order id must be a number' });
+  }
   try {
     const { status } = req.body || {};
     if (!ORDER_STATUSES.includes(status)) {
@@ -224,6 +227,11 @@ router.post('/orders/release-stale', async (req, res) => {
 
 // GET /admin/orders/:id — full order for packing slips, disputes and support calls
 router.get('/orders/:id', async (req, res) => {
+  // The id is numeric; without this a receipt or slug reaches Postgres and surfaces as a 500
+  // "invalid input syntax for type integer" instead of a clear client error.
+  if (!/^\d+$/.test(String(req.params.id || ''))) {
+    return res.status(400).json({ error: 'order id must be a number' });
+  }
   try {
     const { rows } = await db.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });

@@ -13,6 +13,9 @@ const argOf = (name, fallback) => {
 };
 const LIMIT = argOf('--limit', 500);
 const CONCURRENCY = Math.max(1, argOf('--concurrency', 8));
+// lib/seo.js deliberately emits no canonical when the site URL is localhost (a canonical
+// pointing at localhost is worse than none), so a local audit must not demand one.
+const LOCAL_BASE = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(BASE);
 
 // Catalogue pages must carry structured data; plain content pages need not.
 function needsJsonLd(pathname) {
@@ -48,7 +51,7 @@ async function check(url, pathname) {
 
   const canonical = canonicalOf(body);
   if (!canonical) {
-    if (!/noindex/i.test(robots)) problems.push('missing canonical link');
+    if (!LOCAL_BASE && !/noindex/i.test(robots)) problems.push('missing canonical link');
   } else {
     try {
       const got = new URL(canonical).pathname.replace(/\/+$/, '') || '/';
@@ -101,6 +104,9 @@ async function main() {
   });
 
   console.log(`[crawl] ${targets.length} URLs from the sitemap (concurrency ${CONCURRENCY})`);
+  if (LOCAL_BASE) {
+    console.log('[crawl] localhost base — canonicals are intentionally suppressed, so not required');
+  }
 
   const results = [];
   let cursor = 0;

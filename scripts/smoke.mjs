@@ -28,7 +28,9 @@ const ROUTES = [
   '/my-orders',
   '/track-order',
   '/order-success?receipt=smoke',
-  '/invoice/smoke',
+  // Invoices are per-order: a fake receipt is a 404 (see EXPECTED_STATUS). With a real one,
+  // pass INVOICE_RECEIPT to include it in the 200 sweep.
+  ...(process.env.INVOICE_RECEIPT ? [`/invoice/${process.env.INVOICE_RECEIPT}`] : []),
   '/returns',
   '/bulk-quote',
   '/bulk-orders',
@@ -54,6 +56,8 @@ const EXPECTED_STATUS = {
   '/category/does-not-exist': { status: 404, marker: "couldn't find that page" },
   '/category/pumps/does-not-exist': { status: 404, marker: "couldn't find that page" },
   '/product/does-not-exist': { status: 404, marker: "couldn't find that page" },
+  // An invoice for an unknown receipt must 404, not print an empty "Tax Invoice".
+  '/invoice/does-not-exist': { status: 404, marker: "couldn't find that page" },
 };
 
 // Content markers that prove the page actually rendered (not just a shell).

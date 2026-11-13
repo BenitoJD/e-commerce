@@ -1,5 +1,6 @@
 const db = require('../db');
 const { allCategoryPaths } = require('../../data/categories');
+const { sitemapOrigin } = require('../lib/sitemapOrigin');
 
 // Category URLs come from the taxonomy (+ the "all products" page) so adding a subcategory
 // to data/categories.js publishes it here automatically instead of drifting.
@@ -52,9 +53,7 @@ function buildSitemap(base, { slugs = [], brands = [], staticPages = STATIC_PAGE
 // GET /sitemap.xml
 async function sitemapHandler(req, res) {
   try {
-    const base = String(
-      process.env.FRONTEND_URL || process.env.STOREFRONT_URL || 'https://www.example.com'
-    ).replace(/\/+$/, '');
+    const base = sitemapOrigin(req);
     let slugs = [];
     let brands = [];
     try {

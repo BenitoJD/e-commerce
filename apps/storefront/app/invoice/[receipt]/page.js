@@ -1,4 +1,5 @@
 import PrintButton from '../../../components/PrintButton';
+import { notFound } from 'next/navigation';
 import { getInvoiceForRender } from '../../../lib/serverApi';
 import { STORE } from '../../../lib/store';
 import { splitTax } from '../../../lib/tax';
@@ -17,7 +18,9 @@ function fmtDate(v) {
 export default async function InvoicePage({ params }) {
   const receipt = decodeURIComponent(params?.receipt || '');
   const inv = receipt ? await getInvoiceForRender(receipt) : null;
-  const err = !receipt ? 'Missing receipt ID.' : (inv ? '' : 'Invoice not found.');
+  // An unknown receipt must be a real 404: printing a "Tax Invoice" shell for a receipt that
+  // doesn't exist (or belongs to someone else) is misleading and indexable.
+  if (!inv) notFound();
   const items = Array.isArray(inv?.items) ? inv.items : [];
   const customer = inv?.customer || {};
   const rawPayMode = String(inv?.payMode ?? inv?.pay_mode ?? '').toLowerCase();
@@ -55,11 +58,7 @@ export default async function InvoicePage({ params }) {
         <PrintButton />
       </div>
 
-      {err && <p className="text-sm text-red-600 font-semibold mt-4">{err}</p>}
-      {!err && !inv && <p className="text-sm text-gray-500 mt-4">Loading invoice...</p>}
-
-      {inv && (
-        <div className="card print-card p-6 mt-5 text-sm">
+      <div className="card print-card p-6 mt-5 text-sm">
           <div className="flex flex-wrap justify-between gap-4 border-b pb-4">
             <div>
               <div className="font-extrabold text-lg">{STORE.name}</div>
@@ -164,7 +163,6 @@ export default async function InvoicePage({ params }) {
             </div>
           </div>
         </div>
-      )}
     </div>
   );
 }

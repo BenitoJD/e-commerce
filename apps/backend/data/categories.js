@@ -1,6 +1,6 @@
 // Two-level category taxonomy, mapped to the actual 30-product catalogue.
 //
-// The reference store (toolsvilla.com) navigates nested categories
+// The reference store navigates nested categories
 // (/category/pumps/.../borewell-submersible-pumps), so a flat list of top-level categories
 // is a structural difference, not just a naming one. Every product carries a `subcategory`
 // slug from this tree; counts, filters, breadcrumbs and the sitemap all derive from here.

@@ -1,4 +1,4 @@
--- Toolsvilla clone schema
+-- E-Commerce schema
 CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   slug TEXT UNIQUE NOT NULL,

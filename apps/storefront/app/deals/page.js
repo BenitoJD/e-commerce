@@ -3,6 +3,7 @@ import { getDealsForMeta, paiseToRupees, absoluteUrl } from '../../lib/serverApi
 import { breadcrumbJsonLd } from '../../lib/jsonld';
 import { pickDeals } from '../../lib/deals';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 // Deals come from SQL (discount computed and ordered server-side), so nothing beyond the
 // first product page can be missed. The countdown stays client-side.
@@ -25,7 +26,7 @@ export async function generateMetadata() {
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl('/deals') },
+    alternates: { canonical: canonicalUrl('/deals') },
     openGraph: { title, description, url: absoluteUrl('/deals') },
   };
 }

@@ -14,6 +14,10 @@ const BASE = (process.argv[2] || process.env.BASE_URL || 'http://localhost:3000'
 const PRODUCT = process.argv[3] || process.env.PRODUCT_SLUG || '';
 const CATEGORY = process.argv[4] || process.env.CATEGORY || 'power-tools';
 const BRAND = process.argv[5] || process.env.BRAND || '';
+// lib/seo.canonicalUrl deliberately emits NO canonical when the site URL is localhost (a
+// canonical pointing at localhost is worse than none), and pages that bypass it would emit a
+// localhost URL. Neither is a defect on a local audit, so relax both rules for localhost.
+const LOCAL_BASE = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(BASE);
 
 const ROUTES = [
   '/',
@@ -56,10 +60,12 @@ function metaAudit(route, body, problems) {
   // every product at the same URL and de-indexes the rest).
   const canonical = canonicalOf(body);
   if (!canonical) {
-    problems.push('missing canonical link');
+    if (!LOCAL_BASE) problems.push('missing canonical link');
   } else {
     if (!/^https?:\/\//.test(canonical)) problems.push(`canonical is not absolute: ${canonical}`);
-    if (/localhost|127\.0\.0\.1/.test(canonical)) problems.push(`canonical points at localhost: ${canonical}`);
+    if (!LOCAL_BASE && /localhost|127\.0\.0\.1/.test(canonical)) {
+      problems.push(`canonical points at localhost: ${canonical}`);
+    }
     try {
       const u = new URL(canonical);
       const want = route.split('?')[0].replace(/\/+$/, '') || '/';

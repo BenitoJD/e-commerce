@@ -1,11 +1,12 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `About Us | ${STORE.name}`,
   description:
     'Who we are, what we stock and how we support buyers of power tools, motors, pumps, welding and farm machinery across India.',
-  alternates: { canonical: absoluteUrl('/about-us') },
+  alternates: { canonical: canonicalUrl('/about-us') },
   openGraph: {
     title: `About Us | ${STORE.name}`,
     description: 'Who we are, what we stock and how we support buyers of power tools, motors, pumps, welding and farm machinery across India.',

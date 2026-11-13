@@ -1,18 +1,18 @@
-# Feature Parity vs toolsvilla.com
+# Feature Parity Matrix
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 207 (launched against real PostgreSQL and tested end to end).
+How this build compares with the reference store (toolsvilla.com), feature by feature. Last verified: wave 208 (renamed to E-Commerce, real-PostgreSQL end-to-end rehearsal, wiring audit).
 
-**Status: feature parity complete.** Every row in this document is ✅; the only outstanding
+**Status: feature parity complete** for the E-Commerce app. Every row in this document is ✅; the only outstanding
 items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
 SMTP/SMS, store identity) — none of which is code work.
 
 Evidence at this HEAD: **CI green** on Ubuntu/Node 20 (`verify-all` + the live `self-audit`),
-backend **298** tests, storefront **112** tests, self-audit **3/3** (37/37 routes, 17/17 pages,
-74/74 sitemap URLs), fresh-clone check **5/5**, production build **28 routes**.
+backend **304** tests, storefront **112** tests, self-audit **3/3** (37/37 routes, 17/17 pages,
+94/94 sitemap URLs), fresh-checkout check **5/5**, production build **28 routes**.
 
 ## Storefront
 
-| Live feature | Clone status |
+| Live feature | Status in this build |
 |---|---|
 | Homepage hero, categories, brands, bestsellers | ✅ `app/page.js` — **server-rendered** catalogue strips + ItemList JSON-LD; client adds recently-viewed/wishlist |
 | Mega-menu / category nav | ✅ header category nav |
@@ -116,7 +116,7 @@ node scripts/self-audit.mjs    # after a build: fixture backend (real catalogue 
                                # automatically — the reproducible end-to-end check (3/3)
 node scripts/smoke.mjs         # live routes, needs running servers (37/37 incl. five real 404s)
                                #   + scans visible text for ₹NaN / undefined / Invalid Date artefacts
-node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
+node scripts/verify-fresh.mjs # fresh checkout of the pushed repo: 2 suites + audits + compose (5/5)
 
 # Needs a running storefront + backend. Audits the assembled SEO surface, which no unit test
 # sees: every JSON-LD block must parse, Product nodes must carry offers/price/currency/
@@ -127,12 +127,12 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (298 backend, 112 storefront, build 28 routes),
-`self-audit` **3/3** (37/37 routes, 17/17 pages, 74/74 sitemap URLs), `verify-clone` **5/5** on a fresh
-clone of `BenitoJD/toolsvilla-clone`. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
+Last run against the pushed HEAD: `verify-all` **6/6** (304 backend, 112 storefront, build 28 routes),
+`self-audit` **3/3** (37/37 routes, 17/17 pages, 94/94 sitemap URLs), `verify-fresh` **5/5** on a fresh
+checkout. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.
 
-Backend: `cd apps/backend && npm test` — 298 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 304 tests (pricing math, GST, EMI, catalog validity,
 category taxonomy + tree counts, state list, page↔API field contracts (invoice, product, tracking, admin detail + reconcile inputs), **graceful shutdown (drain + hard deadline), production config audit**, **nginx routing/caching rules**, CI workflow shape, coupon expiry/usage caps, webhook state machine + signature (fails closed in production), LIKE escaping, CORS policy (no wildcard in production), status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
@@ -150,9 +150,9 @@ paise→rupee normalisation, readable API errors, video embed allowlist).
 Build: `cd apps/storefront && npm run build` must compile all 29 routes.
 Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
-Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then
+Fresh-checkout check (do this before trusting a deploy): check out into an empty dir, then
 run the storefront suite (needs no install) and `apps/backend` install + suite.
-Both must be green with zero setup beyond `git clone`.
+Both must be green with zero setup beyond a fresh checkout.
 
 Seed (`cd apps/backend && npm run seed`) is **repeatable**: it refreshes catalogue
 content (names, prices, images, specs, videos) and coupon terms, but never overwrites

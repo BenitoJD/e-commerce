@@ -1,10 +1,11 @@
 import { STORE } from '../../lib/store';
 import { absoluteUrl } from '../../lib/serverApi';
+import { canonicalUrl } from '../../lib/seo';
 export const metadata = {
   title: `Shipping Policy | ${STORE.name}`,
   description:
     'Dispatch timelines, delivery partners, freight charges and serviceable pincodes for pan-India delivery.',
-  alternates: { canonical: absoluteUrl('/shipping-policy') },
+  alternates: { canonical: canonicalUrl('/shipping-policy') },
   openGraph: {
     title: `Shipping Policy | ${STORE.name}`,
     description: 'Dispatch timelines, delivery partners, freight charges and serviceable pincodes for pan-India delivery.',

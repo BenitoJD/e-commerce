@@ -57,7 +57,7 @@ test('cart: updateQty 0 removes the line', () => {
 
 test('cart: corrupt/legacy entries self-heal instead of producing NaN', () => {
   reset();
-  store.set('toolskart_cart', JSON.stringify([
+  store.set('ecommerce_cart', JSON.stringify([
     { slug: 'ok', name: 'OK', price: 100, qty: 2 },
     { name: 'no-slug', price: 50, qty: 1 },
     { slug: 'bad-price', name: 'Bad', price: 'junk', qty: 1 },
@@ -71,14 +71,14 @@ test('cart: corrupt/legacy entries self-heal instead of producing NaN', () => {
 
 test('cart: malformed JSON does not throw', () => {
   reset();
-  store.set('toolskart_cart', 'not-json{{{');
+  store.set('ecommerce_cart', 'not-json{{{');
   assert.deepEqual(cart.getCart(), []);
   assert.equal(cart.cartTotal([]), 0);
 });
 
 test('cart: non-array payload is rejected', () => {
   reset();
-  store.set('toolskart_cart', JSON.stringify({ slug: 'x' }));
+  store.set('ecommerce_cart', JSON.stringify({ slug: 'x' }));
   assert.deepEqual(cart.getCart(), []);
 });
 

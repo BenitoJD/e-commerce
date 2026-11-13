@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Restore a backup produced by scripts/db-backup.sh.
 #
-#   RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/toolsvilla-20260520T010000Z.sql.gz
+#   RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/e-commerce-20260520T010000Z.sql.gz
 #
 # Restores are destructive (the dump uses --clean --if-exists), so they require an explicit
 # confirmation variable. Point DATABASE_URL at the target first when not using compose.
@@ -26,7 +26,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 SERVICE="${PG_SERVICE:-postgres}"
 DB_USER="${POSTGRES_USER:-tools}"
-DB_NAME="${POSTGRES_DB:-toolsvilla}"
+DB_NAME="${POSTGRES_DB:-ecommerce}"
 
 echo "[restore] restoring $FILE into $DB_NAME"
 if command -v docker >/dev/null 2>&1 && docker compose ps "$SERVICE" >/dev/null 2>&1; then

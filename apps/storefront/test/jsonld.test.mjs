@@ -7,7 +7,7 @@ const product = {
   price_paise: 549500, stock: 3, images: ['/images/a.svg', '/images/b.svg', '/images/c.svg', '/images/d.svg'],
 };
 const opts = {
-  storeName: 'ToolsKart',
+  storeName: 'E-Commerce',
   absoluteUrl: (p) => `https://shop.test${p}`,
   paiseToRupees: (paise) => Math.round(Number(paise || 0) / 100),
 };
@@ -47,10 +47,10 @@ test('aggregateRating appears only when real reviews exist', () => {
 });
 
 test('organization JSON-LD exposes brand identity and support contact', () => {
-  const store = { name: 'ToolsKart', email: 'care@shop.test', phoneDigits: '919999999999' };
+  const store = { name: 'E-Commerce', email: 'care@shop.test', phoneDigits: '919999999999' };
   const ld = JSON.parse(organizationJsonLd({ store, siteUrl: 'https://shop.test/' }));
   assert.equal(ld['@type'], 'Organization');
-  assert.equal(ld.name, 'ToolsKart');
+  assert.equal(ld.name, 'E-Commerce');
   assert.equal(ld.url, 'https://shop.test'); // trailing slash normalised
   assert.equal(ld.logo, 'https://shop.test/favicon.svg');
   assert.equal(ld.contactPoint[0].telephone, '+919999999999');
@@ -60,7 +60,7 @@ test('organization JSON-LD exposes brand identity and support contact', () => {
 });
 
 test('website JSON-LD advertises the search box action', () => {
-  const ld = JSON.parse(websiteJsonLd({ store: { name: 'ToolsKart' }, siteUrl: 'https://shop.test' }));
+  const ld = JSON.parse(websiteJsonLd({ store: { name: 'E-Commerce' }, siteUrl: 'https://shop.test' }));
   assert.equal(ld['@type'], 'WebSite');
   assert.equal(ld.potentialAction['@type'], 'SearchAction');
   assert.equal(ld.potentialAction.target, 'https://shop.test/category/all?q={search_term_string}');

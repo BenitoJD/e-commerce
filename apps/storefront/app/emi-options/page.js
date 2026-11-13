@@ -1,10 +1,11 @@
 import { STORE } from '../../lib/store';
 import { absoluteUrl } from '../../lib/serverApi';
+import { canonicalUrl } from '../../lib/seo';
 export const metadata = {
   title: `EMI Options | ${STORE.name}`,
   description:
     'Credit and debit card EMI plans, indicative monthly amounts and what to check before choosing a tenure.',
-  alternates: { canonical: absoluteUrl('/emi-options') },
+  alternates: { canonical: canonicalUrl('/emi-options') },
   openGraph: {
     title: `EMI Options | ${STORE.name}`,
     description: 'Credit and debit card EMI plans, indicative monthly amounts and what to check before choosing a tenure.',

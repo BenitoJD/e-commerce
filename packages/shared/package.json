@@ -1,5 +1,5 @@
 {
-  "name": "@toolsvilla/shared",
+  "name": "@ecommerce/shared",
   "version": "0.1.0",
   "main": "src/index.js",
   "description": "Shared currency, GST and product helpers"

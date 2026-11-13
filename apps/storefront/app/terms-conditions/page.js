@@ -1,10 +1,11 @@
 import { STORE } from '../../lib/store';
 import { absoluteUrl } from '../../lib/serverApi';
+import { canonicalUrl } from '../../lib/seo';
 export const metadata = {
   title: `Terms & Conditions | ${STORE.name}`,
   description:
     'The terms that apply when you order from this store: pricing, GST, delivery, cancellations and liability.',
-  alternates: { canonical: absoluteUrl('/terms-conditions') },
+  alternates: { canonical: canonicalUrl('/terms-conditions') },
   openGraph: {
     title: `Terms & Conditions | ${STORE.name}`,
     description: 'The terms that apply when you order from this store: pricing, GST, delivery, cancellations and liability.',

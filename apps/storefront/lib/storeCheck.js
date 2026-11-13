@@ -1,6 +1,6 @@
 // Storefront identity audit.
 //
-// The store name, phone, email, address and GSTIN default to placeholders so the clone runs
+// The store name, phone, email, address and GSTIN default to placeholders so the app runs
 // out of the box. In production those values print on tax invoices and power the WhatsApp
 // links — a fake GSTIN on an invoice is a legal problem, and a fake phone sends customers
 // nowhere. The storefront has no boot hook, so this warns once from the first server render.
@@ -12,7 +12,7 @@ const PLACEHOLDER_PATTERNS = [
   /placeholder/i,
   /example\.(com|org|net)$/i,
   /^xxxxxxxx/i,
-  /toolskart\.(in|com)$/i, // the clone's own demo identity
+  /e-?commerce\.(in|com)$/i, // the shipped demo identity
 ];
 
 export function looksLikePlaceholder(value) {

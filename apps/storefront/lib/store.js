@@ -64,10 +64,10 @@ export function shippingHint(payableRupees, {
 }
 
 export const STORE = {
-  name: process.env.NEXT_PUBLIC_STORE_NAME || 'ToolsKart',
+  name: process.env.NEXT_PUBLIC_STORE_NAME || 'E-Commerce',
   phoneDigits: PHONE_DIGITS,
   phoneDisplay: displayPhone(PHONE_DIGITS),
-  email: process.env.NEXT_PUBLIC_STORE_EMAIL || 'care@toolskart.in',
+  email: process.env.NEXT_PUBLIC_STORE_EMAIL || 'care@ecommerce.in',
   gstin: process.env.NEXT_PUBLIC_STORE_GSTIN || '00AAAAA0000A1Z5',
   address: process.env.NEXT_PUBLIC_STORE_ADDRESS || 'Plot 12, MIDC Industrial Area, Pune, Maharashtra 411026',
   // GST state code of the seller. Drives the CGST/SGST vs IGST decision on invoices, so it

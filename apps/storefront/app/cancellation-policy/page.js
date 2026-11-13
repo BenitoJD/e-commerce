@@ -1,11 +1,12 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `Cancellation Policy | ${STORE.name}`,
   description:
     'Orders can be cancelled free of charge any time before dispatch. See how to cancel, when refunds are issued and what happens after a parcel ships.',
-  alternates: { canonical: absoluteUrl('/cancellation-policy') },
+  alternates: { canonical: canonicalUrl('/cancellation-policy') },
   openGraph: {
     title: `Cancellation Policy | ${STORE.name}`,
     description: 'Cancel before dispatch for a full refund — refunds reach the source account in 3–5 working days.',

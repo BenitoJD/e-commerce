@@ -5,7 +5,7 @@ const { buildPoolConfig } = require('../dbConfig');
 test('pool has bounded size and timeouts by default', () => {
   const cfg = buildPoolConfig({ DATABASE_URL: 'postgres://u:p@db:5432/x' });
   assert.equal(cfg.connectionString, 'postgres://u:p@db:5432/x');
-  assert.equal(cfg.application_name, 'toolsvilla-api');
+  assert.equal(cfg.application_name, 'e-commerce-api');
   assert.equal(cfg.max, 10);
   assert.equal(cfg.connectionTimeoutMillis, 5000);
   assert.equal(cfg.idleTimeoutMillis, 30000);
@@ -15,7 +15,7 @@ test('pool has bounded size and timeouts by default', () => {
 
 test('a missing DATABASE_URL keeps the documented local default', () => {
   const cfg = buildPoolConfig({});
-  assert.match(cfg.connectionString, /localhost:5432\/toolsvilla$/);
+  assert.match(cfg.connectionString, /localhost:5432\/ecommerce$/);
 });
 
 test('environment overrides are honoured', () => {

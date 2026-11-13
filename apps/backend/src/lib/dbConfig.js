@@ -11,8 +11,8 @@ function intFrom(value, fallback) {
 
 function buildPoolConfig(env = process.env) {
   return {
-    connectionString: env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/toolsvilla',
-    application_name: 'toolsvilla-api',
+    connectionString: env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/ecommerce',
+    application_name: 'e-commerce-api',
     // Cap concurrent clients so the API can't exhaust Postgres connection slots.
     max: intFrom(env.DB_POOL_MAX, 10),
     // Give up waiting for a slot/connection instead of hanging the request forever.

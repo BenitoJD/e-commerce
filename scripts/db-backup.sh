@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Nightly Postgres backup for the compose deployment.
 #
-#   ./scripts/db-backup.sh                 # writes backups/toolsvilla-<UTC>.sql.gz
+#   ./scripts/db-backup.sh                 # writes backups/e-commerce-<UTC>.sql.gz
 #   BACKUP_DIR=/var/backups ./scripts/db-backup.sh
 #   KEEP=30 ./scripts/db-backup.sh         # retention (files to keep, default 14)
 #
@@ -19,8 +19,8 @@ KEEP="${KEEP:-14}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 SERVICE="${PG_SERVICE:-postgres}"
 DB_USER="${POSTGRES_USER:-tools}"
-DB_NAME="${POSTGRES_DB:-toolsvilla}"
-OUT="$BACKUP_DIR/toolsvilla-$STAMP.sql.gz"
+DB_NAME="${POSTGRES_DB:-ecommerce}"
+OUT="$BACKUP_DIR/e-commerce-$STAMP.sql.gz"
 
 # Detect the tooling BEFORE creating anything, so a failed run leaves no empty directory.
 if command -v docker >/dev/null 2>&1 && docker compose ps "$SERVICE" >/dev/null 2>&1; then
@@ -58,7 +58,7 @@ echo "[backup] ok: $(du -h "$OUT" | cut -f1) $OUT"
 
 # Retention: newest KEEP files survive, older ones are removed.
 # shellcheck disable=SC2012
-ls -1t "$BACKUP_DIR"/toolsvilla-*.sql.gz 2>/dev/null | tail -n +$((KEEP + 1)) | while read -r old; do
+ls -1t "$BACKUP_DIR"/e-commerce-*.sql.gz 2>/dev/null | tail -n +$((KEEP + 1)) | while read -r old; do
   echo "[backup] pruning $old"
   rm -f "$old"
 done

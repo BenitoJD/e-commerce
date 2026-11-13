@@ -18,9 +18,9 @@ COPY . .
 # args (compose passes them via build.args), not just runtime env.
 ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:9000
 ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxx
-ARG NEXT_PUBLIC_STORE_NAME=ToolsKart
+ARG NEXT_PUBLIC_STORE_NAME=E-Commerce
 ARG NEXT_PUBLIC_STORE_PHONE=919999999999
-ARG NEXT_PUBLIC_STORE_EMAIL=care@toolskart.in
+ARG NEXT_PUBLIC_STORE_EMAIL=care@ecommerce.in
 ARG NEXT_PUBLIC_STORE_GSTIN=00AAAAA0000A1Z5
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 # Needed at BUILD time: next.config.js computes the /sitemap.xml rewrite destination.

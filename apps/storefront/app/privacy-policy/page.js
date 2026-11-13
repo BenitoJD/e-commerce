@@ -1,11 +1,12 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `Privacy Policy | ${STORE.name}`,
   description:
     'What personal data the store collects, why it is needed for delivery and GST invoicing, and how it is protected.',
-  alternates: { canonical: absoluteUrl('/privacy-policy') },
+  alternates: { canonical: canonicalUrl('/privacy-policy') },
   openGraph: {
     title: `Privacy Policy | ${STORE.name}`,
     description: 'What personal data the store collects, why it is needed for delivery and GST invoicing, and how it is protected.',
@@ -22,7 +23,7 @@ export default function PrivacyPolicy() {
         <p>We collect only what an order needs: name, phone, address, pincode, and order history. Payment details are processed directly by Razorpay — we never store card/UPI credentials.</p>
         <p><b>Use:</b> Delivery, GST invoicing, warranty support, fraud prevention and (only if you opt in) offers via email/SMS.</p>
         <p><b>Sharing:</b> With delivery partners, Razorpay and tax authorities as legally required. We never sell your data.</p>
-        <p><b>Cookies/local storage:</b> Cart, wishlist and recently-viewed items stay in your browser (keys toolskart_cart, tw_wishlist, tw_recent, tw_coupon).</p>
+        <p><b>Cookies/local storage:</b> Cart, wishlist and recently-viewed items stay in your browser (keys ecommerce_cart, tw_wishlist, tw_recent, tw_coupon).</p>
         <p><b>Your rights:</b> Ask for export or deletion anytime at {STORE.email}. Marketing opt-out is one click in any email.</p>
       </div>
     </div>

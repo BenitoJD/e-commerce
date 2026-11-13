@@ -10,7 +10,7 @@ $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 if (-not (Test-Path ".git")) { git init -b $Branch }
 git add -A
-git commit -m "Initial end-to-end Toolsvilla clone (storefront+backend+docker+razorpay)" -q
+git commit -m "Initial end-to-end E-Commerce build (storefront+backend+docker+razorpay)" -q
 if (-not (gh repo view "$Owner/$RepoName" 2>$null)) {
   gh repo create "$Owner/$RepoName" --public --source=. --remote=origin --push
 } else {

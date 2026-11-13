@@ -1,10 +1,11 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `Bulk Orders (B2B) | ${STORE.name}`,
   description: 'Wholesale slab pricing on 5+ units, GST invoice for input tax credit, freight support and a dedicated account manager for sites, farms, factories and resellers.',
-  alternates: { canonical: absoluteUrl('/bulk-orders') },
+  alternates: { canonical: canonicalUrl('/bulk-orders') },
   openGraph: {
     title: `Bulk Orders (B2B) | ${STORE.name}`,
     description: 'Wholesale pricing on 5+ units with GST invoice and freight support.',

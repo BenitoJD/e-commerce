@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getProductForMeta, getRatingForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { productJsonLd, breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
+import { canonicalUrl } from '../../../lib/seo';
 
 // Metadata + structured data are produced here (server) so crawlers see real product
 // content, while <ProductView> stays a client component for cart/wishlist interactivity.
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }) {
       // Next streams this dynamic route (status stays 200) so the body shows the branded
       // 404; noindex keeps the dead URL out of the index regardless.
       robots: { index: false, follow: true },
-      alternates: { canonical: absoluteUrl(`/product/${encodeURIComponent(slug)}`) },
+      alternates: { canonical: canonicalUrl(`/product/${encodeURIComponent(slug)}`) },
     };
   }
   const price = paiseToRupees(p.price_paise);
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description: description.slice(0, 300),
-    alternates: { canonical: absoluteUrl(`/product/${encodeURIComponent(slug)}`) },
+    alternates: { canonical: canonicalUrl(`/product/${encodeURIComponent(slug)}`) },
     openGraph: {
       title,
       description: description.slice(0, 300),

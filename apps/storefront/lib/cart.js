@@ -16,7 +16,7 @@ function sanitizeItem(i) {
 export function getCart() {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = JSON.parse(localStorage.getItem('toolskart_cart') || '[]');
+    const raw = JSON.parse(localStorage.getItem('ecommerce_cart') || '[]');
     if (!Array.isArray(raw)) return [];
     // Self-heal: drop corrupt/legacy entries (missing slug, NaN price) so one bad
     // item can never turn every total on the site into NaN.
@@ -27,7 +27,7 @@ export function getCart() {
 }
 
 export function saveCart(items) {
-  localStorage.setItem('toolskart_cart', JSON.stringify(items));
+  localStorage.setItem('ecommerce_cart', JSON.stringify(items));
   window.dispatchEvent(new Event('cart-updated'));
 }
 

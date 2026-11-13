@@ -7,6 +7,7 @@ import CategoryView from '../../../../components/CategoryView';
 import { notFound } from 'next/navigation';
 import { getProductsPage, getProductsForMeta, getCategoriesForMeta, paiseToRupees, absoluteUrl } from '../../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../../lib/jsonld';
+import { canonicalUrl } from '../../../../lib/seo';
 import { STORE } from '../../../../lib/store';
 
 const PAGE_SIZE = 40;
@@ -26,7 +27,10 @@ export async function generateMetadata({ params, searchParams }) {
   const parentSlug = decodeURIComponent(params.slug || '');
   const childSlug = decodeURIComponent(params.sub || '');
   const query = String((searchParams && searchParams.q) || '').trim();
-  const canonical = absoluteUrl(`/category/${encodeURIComponent(parentSlug)}/${encodeURIComponent(childSlug)}`);
+  const pageUrl = absoluteUrl(`/category/${encodeURIComponent(parentSlug)}/${encodeURIComponent(childSlug)}`);
+  // Canonical and OG differ on purpose: a canonical pointing at localhost is worse than none,
+  // while the OG URL is fine either way.
+  const canonical = canonicalUrl(`/category/${encodeURIComponent(parentSlug)}/${encodeURIComponent(childSlug)}`);
 
   if (query) {
     return {
@@ -70,7 +74,7 @@ export async function generateMetadata({ params, searchParams }) {
     title,
     description: description.slice(0, 300),
     alternates: { canonical },
-    openGraph: { title, description: description.slice(0, 300), url: canonical },
+    openGraph: { title, description: description.slice(0, 300), url: pageUrl },
     // A child page whose slug no longer exists should not be indexed as an empty category.
     ...(child ? {} : { robots: { index: false, follow: true } }),
   };

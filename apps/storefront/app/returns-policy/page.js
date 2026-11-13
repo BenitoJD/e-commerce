@@ -1,11 +1,12 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `Returns Policy | ${STORE.name}`,
   description:
     'The 7-day return window, what qualifies, how to raise an RMA and when refunds are issued.',
-  alternates: { canonical: absoluteUrl('/returns-policy') },
+  alternates: { canonical: canonicalUrl('/returns-policy') },
   openGraph: {
     title: `Returns Policy | ${STORE.name}`,
     description: 'The 7-day return window, what qualifies, how to raise an RMA and when refunds are issued.',

@@ -3,10 +3,10 @@
 ## Prereq
 - Node 20+, pnpm 9 (or npm), Docker Desktop (for compose), Postgres 16 if running without Docker.
 
-## 1. Clone
+## 1. Get the code
 ```bash
 git clone https://github.com/BenitoJD/toolsvilla-clone.git
-cd toolsvilla-clone
+cd e-commerce
 cp .env.example .env
 ```
 

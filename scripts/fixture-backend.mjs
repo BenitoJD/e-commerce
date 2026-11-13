@@ -16,6 +16,7 @@ const BACKEND = path.join(HERE, '..', 'apps', 'backend');
 const productsMod = require(path.join(BACKEND, 'data', 'products.js'));
 const PRODUCTS = Array.isArray(productsMod) ? productsMod : productsMod.products;
 const { CATEGORIES, resolveCategory } = require(path.join(BACKEND, 'data', 'categories.js'));
+const { STATIC_PAGES } = require(path.join(BACKEND, 'data', 'sitePages.js'));
 const { STATES } = require(path.join(BACKEND, 'data', 'states.js'));
 
 const PORT = Number(process.env.FIXTURE_PORT) || 9100;
@@ -110,13 +111,14 @@ function invoiceFor(receipt) {
 
 function sitemapXml() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.test';
+  // Same fixed pages the real backend advertises (shared data module), plus every product and
+  // every brand present in the catalogue — so the audit crawls the same URL set production does.
+  const brands = [...new Set(PRODUCTS.map((p) => p.brand).filter(Boolean))].sort();
   const urls = [
-    '/', '/deals', '/brands', '/bulk-quote', '/bulk-orders', '/emi-options', '/contact-us',
-    '/about-us', '/shipping-policy', '/returns-policy', '/cancellation-policy',
-    '/warranty-policy', '/privacy-policy', '/terms-conditions', '/category/all',
-    ...CATEGORIES.flatMap((c) => [`/category/${c.slug}`, ...c.children.map((k) => `/category/${c.slug}/${k.slug}`)]),
+    '/',
+    ...STATIC_PAGES,
     ...PRODUCTS.map((p) => `/product/${p.slug}`),
-    ...['Bosch', 'CRI', 'Kirloskar'].map((b) => `/brand/${encodeURIComponent(b)}`),
+    ...brands.map((b) => `/brand/${encodeURIComponent(b)}`),
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
     + urls.map((u) => `  <url><loc>${base}${u}</loc></url>`).join('\n') + '\n</urlset>';

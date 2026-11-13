@@ -1,11 +1,12 @@
 import { absoluteUrl } from '../../lib/serverApi';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 export const metadata = {
   title: `Warranty Policy | ${STORE.name}`,
   description:
     'Manufacturer warranty terms, what the invoice proves and how claims are handled.',
-  alternates: { canonical: absoluteUrl('/warranty-policy') },
+  alternates: { canonical: canonicalUrl('/warranty-policy') },
   openGraph: {
     title: `Warranty Policy | ${STORE.name}`,
     description: 'Manufacturer warranty terms, what the invoice proves and how claims are handled.',

@@ -1,11 +1,11 @@
-# ToolsKart — Toolsvilla-style Machinery & Tools Store
+# E-Commerce — Machinery & Tools Store
 
 [![verify](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml/badge.svg)](https://github.com/BenitoJD/toolsvilla-clone/actions/workflows/verify.yml)
 
 Production-shaped ecommerce monorepo for the Indian tools/machinery market:
 Next.js storefront + Express/Postgres backend + Razorpay payments, deployable on a single VPS.
 
-Full parity matrix vs toolsvilla.com: [`docs/PARITY.md`](docs/PARITY.md).
+Feature parity matrix: [`docs/PARITY.md`](docs/PARITY.md).
 
 ## Structure
 
@@ -114,20 +114,26 @@ Everything that runs without Docker/Postgres, in one command:
 
 ```bash
 node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
-node scripts/verify-clone.mjs # clones the pushed repo and runs 5 checks on it
+node scripts/verify-fresh.mjs # checks a fresh checkout of the pushed repo (5 checks)
 
 # After a build: the live end-to-end audit. Boots a fixture backend serving the REAL
 # catalogue, starts the built storefront against it, then runs three suites and cleans up:
-#   37/37 routes · 17/17 pages · 74/74 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
+#   37/37 routes · 17/17 pages · 94/94 sitemap URLs (JSON-LD, canonicals, H1, noindex, ₹NaN)
 node scripts/self-audit.mjs   # 3/3 suites
 
 # CI (.github/workflows/verify.yml) runs exactly these on every push to main and every PR:
 # pnpm install --frozen-lockfile → verify-all → self-audit. A test asserts the workflow keeps
 # running both, so a green badge can't hide skipped checks.
+
+# Needs a running stack (API + storefront + Postgres). Drives the real customer and operator
+# journeys — COD order with coupon, stock reserve/release, invoice maths, tracking, admin
+# state machine, returns window, cancellation, signed webhook, quotes, reviews, 404s, SEO:
+API_URL=http://127.0.0.1:9000 BASE_URL=http://localhost:3000 \
+ADMIN_TOKEN=<admin token> RAZORPAY_WEBHOOK_SECRET=<test secret> node scripts/e2e-local.cjs
 ```
 
 Individually:
-cd apps/backend && npm test        # 298 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 304 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
@@ -150,8 +156,8 @@ Product images are generated placeholders (`scripts/gen-product-images.mjs`); a 
 fails if any catalog image path has no file behind it. Replace with real photography by
 overwriting `apps/storefront/public/images/<slug>.svg` (or pointing `images[]` at your files).
 
-Fresh-clone check before trusting a deploy: clone into an empty directory and run the
-suites there — that is how the missing-catalog-files bug was caught.
+Fresh-checkout check before trusting a deploy: check out into an empty directory and run
+the suites there — that is how the missing-catalog-files bug was caught.
 
 Route smoke test and SEO audit (need the site running):
 

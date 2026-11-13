@@ -90,8 +90,8 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
   A failed dump exits non-zero and deletes its partial file — an empty backup that looks fine
   is worse than none.
 - Nightly cron on the VPS:
-  `15 1 * * * cd /srv/toolsvilla-clone && ./scripts/db-backup.sh >> /var/log/toolsvilla-backup.log 2>&1`
-- **Restore**: `RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/toolsvilla-<stamp>.sql.gz`
+  `15 1 * * * cd /srv/e-commerce && ./scripts/db-backup.sh >> /var/log/e-commerce-backup.log 2>&1`
+- **Restore**: `RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/e-commerce-<stamp>.sql.gz`
   (it refuses without the variable because it replaces live data, and stops on the first SQL
   error). Restart the backend afterwards so pooled connections see the restored data.
 - `backups/` and `*.sql.gz` are gitignored — dumps contain customer PII.

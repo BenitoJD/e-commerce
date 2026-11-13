@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getProductsPage, getProductsForMeta, getCategoriesForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
+import { canonicalUrl } from '../../../lib/seo';
 
 const PAGE_SIZE = 40;
 
@@ -29,7 +30,7 @@ export async function generateMetadata({ params, searchParams }) {
         title: `Category not found — ${STORE.name}`,
         description: 'This category does not exist. Browse all products, deals and brands instead.',
         robots: { index: false, follow: true },
-        alternates: { canonical: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+        alternates: { canonical: canonicalUrl(`/category/${encodeURIComponent(slug)}`) },
       };
     }
   }
@@ -39,7 +40,7 @@ export async function generateMetadata({ params, searchParams }) {
       title: `Search: ${query} | ${STORE.name}`,
       description: `Products matching "${query}" at ${STORE.name} — GST invoice, EMI and pan-India delivery.`,
       robots: { index: false, follow: true },
-      alternates: { canonical: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+      alternates: { canonical: canonicalUrl(`/category/${encodeURIComponent(slug)}`) },
     };
   }
 
@@ -60,7 +61,7 @@ export async function generateMetadata({ params, searchParams }) {
   return {
     title,
     description: description.slice(0, 300),
-    alternates: { canonical: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
+    alternates: { canonical: canonicalUrl(`/category/${encodeURIComponent(slug)}`) },
     openGraph: { title, description: description.slice(0, 300), url: absoluteUrl(`/category/${encodeURIComponent(slug)}`) },
   };
 }

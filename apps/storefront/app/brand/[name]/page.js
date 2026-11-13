@@ -2,6 +2,7 @@ import BrandView from '../../../components/BrandView';
 import { getBrandPage, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
+import { canonicalUrl } from '../../../lib/seo';
 
 // Brand pages are indexed ("Bosch tools price"), so the first page renders on the server.
 
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl(`/brand/${encodeURIComponent(name)}`) },
+    alternates: { canonical: canonicalUrl(`/brand/${encodeURIComponent(name)}`) },
     openGraph: { title, description, url: absoluteUrl(`/brand/${encodeURIComponent(name)}`) },
   };
 }

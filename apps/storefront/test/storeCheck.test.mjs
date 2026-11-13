@@ -38,7 +38,7 @@ test('placeholder detection tolerates formatting and rejects real values', () =>
   assert.equal(looksLikePlaceholder('+91 99999 99999'), true);
   assert.equal(looksLikePlaceholder('919999999999'), true);
   assert.equal(looksLikePlaceholder('placeholder@shop.test'), true);
-  assert.equal(looksLikePlaceholder('care@toolskart.in'), true, 'the clone demo identity is a placeholder too');
+  assert.equal(looksLikePlaceholder('care@ecommerce.in'), true, 'the shipped demo identity is a placeholder too');
   assert.equal(looksLikePlaceholder(''), true);
   assert.equal(looksLikePlaceholder('919876543210'), false);
   assert.equal(looksLikePlaceholder('care@acmetools.in'), false);

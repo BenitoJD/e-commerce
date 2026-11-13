@@ -1,8 +1,8 @@
 {
-  "name": "toolsvilla-clone",
+  "name": "e-commerce",
   "version": "0.1.0",
   "private": true,
-  "description": "Toolsvilla-like machinery & tools ecommerce — Next.js storefront + Node backend + Razorpay, VPS-ready monorepo",
+  "description": "E-Commerce machinery & tools storefront — Next.js storefront + Node backend + Razorpay, VPS-ready monorepo",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev:backend": "pnpm --filter ./apps/backend dev",

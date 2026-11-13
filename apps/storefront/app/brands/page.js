@@ -1,6 +1,7 @@
 import { getBrandsForMeta, absoluteUrl } from '../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../lib/jsonld';
 import { STORE } from '../../lib/store';
+import { canonicalUrl } from '../../lib/seo';
 
 // Directory page: server-rendered so every brand link is in the initial HTML, which is
 // how crawlers discover /brand/<name> pages without relying on the sitemap alone.
@@ -11,7 +12,7 @@ export async function generateMetadata() {
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl('/brands') },
+    alternates: { canonical: canonicalUrl('/brands') },
     openGraph: { title, description, url: absoluteUrl('/brands') },
   };
 }

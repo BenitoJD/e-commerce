@@ -28,10 +28,21 @@ test('self-audit listens where the build baked its sitemap rewrite', () => {
 });
 
 test('contract tests normalise line endings before matching multi-line markers', () => {
-  // A fresh clone on Windows checks out CRLF, so a marker containing "\n" never matched —
-  // a failure that only appeared in verify-clone, never locally.
+  // A fresh checkout on Windows uses CRLF, so a marker containing "\n" never matched —
+  // a failure that only appeared in the fresh-checkout run, never locally.
   const src = fs.readFileSync(path.join(ROOT, 'apps', 'backend', 'src', 'lib', '__tests__', 'trackingContract.test.js'), 'utf8');
   assert.match(src, /replace\(\/\\r\\n\/g, '\\n'\)/, 'multi-line marker matching must normalise CRLF');
+});
+
+test('the end-to-end script exists and is documented', () => {
+  const e2e = path.join(ROOT, 'scripts', 'e2e-local.cjs');
+  assert.ok(fs.existsSync(e2e), 'scripts/e2e-local.cjs must exist');
+  const src = fs.readFileSync(e2e, 'utf8');
+  for (const flow of ['checkout/create', 'service/track', 'service/returns', 'admin/orders', 'webhooks/razorpay']) {
+    assert.ok(src.includes(flow), `e2e must exercise ${flow}`);
+  }
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  assert.match(readme, /scripts\/e2e-local\.cjs/, 'README must document how to run it');
 });
 
 test('fixture backend serves the real catalogue rather than invented data', () => {

@@ -2,6 +2,7 @@ import HomeView from '../components/HomeView';
 import { organizationJsonLd, websiteJsonLd } from '../lib/jsonld';
 import { getProductsForMeta, paiseToRupees, absoluteUrl } from '../lib/serverApi';
 import { STORE } from '../lib/store';
+import { canonicalUrl } from '../lib/seo';
 
 // The homepage is the top landing page for organic traffic, so its catalogue strips
 // are rendered on the server (crawlers see real products, not a spinner) while the
@@ -17,7 +18,7 @@ export async function generateMetadata() {
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl('/') },
+    alternates: { canonical: canonicalUrl('/') },
     openGraph: { title, description, type: 'website', url: absoluteUrl('/') },
   };
 }

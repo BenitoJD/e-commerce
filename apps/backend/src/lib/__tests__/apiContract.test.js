@@ -61,6 +61,7 @@ const ROUTER_FILES = {
   invoiceRouter: 'invoice.js',
   brandsRouter: 'brands.js',
   categoriesRouter: 'categories.js',
+  statesRouter: 'states.js',
   dealsRouter: 'deals.js',
 };
 

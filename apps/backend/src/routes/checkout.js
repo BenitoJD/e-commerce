@@ -5,6 +5,7 @@ const { withTransaction, reserveItems } = require('../lib/stock');
 const { keysConfigured } = require('../lib/refunds');
 const { makeReceipt } = require('../lib/receipt');
 const { clampText, normalizePhone, normalizeGstin, isValidGstin } = require('../lib/validate');
+const { resolveState } = require('../../data/states');
 const { codMaxPaise, shippingFeePaise } = require('../lib/policy');
 
 const router = express.Router();
@@ -71,12 +72,20 @@ router.post('/create', async (req, res) => {
     if (buyerGstin && !isValidGstin(buyerGstin)) {
       return res.status(400).json({ error: 'GSTIN looks invalid — check the 15-character number on your registration certificate' });
     }
+    // State matters for GST: the invoice's place of supply (and CGST/SGST vs IGST) is
+    // decided by it. Optional so older clients keep working, validated when supplied.
+    const state = resolveState(customer.stateCode || customer.state || '');
+    if ((customer.stateCode || customer.state) && !state) {
+      return res.status(400).json({ error: 'Unknown state — pick your delivery state from the list' });
+    }
     const buyer = {
       name: cleanName,
       phone: cleanPhone,
       address: clampText(customer.address, 500),
       pincode: rawPincode,
       gstin: buyerGstin || null,
+      stateCode: state ? state.code : null,
+      state: state ? state.name : null,
     };
 
     // Lookup products (from the normalised basket, not the raw request)

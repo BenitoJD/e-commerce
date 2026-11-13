@@ -33,10 +33,15 @@ export function stateName(code) {
 }
 
 // Rounding must not lose paise: the two halves always add back to the total tax.
-export function splitTax(gstPaise, { sellerGstin = '', sellerStateCode = '', buyerGstin = '', rate = 18 } = {}) {
+export function splitTax(gstPaise, { sellerGstin = '', sellerStateCode = '', buyerGstin = '', buyerStateCode = '', rate = 18 } = {}) {
   const total = Math.max(0, Math.round(Number(gstPaise) || 0));
   const sellerState = stateCodeOf(sellerGstin) || (STATE_NAMES[String(sellerStateCode || '')] ? String(sellerStateCode) : null);
-  const buyerState = stateCodeOf(buyerGstin);
+  // Buyer state: prefer the GSTIN (authoritative for a business), else the delivery state
+  // the shopper picked at checkout.
+  const buyerState = stateCodeOf(buyerGstin)
+    || (STATE_NAMES[String(buyerStateCode || '').padStart(2, '0')]
+      ? String(buyerStateCode).padStart(2, '0')
+      : null);
   const interState = Boolean(sellerState && buyerState && sellerState !== buyerState);
   const cgstPaise = interState ? 0 : Math.floor(total / 2);
   const sgstPaise = interState ? 0 : total - cgstPaise;

@@ -516,6 +516,11 @@ export async function getAdminStockAlerts(token, slug = '') {
   return handle(res);
 }
 
+export async function getStates() {
+  const res = await fetch(`${BASE}/store/states`, { cache: 'no-store' });
+  return handle(res);
+}
+
 export async function checkReturnEligibility(receipt, phone) {
   const q = new URLSearchParams({ receipt: String(receipt || ''), phone: String(phone || '') });
   const res = await fetch(`${BASE}/store/service/returns/eligibility?${q.toString()}`, { cache: 'no-store' });

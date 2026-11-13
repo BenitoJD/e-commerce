@@ -60,6 +60,22 @@ test('seller state can come from config when the GSTIN is a placeholder', () => 
   assert.equal(intra.cgstPaise + intra.sgstPaise, 1800);
 });
 
+test('a B2C buyer’s chosen delivery state decides the place of supply', () => {
+  const inter = splitTax(1800, { sellerGstin: '', sellerStateCode: '27', buyerStateCode: '29' });
+  assert.equal(inter.kind, 'inter');
+  assert.equal(inter.igstPaise, 1800);
+  assert.equal(inter.placeOfSupply, 'Karnataka');
+
+  const intra = splitTax(1800, { sellerGstin: '', sellerStateCode: '27', buyerStateCode: '27' });
+  assert.equal(intra.kind, 'intra');
+  assert.equal(intra.cgstPaise + intra.sgstPaise, 1800);
+  assert.equal(intra.assumed, false, 'no longer a guess when the state was supplied');
+
+  // The GSTIN still wins over the field if both are present.
+  const fromGstin = splitTax(1800, { sellerStateCode: '27', buyerGstin: '29AAGCB7383J1Z4', buyerStateCode: '27' });
+  assert.equal(fromGstin.placeOfSupply, 'Karnataka');
+});
+
 test('splitTax tolerates junk input', () => {
   const t = splitTax(null, {});
   assert.equal(t.totalPaise, 0);

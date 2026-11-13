@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 173 (real 404s for unknown slugs — root loading boundary removed; smoke 36/36).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 174 (checkout delivery state drives B2C place of supply, 226/90 tests).
 
 ## Storefront
 
@@ -44,6 +44,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
 | GST invoice (print/PDF) | ✅ `/invoice/[receipt]` **server-rendered** (prints without waiting for JS); seller GSTIN + address from config, **buyer GSTIN**, item lines with HSN, **shipping line**, coupon line, totals that reconcile, a **GST split with place of supply** (CGST+SGST intra-state, IGST inter-state, paise-exact), **amount in words** (lakh/crore), "prices inclusive of GST", "Reverse charge: No" and an **Authorised Signatory** block — with a **field-level contract test** proving every key the page reads is actually sent (verified to fail on a rename) |
 | Buyer GSTIN validation | ✅ **structure + state code + mod-36 check character** verified on the server and mirrored in the checkout UI — a transcription typo is rejected instead of printing a tax invoice that can't be used for input credit; still optional for retail buyers |
+| Delivery state + place of supply | ✅ checkout captures a **state (01–38 with names)** from `GET /store/states`, validated server-side and stored on the order; the invoice uses it as the **place of supply for B2C orders** (GSTIN wins when present), so intra vs inter-state tax is decided by the real delivery state instead of being assumed |
 | 404 + error handling | ✅ branded `not-found.js` (search, categories, WhatsApp — not a dead end) with a **real 404 status** for unknown routes *and* for unknown product / category / subcategory slugs; `error.js` boundary offers retry/home/browse instead of a blank app-error screen. (The root `app/loading.js` boundary was removed: a root Suspense boundary made every dynamic `notFound()` stream a `200`, so a fake skeleton cost honest status codes.) |
 | Policies: shipping/returns/warranty/privacy/terms/about/contact/EMI | ✅ 10 static pages incl. **cancellation policy**, all in the footer + sitemap |
 | Cancellation (customer) | ✅ `/store/service/cancel` from Track Order for `pending` / `paid` / `cod_pending` only (not once shipped), restocks, refunds (gateway or flagged manual) and now **releases the coupon use** so a limited code isn't consumed by a cancelled order |
@@ -109,14 +110,14 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),
 `smoke` **32/32** live routes, `verify-clone` **5/5** on a fresh clone of `BenitoJD/toolsvilla-clone`.
 
-Backend: `cd apps/backend && npm test` — 223 tests (pricing math, GST, EMI, catalog validity,
-category taxonomy + tree counts, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
+Backend: `cd apps/backend && npm test` — 226 tests (pricing math, GST, EMI, catalog validity,
+category taxonomy + tree counts, state list, coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
 in-memory DB: checkout/stock, coupons, cancel, webhooks, quote conversion, admin guard,
 invoice balance, returns workflow, stock alerts).
 
-Storefront: `cd apps/storefront && npm test` — 89 tests (catalog filter/sort logic, cart
+Storefront: `cd apps/storefront && npm test` — 90 tests (catalog filter/sort logic, cart
 add/merge/clamp + reorder mapping + stock status, order money reconciliation, picking-list aggregation, GST-inclusive split, COD cap + shipping
 mirrors, deals threshold/sorting, brand directory counts, recently-viewed de-dupe/cap,
 canonical-URL guard, WhatsApp links (customer + share), TTL cache eviction/expiry,

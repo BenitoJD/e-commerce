@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { isValidGstin } from '../../lib/gstin';
-import { createCheckout, validateCoupon } from '../../lib/api';
+import { createCheckout, validateCoupon, getStates } from '../../lib/api';
 import { COD_MAX_RUPEES, SHIPPING_FEE_RUPEES, shippingFor, STORE } from '../../lib/store';
 
 function loadRazorpay() {
@@ -32,7 +32,8 @@ function readCoupon() {
 export default function CheckoutPage() {
   const [items, setItems] = useState([]);
   const [coupon, setCoupon] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', address: '', pincode: '', gstin: '', payMode: 'UPI' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', pincode: '', stateCode: '', gstin: '', payMode: 'UPI' });
+  const [states, setStates] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [serverTotal, setServerTotal] = useState(null); // authoritative total returned by backend
@@ -40,6 +41,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     setItems(getCart());
     setCoupon(readCoupon());
+    // Delivery states come from the backend so the picker and the invoice agree on the
+    // GST state list. A failed fetch just leaves the picker empty (state stays optional).
+    let alive = true;
+    getStates()
+      .then((r) => { if (alive) setStates((r && r.states) || []); })
+      .catch(() => { /* keep the form usable without the list */ });
+    return () => { alive = false; };
   }, []);
 
   const subtotal = cartTotal(items);
@@ -104,7 +112,7 @@ export default function CheckoutPage() {
     setBusy(true);
     try {
       const payload = {
-        customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode, gstin: form.gstin.trim() || null },
+        customer: { name: form.name, phone: form.phone, address: form.address, pincode: form.pincode, stateCode: form.stateCode || null, gstin: form.gstin.trim() || null },
         items: items.map((i) => ({ slug: i.slug, qty: i.qty, price: i.price })),
         payMode: form.payMode,
         amount: total,
@@ -202,6 +210,23 @@ export default function CheckoutPage() {
         <div><label className="label">Full address</label><textarea className="input" rows={3} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="House no, street, city, state" aria-label="Delivery address" autoComplete="street-address" required /></div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div><label className="label">Pincode</label><input className="input" value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="110001" inputMode="numeric" aria-label="Pincode" autoComplete="postal-code" required /></div>
+          <div>
+            <label className="label">Delivery state</label>
+            <select
+              className="input"
+              value={form.stateCode}
+              onChange={(e) => set('stateCode', e.target.value)}
+              aria-label="Delivery state"
+              autoComplete="address-level1"
+              required
+            >
+              <option value="">Select state</option>
+              {states.map((s) => <option key={s.code} value={s.code}>{s.name}</option>)}
+            </select>
+            {/* The state decides the invoice's place of supply (CGST+SGST vs IGST). */}
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">GSTIN <span className="text-gray-400 font-normal">(optional, for business invoices)</span></label>
             <input className="input uppercase" value={form.gstin} onChange={(e) => set('gstin', e.target.value.toUpperCase())} placeholder="27AABCU9603R1ZM" maxLength={20} aria-label="GSTIN for business invoice" autoComplete="off" />

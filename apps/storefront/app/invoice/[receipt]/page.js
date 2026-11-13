@@ -40,6 +40,8 @@ export default async function InvoicePage({ params }) {
     sellerGstin: STORE.gstin,
     sellerStateCode: STORE.stateCode,
     buyerGstin: customer.gstin || '',
+    // B2C buyers have no GSTIN; the delivery state they picked is the place of supply.
+    buyerStateCode: customer.stateCode || customer.state_code || '',
     rate: Number(gstRate) || 18,
   });
 

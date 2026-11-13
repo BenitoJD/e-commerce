@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getAdminOrderDetail } from '../../../lib/api';
 import { aggregatePicking } from '../../../lib/picking';
+import { getAdminToken } from '../../../lib/adminToken';
 
 // Printable consolidated picking list for the orders selected in the admin console.
 // One row per SKU with the total quantity, which is what the person with the trolley needs.
@@ -18,7 +19,7 @@ export default function PickingListPage() {
     const raw = params.get('ids') || '';
     const parsed = raw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 100);
     setIds(parsed);
-    setToken(localStorage.getItem('tw_admin_token') || '');
+    setToken(getAdminToken());
   }, []);
 
   useEffect(() => {

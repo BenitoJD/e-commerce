@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 148 (global print stylesheet + focus rings, 172 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 149 (admin token single-sourced; picking list can actually load), 174 backend tests.
 
 ## Storefront
 
@@ -21,7 +21,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Admin invoice access | ✅ **Invoice** link on every order row and **Open GST invoice** in the detail panel — support and GST filing no longer require hand-building `/invoice/<receipt>` (guarded by a test) |
 | Admin charge breakdown | ✅ order detail shows **items − coupon + shipping = total charged** with a red `role="alert"` warning when it doesn't reconcile, computed by a tested pure helper (`lib/orderMath.js`) |
 | Admin bulk order actions | ✅ row checkboxes + select-all with **Mark shipped / Mark delivered / Cancel selected** via one `POST /admin/orders/bulk-status` (max 200 ids); illegal transitions are **skipped with a reason** rather than failing the batch, and a shared helper keeps stock release + refunds identical to single-order updates |
-| Warehouse picking list | ✅ **Print picking list** for the selected orders (`/admin/picking?ids=…`) — one row per SKU with the **combined quantity** across orders, HSN and a tick box; print-friendly (`no-print` controls), noindex, aggregation covered by tests |
+| Warehouse picking list | ✅ **Print picking list** for the selected orders (`/admin/picking?ids=…`) — one row per SKU with the **combined quantity** across orders, HSN and a tick box; print-friendly (`no-print` controls), noindex, aggregation covered by tests; **shares the admin token with the console** via `lib/adminToken.js` (same key, same storage) |
+| Admin session | ✅ one token helper (`getAdminToken/setAdminToken/clearAdminToken`, `sessionStorage` key `tk_admin`) used by the console and every admin sub-page — a page inventing its own key silently behaved as logged out, so a test now forbids direct key access |
 | Print output | ✅ global print stylesheet in `globals.css` — `.no-print`, header/footer hidden, `.print-card` — shared by the **GST invoice and the picking list** (previously `.no-print` was undefined outside the invoice, so picking-list buttons would have printed). Guarded by a test |
 | Keyboard focus | ✅ visible focus ring on `.btn-primary`/`.btn-outline` (focus-visible + offset) and on all links/buttons via a global `:focus-visible` rule |
 | Bulk quote / B2B | ✅ `/bulk-quote`, `/bulk-orders`, admin pipeline + one-click convert-to-order; buyers check their own quote status by phone (phone-scoped, no PII leak) |
@@ -98,7 +99,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 172 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 174 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

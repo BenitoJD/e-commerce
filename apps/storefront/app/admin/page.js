@@ -33,6 +33,7 @@ import {
 } from '../../lib/api';
 import { waLinkTo, STORE } from '../../lib/store';
 import { reconcileOrder } from '../../lib/orderMath';
+import { getAdminToken, setAdminToken, clearAdminToken } from '../../lib/adminToken';
 
 function inrFromPaise(paise) {
   const n = Number(paise || 0) / 100;
@@ -110,25 +111,19 @@ export default function AdminPage() {
   const [prodMsg, setProdMsg] = useState('');
 
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem('tk_admin') || '';
-      setToken(saved);
-      setInput(saved);
-    } catch {}
+    const saved = getAdminToken();
+    setToken(saved);
+    setInput(saved);
   }, []);
 
   function saveToken() {
-    try {
-      sessionStorage.setItem('tk_admin', input);
-    } catch {}
+    setAdminToken(input);
     setToken(input);
     setError('');
   }
 
   function clearToken() {
-    try {
-      sessionStorage.removeItem('tk_admin');
-    } catch {}
+    clearAdminToken();
     setToken('');
     setStats(null);
     setOrders([]);

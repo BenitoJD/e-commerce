@@ -1,6 +1,14 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 189 (graceful shutdown on SIGTERM with a hard deadline; wiring verified by booting the server and emitting the signal).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 206.
+
+**Status: feature parity complete.** Every row in this document is ✅; the only outstanding
+items are the operator inputs listed under *Needs your inputs* (photos, VPS, live keys,
+SMTP/SMS, store identity) — none of which is code work.
+
+Evidence at this HEAD: **CI green** on Ubuntu/Node 20 (`verify-all` + the live `self-audit`),
+backend **291** tests, storefront **112** tests, self-audit **3/3** (36/36 routes, 17/17 pages,
+74/74 sitemap URLs), fresh-clone check **5/5**, production build **28 routes**.
 
 ## Storefront
 
@@ -119,7 +127,7 @@ node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits
 node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug> [brand]   # 17/17 pages
 ```
 
-Last run against the pushed HEAD: `verify-all` **6/6** (289 backend, 112 storefront, build 28 routes),
+Last run against the pushed HEAD: `verify-all` **6/6** (291 backend, 112 storefront, build 28 routes),
 `self-audit` **3/3** (36/36 routes, 17/17 pages, 74/74 sitemap URLs), `verify-clone` **5/5** on a fresh
 clone of `BenitoJD/toolsvilla-clone`. **CI is green** on GitHub Actions (Ubuntu, Node 20): the same
 pipeline — `verify-all` then the live `self-audit` — runs on every push to `main` and every PR.

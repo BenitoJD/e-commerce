@@ -24,6 +24,23 @@ function sections() {
   return out;
 }
 
+test('PARITY.md states the current verification wave and the overall status', () => {
+  // The header drifted for 17 waves because an automated edit silently matched nothing while
+  // still reporting success. A stale header makes the doc look unmaintained.
+  const head = fs.readFileSync(DOC, 'utf8').split(/\r?\n/).slice(0, 10).join('\n');
+  const wave = head.match(/Last verified: wave (\d+)/);
+  assert.ok(wave, 'header must state the wave it was verified at');
+  assert.ok(Number(wave[1]) >= 200, `header wave ${wave[1]} looks stale`);
+  assert.match(head, /\*\*Status:/, 'header must state whether parity is complete');
+  assert.match(head, /(complete|remaining)/i);
+});
+
+test('no section still carries an open-work marker', () => {
+  // 🚧 means "still to do"; the user should never find one left behind without an explanation.
+  const src = fs.readFileSync(DOC, 'utf8');
+  assert.doesNotMatch(src, /🚧/, 'remove the marker or explain the remaining work');
+});
+
 test('PARITY.md has no duplicate section headings', () => {
   const titles = sections().map((s) => s.title);
   const dupes = titles.filter((t, i) => titles.indexOf(t) !== i);

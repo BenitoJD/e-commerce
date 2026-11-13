@@ -18,14 +18,16 @@ const NODE = process.execPath;
 const CHECKS = [
   {
     name: 'backend tests',
+    // run-tests.mjs expands the file list itself: `node --test "glob"` only works on Node 21+,
+    // which broke the suite on Node 20 (the version this repo declares and CI uses).
     cmd: NODE,
-    args: ['--test', 'src/lib/__tests__/*.test.js'],
+    args: ['../../scripts/run-tests.mjs', 'src/lib/__tests__'],
     cwd: path.join(ROOT, 'apps/backend'),
   },
   {
     name: 'storefront tests',
     cmd: NODE,
-    args: ['--test', 'test/*.test.mjs'],
+    args: ['../../scripts/run-tests.mjs', 'test'],
     cwd: path.join(ROOT, 'apps/storefront'),
   },
   {
@@ -78,9 +80,11 @@ for (const check of CHECKS) {
     detail = `expected marker "${check.expectClean}"`;
   }
 
-  const tests = output.match(/ℹ tests (\d+)/);
-  const pass = output.match(/ℹ pass (\d+)/);
-  const fail = output.match(/ℹ fail (\d+)/);
+  // Node's reporter differs by version: "ℹ tests 5" on 22+, "# tests 5" on 20. Show counts
+  // either way so CI output stays informative.
+  const tests = output.match(/(?:ℹ|#) tests (\d+)/);
+  const pass = output.match(/(?:ℹ|#) pass (\d+)/);
+  const fail = output.match(/(?:ℹ|#) fail (\d+)/);
   if (tests) detail = `${pass ? pass[1] : '?'}/${tests[1]} passed`;
 
   results.push({ name: check.name, ok, ms, detail });

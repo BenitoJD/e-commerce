@@ -129,7 +129,7 @@ cd apps/backend && npm test        # 289 tests: pricing/GST/EMI, catalog, coupon
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
-cd apps/storefront && npm test     # 108 tests: catalog filters, cart self-healing +
+cd apps/storefront && npm test     # 112 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
 cd apps/storefront && npm run build # must compile all 29 routes

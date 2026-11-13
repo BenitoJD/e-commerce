@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 183 (smoke now scans rendered text for artifacts; it caught ₹NaN on SSR product/category/home pages, now fixed).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 184 (JSON-LD audit on rendered pages, proven to catch parse errors + missing offers + short breadcrumbs).
 
 ## Storefront
 
@@ -106,6 +106,12 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (36/36 incl. four real 404s)
                                #   + scans visible text for ₹NaN / undefined / Invalid Date artefacts
 node scripts/verify-clone.mjs  # clones the pushed repo fresh: 2 suites + audits + compose (5/5)
+
+# Needs a running storefront + backend. Audits the assembled SEO surface, which no unit test
+# sees: every JSON-LD block must parse, Product nodes must carry offers/price/currency/
+# availability, BreadcrumbLists must be >= 2 items with 1..n positions, and the visible text
+# must be free of ₹NaN/undefined/Invalid Date artefacts.
+node scripts/audit-pages.mjs http://localhost:3000 <product-slug> <category-slug>   # 5/5 pages
 ```
 
 Last run against the pushed HEAD: `verify-all` **6/6** (222 backend, 83 storefront, build 28 routes),

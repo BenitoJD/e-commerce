@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 184 (JSON-LD audit on rendered pages, proven to catch parse errors + missing offers + short breadcrumbs).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 186 (page audit covers 17 public routes incl. brand pages, image alt text, canonicals and JSON-LD).
 
 ## Storefront
 

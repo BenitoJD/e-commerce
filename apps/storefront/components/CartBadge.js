@@ -17,5 +17,14 @@ export default function CartBadge() {
       window.removeEventListener('storage', sync);
     };
   }, []);
-  return <a href="/cart" className="btn-primary !py-2" aria-label={`Cart${count ? `, ${count} item${count === 1 ? '' : 's'}` : ''}`}>Cart{count > 0 ? ` (${count})` : ''}</a>;
+  return (
+    <a
+      href="/cart"
+      className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-paper transition hover:bg-copper"
+      aria-label={`Cart${count ? `, ${count} item${count === 1 ? '' : 's'}` : ''}`}
+    >
+      Cart
+      {count > 0 ? <span className="rounded-full bg-copper px-2 py-0.5 text-[10px] leading-none text-white">{count}</span> : null}
+    </a>
+  );
 }

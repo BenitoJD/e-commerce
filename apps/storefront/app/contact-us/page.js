@@ -34,15 +34,15 @@ export default function ContactUs() {
       <div className="grid sm:grid-cols-2 gap-4 mt-5">
         <div className="card p-5 text-sm">
           <b>Helpline</b>
-          <p className="mt-2">Phone / WhatsApp: <a className="text-[#F97316] font-bold" href={waLink()}>{STORE.phoneDisplay}</a></p>
+          <p className="mt-2">Phone / WhatsApp: <a className="text-[#A95F32] font-bold" href={waLink()}>{STORE.phoneDisplay}</a></p>
           <p className="mt-1">Email: {STORE.email}</p>
           <p className="mt-1 text-gray-500">Mon–Sat, 9am–7pm IST</p>
         </div>
         <div className="card p-5 text-sm">
           <b>Quick help</b>
-          <p className="mt-2"><a href="/track-order" className="text-[#F97316] font-bold underline">Track your order</a></p>
-          <p className="mt-1"><a href="/bulk-quote" className="text-[#F97316] font-bold underline">Request a bulk quote</a></p>
-          <p className="mt-1"><a href="/shipping-policy" className="text-[#F97316] font-bold underline">Shipping policy</a></p>
+          <p className="mt-2"><a href="/track-order" className="text-[#A95F32] font-bold underline">Track your order</a></p>
+          <p className="mt-1"><a href="/bulk-quote" className="text-[#A95F32] font-bold underline">Request a bulk quote</a></p>
+          <p className="mt-1"><a href="/shipping-policy" className="text-[#A95F32] font-bold underline">Shipping policy</a></p>
         </div>
       </div>
       <form onSubmit={send} className="card p-5 mt-4 space-y-3">

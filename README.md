@@ -75,6 +75,17 @@ Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
 `NEXT_PUBLIC_*` values are baked in at **build** time — changing them requires a rebuild.
 
+## Design language
+
+The storefront is an editorial shop, not a template: warm ivory paper, ink and copper,
+**Fraunces** serif headlines with **Manrope** for interface text (both self-hosted in
+`public/fonts/`), generous spacing, quiet product cards and full-bleed photography. The
+homepage leads with the people behind the work — the workshop story, named team members
+and a direct WhatsApp line — then the collection, the weekly edit and the brands. Product
+pages keep a sticky-feeling buy column, warm specification tables and a genuine
+human-support card. Motion is restrained and respects `prefers-reduced-motion`; focus
+states, one-h1 pages, mobile layouts and `alt` text are covered by the E2E suite.
+
 ## Accounts & notifications
 
 - **Accounts**: register / sign in / sign out, profile, **saved addresses** (default one

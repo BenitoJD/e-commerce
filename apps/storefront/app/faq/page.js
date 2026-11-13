@@ -76,7 +76,7 @@ export default function FaqPage() {
       <h1 className="text-3xl font-extrabold">Frequently asked questions</h1>
       <p className="text-sm text-gray-500 mt-1">
         Delivery, payments, GST invoices, returns and bulk orders. Still stuck?{' '}
-        <a href="/contact-us" className="text-[#F97316] font-bold underline">Contact us</a> or{' '}
+        <a href="/contact-us" className="text-[#A95F32] font-bold underline">Contact us</a> or{' '}
         <a href={waLink('Hi, I have a question about an order')} className="text-green-700 font-bold underline">WhatsApp</a>.
       </p>
       <div className="mt-6 space-y-3">

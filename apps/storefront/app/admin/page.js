@@ -113,6 +113,7 @@ export default function AdminPage() {
   const [notifications, setNotifications] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [notifyBusy, setNotifyBusy] = useState(false);
+  const modFilterRef = useRef('false');
   const [shipForm, setShipForm] = useState({ awb: '', courier: '', tracking_url: '' });
   const [shipMsg, setShipMsg] = useState('');
   // Monotonic request ids: a slow response for an older filter must never overwrite the
@@ -273,6 +274,10 @@ export default function AdminPage() {
     if (token && tab === 'messages') loadMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msgFilter]);
+
+  useEffect(() => {
+    modFilterRef.current = modVerified;
+  }, [modVerified]);
 
   useEffect(() => {
     if (token && tab === 'reviews') loadModReviews();
@@ -537,8 +542,11 @@ export default function AdminPage() {
       // the "All" results with the unverified queue.
       setModReviews((prev) => {
         const next = prev.map((r) => (String(r.id) === String(id) ? { ...r, verified } : r));
-        if (modVerified === 'true' && !verified) return next.filter((r) => String(r.id) !== String(id));
-        if (modVerified === 'false' && verified) return next.filter((r) => String(r.id) !== String(id));
+        // Read the live filter, not this render's closure: an operator can change the filter
+        // while the verify request is still in flight, and the old closure then hid the row.
+        const filter = modFilterRef.current;
+        if (filter === 'true' && !verified) return next.filter((r) => String(r.id) !== String(id));
+        if (filter === 'false' && verified) return next.filter((r) => String(r.id) !== String(id));
         return next;
       });
     } catch (e) {
@@ -1424,7 +1432,7 @@ export default function AdminPage() {
             <div className="mt-4">
               <div className="flex gap-2 items-center mb-3 flex-wrap">
                 <label className="text-sm font-semibold">Show:</label>
-                <select value={modVerified} onChange={(e) => setModVerified(e.target.value)} className="input !w-auto">
+                <select value={modVerified} onChange={(e) => { modFilterRef.current = e.target.value; setModVerified(e.target.value); }} className="input !w-auto">
                   <option value="">All</option>
                   <option value="false">Unverified (queue)</option>
                   <option value="true">Verified</option>
@@ -1553,7 +1561,7 @@ export default function AdminPage() {
                       <p className="text-xs text-gray-500">{n.to_email} • {n.type} • {new Date(n.created_at).toLocaleString('en-IN')}{n.order_receipt ? ` • ${n.order_receipt}` : ''}</p>
                       <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap line-clamp-3">{n.body}</p>
                       <div className="flex gap-2 mt-2">
-                        {n.status !== 'sent' && <button onClick={() => resendMail(n.id)} className="text-xs font-bold text-[#F97316] underline">Requeue</button>}
+                        {n.status !== 'sent' && <button onClick={() => resendMail(n.id)} className="text-xs font-bold text-[#A95F32] underline">Requeue</button>}
                       </div>
                     </div>
                   ))}

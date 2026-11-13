@@ -46,8 +46,8 @@ function LoginInner() {
         {err && <p role="alert" className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">{busy ? 'Signing in...' : 'Sign in'}</button>
         <div className="flex justify-between text-sm">
-          <a href="/account/forgot" className="text-[#F97316] font-semibold">Forgot password?</a>
-          <a href="/register" className="text-[#F97316] font-semibold">Create an account</a>
+          <a href="/account/forgot" className="text-[#A95F32] font-semibold">Forgot password?</a>
+          <a href="/register" className="text-[#A95F32] font-semibold">Create an account</a>
         </div>
       </form>
       <p className="text-xs text-gray-500 mt-4">

@@ -10,10 +10,10 @@ test.describe('Public browsing', () => {
     const errors = watchErrors(page);
     await page.goto('/');
     await expect(page).toHaveTitle(/E-Commerce/);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/machinery/i);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/made to work/i);
     await expect(page.getByRole('link', { name: /View all deals/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Shop by Category/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Top Brands/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Brands we trust/i })).toBeVisible();
     await expect(page.locator('footer')).toContainText(/GST invoice/i);
 
     const text = await page.locator('body').innerText();
@@ -88,13 +88,13 @@ test.describe('Public browsing', () => {
 
     // Clear filters restores the full catalogue.
     await page.getByRole('button', { name: /Clear filters/i }).first().click();
-    await expect(page.locator('a.card').first()).toBeVisible();
+    await expect(page.locator('[data-testid="product-card"]').first()).toBeVisible();
   });
 
   test('category filtering, sorting and price bounds work together', async ({ page }) => {
     await page.goto('/category/power-tools');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Power Tools/i);
-    const cards = page.locator('a.card');
+    const cards = page.locator('[data-testid="product-card"]');
     await expect(cards.first()).toBeVisible();
     const allCount = await cards.count();
     expect(allCount).toBeGreaterThan(1);
@@ -103,20 +103,20 @@ test.describe('Public browsing', () => {
     const brandSelect = page.locator('select').first();
     await brandSelect.selectOption({ label: 'Bosch' });
     await expect.poll(async () => cards.count()).toBeLessThan(allCount);
-    const brandLabels = await cards.locator('.text-xs.text-gray-500').allInnerTexts();
-    for (const b of brandLabels) expect(b.trim()).toBe('Bosch');
+    const brandLabels = await cards.getByTestId('product-brand').allInnerTexts();
+    for (const b of brandLabels) expect(b.trim().toLowerCase()).toBe('bosch');
 
     // Sort price low→high.
     await page.locator('select').nth(1).selectOption('low');
     await expect.poll(async () => {
-      const prices = (await page.locator('a.card .text-lg').allInnerTexts()).map((p) => Number(p.replace(/[^\d]/g, '')));
+      const prices = (await page.locator('[data-testid="product-card"] .font-display').allInnerTexts()).map((p) => Number(p.replace(/[^\d]/g, '')));
       return prices.every((p, i) => i === 0 || p >= prices[i - 1]);
     }).toBe(true);
 
     // Price bounds exclude expensive products.
     await page.getByLabel('Maximum price in rupees').fill('5000');
     await expect.poll(async () => {
-      const ps = (await page.locator('a.card .text-lg').allInnerTexts()).map((p) => Number(p.replace(/[^\d]/g, '')));
+      const ps = (await page.locator('[data-testid="product-card"] .font-display').allInnerTexts()).map((p) => Number(p.replace(/[^\d]/g, '')));
       return ps.every((p) => p <= 5000);
     }).toBe(true);
 
@@ -208,7 +208,7 @@ test.describe('Public browsing', () => {
   test('deals page lists discounted products and brand directory opens brands', async ({ page }) => {
     await page.goto('/deals');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Deals/i);
-    await expect(page.locator('a.card').first()).toBeVisible();
+    await expect(page.locator('[data-testid="product-card"]').first()).toBeVisible();
     await page.goto('/brands');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Shop by Brand/i);
     await expect(page.getByText(/Featured brands/i)).toBeVisible();
@@ -227,7 +227,7 @@ test.describe('Public browsing', () => {
     await page.getByRole('link', { name: /Bosch/ }).first().click();
     await expect(page).toHaveURL(/\/brand\/Bosch/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Bosch/i);
-    await expect(page.locator('a.card').first()).toBeVisible();
+    await expect(page.locator('[data-testid="product-card"]').first()).toBeVisible();
   });
 
   test('unknown routes, products and categories return branded 404 pages', async ({ page }) => {

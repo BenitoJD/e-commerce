@@ -32,7 +32,7 @@ export default function GlobalError({ error, reset }) {
               : 'This page could not load. Your cart is safe; reload or go back to the homepage.'}
           </p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => window.location.reload()} style={{ background: '#F97316', color: '#fff', border: 0, borderRadius: 8, padding: '12px 20px', fontWeight: 700, cursor: 'pointer' }}>Reload page</button>
+            <button onClick={() => window.location.reload()} style={{ background: '#A95F32', color: '#fff', border: 0, borderRadius: 8, padding: '12px 20px', fontWeight: 700, cursor: 'pointer' }}>Reload page</button>
             <button onClick={() => reset()} style={{ background: '#fff', border: '1px solid #D1D5DB', borderRadius: 8, padding: '12px 20px', fontWeight: 700, cursor: 'pointer' }}>Try again</button>
             <a href="/" style={{ border: '1px solid #D1D5DB', borderRadius: 8, padding: '12px 20px', fontWeight: 700, color: '#111827', textDecoration: 'none' }}>Homepage</a>
           </div>

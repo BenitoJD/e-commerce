@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
         {msg && <p role="status" className="text-sm text-green-700 font-semibold">{msg}</p>}
         {devUrl && <p className="text-xs break-all bg-amber-50 border border-amber-200 rounded p-2">Development reset link: <a className="underline" href={devUrl}>{devUrl}</a></p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">{busy ? 'Sending...' : 'Send reset link'}</button>
-        <p className="text-sm text-center"><a href="/login" className="text-[#F97316] font-semibold">Back to sign in</a></p>
+        <p className="text-sm text-center"><a href="/login" className="text-[#A95F32] font-semibold">Back to sign in</a></p>
       </form>
     </div>
   );

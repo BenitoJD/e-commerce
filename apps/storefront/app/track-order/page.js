@@ -123,12 +123,12 @@ export default function TrackOrderPage() {
                 {STEPS.map((s, i) => (
                   <div key={s} className="flex-1 flex items-center last:flex-none">
                     <div className="flex flex-col items-center">
-                      <div className={`w-9 h-9 rounded-full grid place-items-center font-bold text-sm ${i <= activeIdx || activeIdx === -1 && i === 0 ? 'bg-[#F97316] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                      <div className={`w-9 h-9 rounded-full grid place-items-center font-bold text-sm ${i <= activeIdx || activeIdx === -1 && i === 0 ? 'bg-[#A95F32] text-white' : 'bg-gray-200 text-gray-500'}`}>
                         {i + 1}
                       </div>
                       <span className="text-[11px] font-bold mt-1 capitalize">{s}</span>
                     </div>
-                    {i < STEPS.length - 1 && <div className={`flex-1 h-1 mx-1 rounded ${i < activeIdx ? 'bg-[#F97316]' : 'bg-gray-200'}`} />}
+                    {i < STEPS.length - 1 && <div className={`flex-1 h-1 mx-1 rounded ${i < activeIdx ? 'bg-[#A95F32]' : 'bg-gray-200'}`} />}
                   </div>
                 ))}
               </div>
@@ -151,7 +151,7 @@ export default function TrackOrderPage() {
                 {data.courier ? `Courier: ${data.courier}` : ''}{data.courier && data.awb ? ' • ' : ''}{data.awb ? `AWB: ${data.awb}` : ''}
               </div>
               {data.trackingUrl ? (
-                <a href={data.trackingUrl} target="_blank" rel="noreferrer" className="text-[#F97316] font-bold underline text-xs">Track with courier →</a>
+                <a href={data.trackingUrl} target="_blank" rel="noreferrer" className="text-[#A95F32] font-bold underline text-xs">Track with courier →</a>
               ) : null}
             </div>
           ) : null}
@@ -168,7 +168,7 @@ export default function TrackOrderPage() {
                   : '';
                 return (
                   <div key={i} className="text-sm flex gap-2">
-                    <span className="text-[#F97316] font-bold">•</span>
+                    <span className="text-[#A95F32] font-bold">•</span>
                     <span>
                       <b>{t.label || t.status || t.event || 'update'}</b>
                       {stamp ? <span className="text-gray-500"> — {stamp}</span> : null}

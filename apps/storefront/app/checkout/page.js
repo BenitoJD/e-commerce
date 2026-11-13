@@ -258,24 +258,24 @@ export default function CheckoutPage() {
       {items.length === 0 && (
         <div role="alert" className="card p-4 mt-4 border-amber-300 bg-amber-50 text-sm">
           <b>Your cart is empty — add a product before checking out.</b>
-          <a href="/category/all" className="block text-[#F97316] font-bold mt-2">Browse products →</a>
+          <a href="/category/all" className="block text-[#A95F32] font-bold mt-2">Browse products →</a>
         </div>
       )}
-      <p className="text-sm text-gray-500 mt-1">{items.length} items • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${shown.toLocaleString('en-IN')}` : ` • Total ₹${shown.toLocaleString('en-IN')}`}{serverTotal != null ? ' (updated live)' : ''}</p>
+      <p className="text-sm text-gray-500 mt-1">{items.length} {items.length === 1 ? 'item' : 'items'} • Subtotal ₹{subtotal.toLocaleString('en-IN')}{discount > 0 ? ` • Coupon −₹${discount.toLocaleString('en-IN')} • Total ₹${shown.toLocaleString('en-IN')}` : ` • Total ₹${shown.toLocaleString('en-IN')}`}{serverTotal != null ? ' (updated live)' : ''}</p>
       {couponNotice && (
         <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800">{couponNotice}</div>
       )}
       {coupon && (
         <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm flex justify-between items-center">
           <span><b>{coupon.code}</b> applied — you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>
-          <a href="/cart" className="text-xs font-bold text-[#F97316] underline">Change</a>
+          <a href="/cart" className="text-xs font-bold text-[#A95F32] underline">Change</a>
         </div>
       )}
       {Array.isArray(items) && items.length > 0 && (
         <div className="card p-4 mt-5">
           <div className="flex items-center justify-between">
             <b className="text-sm">Order summary</b>
-            <a href="/cart" className="text-xs font-bold text-[#F97316] underline">Edit cart</a>
+            <a href="/cart" className="text-xs font-bold text-[#A95F32] underline">Edit cart</a>
           </div>
           <ul className="mt-3 divide-y text-sm">
             {items.map((i) => (
@@ -344,13 +344,13 @@ export default function CheckoutPage() {
               return (
                 <label
                   key={m}
-                  className={`border rounded-lg px-3 py-2.5 text-sm font-bold text-center ${blocked ? 'cursor-not-allowed opacity-50 text-gray-400' : 'cursor-pointer'} ${form.payMode === m ? 'border-[#F97316] bg-orange-50 text-[#EA580C]' : blocked ? '' : 'text-gray-600'}`}
+                  className={`border rounded-lg px-3 py-2.5 text-sm font-bold text-center ${blocked ? 'cursor-not-allowed opacity-50 text-gray-400' : 'cursor-pointer'} ${form.payMode === m ? 'border-[#A95F32] bg-orange-50 text-[#874822]' : blocked ? '' : 'text-gray-600'}`}
                 >
                   <span className="inline-flex items-center gap-2">
                     <input
                       type="radio"
                       name="payMode"
-                      className="h-4 w-4 accent-[#F97316]"
+                      className="h-4 w-4 accent-[#A95F32]"
                       checked={form.payMode === m}
                       disabled={disabled}
                       onChange={() => set('payMode', m)}
@@ -404,7 +404,7 @@ export default function CheckoutPage() {
             <button type="button" onClick={payMock} disabled={busy} className="btn-primary w-full mt-3 disabled:opacity-60">
               {busy ? 'Confirming...' : 'Simulate successful payment'}
             </button>
-            <a href="/cart" className="block text-center text-xs font-bold text-[#F97316] mt-2">Back to cart</a>
+            <a href="/cart" className="block text-center text-xs font-bold text-[#A95F32] mt-2">Back to cart</a>
           </div>
         ) : (
           <>

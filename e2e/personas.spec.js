@@ -36,7 +36,7 @@ test.describe('Persona journeys', () => {
     const phone = uniquePhone();
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/machinery/i);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/made to work/i);
     const search = page.getByRole('combobox', { name: 'Search products' }).first();
     await search.fill('angle grinder');
     const option = page.getByRole('listbox').getByRole('option').first();
@@ -69,7 +69,7 @@ test.describe('Persona journeys', () => {
   test('deal hunter: browses deals, compares, saves a wishlist and applies a coupon', async ({ page }) => {
     await page.goto('/deals');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Deals/i);
-    const cards = page.locator('a.card');
+    const cards = page.locator('[data-testid="product-card"]');
     await expect(cards.first()).toBeVisible();
     const firstHref = await cards.first().getAttribute('href');
     const secondHref = await cards.nth(1).getAttribute('href');
@@ -297,13 +297,13 @@ test.describe('Persona journeys', () => {
     await expect(page).toHaveURL(/\/category\/furniture/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Furniture/i);
 
-    const cards = page.locator('a.card');
+    const cards = page.locator('[data-testid="product-card"]');
     await expect(cards).toHaveCount(6);
     const broken = await cards.locator('img').evaluateAll((imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.getAttribute('src')));
     expect(broken, `broken furniture images: ${broken.join(', ')}`).toEqual([]);
 
     // Wardrobe has three real photos; the thumbnails must switch the main image.
-    await page.locator('a.card').filter({ hasText: 'Carved Teak Wardrobe' }).click();
+    await page.locator('[data-testid="product-card"]').filter({ hasText: 'Carved Teak Wardrobe' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Carved Teak Wardrobe/i);
     await expect(page.getByRole('button', { name: /View image 3 of 3/i })).toBeVisible();
     const main = page.locator('main img').first();
@@ -313,7 +313,7 @@ test.describe('Persona journeys', () => {
 
     await page.goto('/category/furniture/doors');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Doors/i);
-    await page.locator('a.card').filter({ hasText: 'Hand-Carved Teak Door' }).click();
+    await page.locator('[data-testid="product-card"]').filter({ hasText: 'Hand-Carved Teak Door' }).click();
     await expect(page.locator('main img').first()).toHaveAttribute('src', /gracewood-carved-door\.jpg/);
     await page.getByRole('button', { name: /^Add to Cart$/ }).click();
     await page.getByRole('link', { name: /^Cart/ }).first().click();

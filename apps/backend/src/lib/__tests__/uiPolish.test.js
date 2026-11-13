@@ -51,5 +51,5 @@ test('the header exposes the shopper tools (wishlist, compare, cart)', () => {
   const badge = fs.readFileSync(path.join(STOREFRONT, 'components', 'CartBadge.js'), 'utf8');
   assert.ok(badge.includes('href="/cart"'), 'CartBadge should link to /cart');
   // Compare lives in localStorage, so a header entry point is the only way to reach it.
-  assert.match(src, /href="\/compare"[^>]*>⇄ Compare/, 'compare link should be labelled for shoppers');
+  assert.match(src, /href="\/compare"[^>]*>Compare/, 'compare link should be labelled for shoppers');
 });

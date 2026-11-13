@@ -8,7 +8,7 @@ const LETTERS = ['All', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 function BrandImage({ brand, large = false }) {
   if (!brand.image) {
     return (
-      <div className={`mx-auto ${large ? 'h-20 w-20 text-3xl' : 'h-14 w-14 text-2xl'} rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 text-[#EA580C] grid place-items-center font-black`}>
+      <div className={`mx-auto ${large ? 'h-20 w-20 text-3xl' : 'h-14 w-14 text-2xl'} rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 text-[#874822] grid place-items-center font-black`}>
         {brand.name[0]}
       </div>
     );
@@ -29,7 +29,7 @@ function BrandCard({ brand, large = false }) {
   return (
     <a
       href={`/brand/${encodeURIComponent(brand.name)}`}
-      className={`card group overflow-hidden hover:border-[#F97316] hover:shadow-md transition ${large ? 'ring-1 ring-orange-100' : ''}`}
+      className={`card group overflow-hidden hover:border-[#A95F32] hover:shadow-md transition ${large ? 'ring-1 ring-orange-100' : ''}`}
     >
       <div className={`bg-white border-b border-gray-100 flex items-center justify-center overflow-hidden ${large ? 'h-36 p-4' : 'h-28 p-3'}`}>
         <BrandImage brand={brand} large={large} />
@@ -41,7 +41,7 @@ function BrandCard({ brand, large = false }) {
             {brand.count} product{brand.count === 1 ? '' : 's'}
           </div>
         </div>
-        <span aria-hidden="true" className="text-[#F97316] font-bold shrink-0 group-hover:translate-x-0.5 transition">→</span>
+        <span aria-hidden="true" className="text-[#A95F32] font-bold shrink-0 group-hover:translate-x-0.5 transition">→</span>
       </div>
     </a>
   );
@@ -76,7 +76,7 @@ export default function BrandDirectory({ brands = [] }) {
       <section className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 via-amber-50 to-white px-6 py-8 md:px-10 md:py-10">
         <div className="grid lg:grid-cols-[1fr_auto] gap-8 items-end">
           <div>
-            <span className="badge bg-white text-[#EA580C] border border-orange-200">Genuine brands</span>
+            <span className="badge bg-white text-[#874822] border border-orange-200">Genuine brands</span>
             <h1 className="text-3xl md:text-4xl font-black mt-3">Shop by Brand</h1>
             <p className="text-sm md:text-base text-gray-600 mt-2 max-w-2xl">
               {brands.length} authorised brands across machinery, tools and handcrafted furniture.
@@ -98,15 +98,15 @@ export default function BrandDirectory({ brands = [] }) {
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="rounded-2xl bg-white/80 border border-orange-100 px-4 py-3">
-              <div className="text-2xl font-black text-[#EA580C]">{brands.length}</div>
+              <div className="text-2xl font-black text-[#874822]">{brands.length}</div>
               <div className="text-[11px] uppercase tracking-wide text-gray-500 font-bold">Brands</div>
             </div>
             <div className="rounded-2xl bg-white/80 border border-orange-100 px-4 py-3">
-              <div className="text-2xl font-black text-[#EA580C]">{totalProducts}</div>
+              <div className="text-2xl font-black text-[#874822]">{totalProducts}</div>
               <div className="text-[11px] uppercase tracking-wide text-gray-500 font-bold">Products</div>
             </div>
             <div className="rounded-2xl bg-white/80 border border-orange-100 px-4 py-3">
-              <div className="text-2xl font-black text-[#EA580C]">GST</div>
+              <div className="text-2xl font-black text-[#874822]">GST</div>
               <div className="text-[11px] uppercase tracking-wide text-gray-500 font-bold">Invoices</div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function BrandDirectory({ brands = [] }) {
                 disabled={disabled}
                 aria-pressed={letter === l}
                 onClick={() => setLetter(l)}
-                className={`shrink-0 w-8 h-8 rounded-lg text-xs font-bold border ${letter === l ? 'bg-[#F97316] text-white border-[#F97316]' : disabled ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : 'bg-white text-gray-600 border-gray-200 hover:border-[#F97316] hover:text-[#EA580C]'}`}
+                className={`shrink-0 w-8 h-8 rounded-lg text-xs font-bold border ${letter === l ? 'bg-[#A95F32] text-white border-[#A95F32]' : disabled ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : 'bg-white text-gray-600 border-gray-200 hover:border-[#A95F32] hover:text-[#874822]'}`}
               >
                 {l}
               </button>

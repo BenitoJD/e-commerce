@@ -165,7 +165,7 @@ test.describe('Admin console', () => {
     const reviewRow = page.locator('tr').filter({ hasText: reviewTitle });
     await reviewRow.getByRole('button', { name: /^Verify$/ }).click();
     await page.locator('select').first().selectOption('');
-    await expect.poll(async () => (await reviewRow.innerText()).includes('yes'), { timeout: 15000 }).toBe(true);
+    await expect.poll(async () => (await reviewRow.innerText()).toLowerCase().includes('yes'), { timeout: 15000 }).toBe(true);
     await expect(page.getByText(reviewTitle).first()).toBeVisible();
 
     // Emails tab lists the confirmation messages queued by the order.

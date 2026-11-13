@@ -184,9 +184,9 @@ export default function AccountPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
                 <b>{inr(o.amount_paise)}</b>
                 <div className="flex gap-3 text-xs font-bold">
-                  <a className="text-[#F97316] underline" href={`/invoice/${encodeURIComponent(o.receipt)}`}>Invoice</a>
-                  <a className="text-[#F97316] underline" href={`/track-order?receipt=${encodeURIComponent(o.receipt)}`}>Track</a>
-                  <button onClick={() => reorder(o)} disabled={busy} className="text-[#F97316] underline disabled:opacity-50">Reorder</button>
+                  <a className="text-[#A95F32] underline" href={`/invoice/${encodeURIComponent(o.receipt)}`}>Invoice</a>
+                  <a className="text-[#A95F32] underline" href={`/track-order?receipt=${encodeURIComponent(o.receipt)}`}>Track</a>
+                  <button onClick={() => reorder(o)} disabled={busy} className="text-[#A95F32] underline disabled:opacity-50">Reorder</button>
                 </div>
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function AccountPage() {
               <div key={a.id} className="card p-4 text-sm">
                 <div className="flex justify-between">
                   <b>{a.label}{a.is_default ? ' • Default' : ''}</b>
-                  {!a.is_default && <button onClick={() => makeDefault(a)} className="text-xs text-[#F97316] font-bold">Make default</button>}
+                  {!a.is_default && <button onClick={() => makeDefault(a)} className="text-xs text-[#A95F32] font-bold">Make default</button>}
                 </div>
                 <p className="mt-1">{a.name} — {a.phone}</p>
                 <p className="text-gray-600">{a.address}, {a.pincode}, {a.state}</p>
@@ -234,7 +234,7 @@ export default function AccountPage() {
           <p><span className="text-gray-500">Email:</span> <b>{user.email}</b></p>
           <p><span className="text-gray-500">Phone:</span> <b>{user.phone || 'Not set'}</b></p>
           <p><span className="text-gray-500">Member since:</span> <b>{new Date(user.createdAt).toLocaleDateString('en-IN')}</b></p>
-          <a href="/account/forgot" className="text-[#F97316] font-bold underline inline-block pt-2">Change password</a>
+          <a href="/account/forgot" className="text-[#A95F32] font-bold underline inline-block pt-2">Change password</a>
         </div>
       )}
     </div>

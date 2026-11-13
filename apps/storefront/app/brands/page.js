@@ -33,7 +33,7 @@ export default async function BrandsPage() {
         }}
       />
       <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-0">
-        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <a href="/" className="hover:text-[#A95F32]">Home</a>
         <span className="mx-1">/</span>
         <span className="text-gray-700">Brands</span>
       </nav>

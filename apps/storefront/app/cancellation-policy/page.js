@@ -25,17 +25,17 @@ export default function CancellationPolicy() {
           No fee is charged and any amount already paid is refunded in full.
         </p>
         <p>
-          <b>How to cancel.</b> Open <a href="/track-order" className="text-[#F97316] font-bold underline">Track Order</a>,
+          <b>How to cancel.</b> Open <a href="/track-order" className="text-[#A95F32] font-bold underline">Track Order</a>,
           enter your receipt number and the phone used at checkout, and use the <i>Cancel order</i>
           button. You can also{' '}
-          <a href="/contact-us" className="text-[#F97316] font-bold underline">contact us</a> with your
+          <a href="/contact-us" className="text-[#A95F32] font-bold underline">contact us</a> with your
           receipt number — we action it the same day during working hours.
         </p>
         <p>
           <b>After dispatch.</b> Once an order is marked <i>Shipped</i> it cannot be cancelled,
           because the parcel is already with the courier. You can still refuse delivery or raise a
           return after it arrives — see the{' '}
-          <a href="/returns-policy" className="text-[#F97316] font-bold underline">returns policy</a>{' '}
+          <a href="/returns-policy" className="text-[#A95F32] font-bold underline">returns policy</a>{' '}
           (7 days from delivery).
         </p>
         <p>

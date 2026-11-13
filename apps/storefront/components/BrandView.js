@@ -1,9 +1,9 @@
 'use client';
 
-import { fitClass } from '../lib/image';
 
 import { useEffect, useState } from 'react';
 import { searchProducts, asList } from '../lib/api';
+import ProductCard from './ProductCard';
 
 export default function BrandView({ name, initialItems = [], initialTotal = null }) {
   const PAGE = 40;
@@ -59,13 +59,13 @@ export default function BrandView({ name, initialItems = [], initialTotal = null
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-2">
-        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <a href="/" className="hover:text-[#A95F32]">Home</a>
         <span className="mx-1">/</span>
-        <a href="/brands" className="hover:text-[#F97316]">Brands</a>
+        <a href="/brands" className="hover:text-[#A95F32]">Brands</a>
         <span className="mx-1">/</span>
         <span className="text-gray-700">{name}</span>
       </nav>
-      <a href="/brands" className="text-sm text-[#F97316] font-bold">← All brands</a>
+      <a href="/brands" className="text-sm text-[#A95F32] font-bold">← All brands</a>
       <h1 className="text-3xl font-extrabold mt-1">{name}</h1>
       <p className="text-sm text-gray-500 mt-1">
         {(total != null ? total : items.length)} product{(total != null ? total : items.length) === 1 ? '' : 's'} • GST invoice • EMI available
@@ -78,27 +78,8 @@ export default function BrandView({ name, initialItems = [], initialTotal = null
           <a href="/category/all" className="btn-primary inline-block mt-4">Browse All Products</a>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {items.map((p) => {
-            const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
-            return (
-              <a key={p.slug || p.id} href={`/product/${p.slug || p.id}`} className="card">
-                <div className="relative">
-                  <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className={fitClass(p.image || p.images?.[0], 'h-40 w-full object-cover')} loading="lazy" />
-                  {off > 0 && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off}% OFF</span>}
-                {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
-                </div>
-                <div className="p-3">
-                  <div className="text-xs text-gray-500 font-semibold">{p.brand || ''}</div>
-                  <div className="text-sm font-bold line-clamp-2 min-h-[2.5rem]">{p.name}</div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="font-extrabold text-lg">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                    {p.mrp && <span className="text-xs text-gray-400 line-through">₹{Number(p.mrp).toLocaleString('en-IN')}</span>}
-                  </div>
-                </div>
-              </a>
-            );
-          })}
+        <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+          {items.map((p) => <ProductCard key={p.slug || p.id} p={p} />)}
         </div>
       )}
       {!loading && hasMore ? (

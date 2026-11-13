@@ -236,7 +236,7 @@ export default function CartPage() {
                 <span>Shipping</span>
                 <span>{shipHint.free ? 'Free' : `₹${shipping.toLocaleString('en-IN')}`}</span>
               </div>
-              <div className="flex justify-between text-lg"><span>To Pay</span><span>₹{(payable + shipping).toLocaleString('en-IN')}</span></div>
+              <div className="flex items-baseline justify-between font-display text-2xl"><span>To Pay</span><span>₹{(payable + shipping).toLocaleString('en-IN')}</span></div>
             </div>
             <p className="text-xs text-gray-500 mt-1">Prices include GST.</p>
             <p
@@ -257,7 +257,7 @@ export default function CartPage() {
             ) : (
               <a href="/checkout" className="btn-primary block text-center mt-4">Proceed to Checkout</a>
             )}
-            <a href="/category/all" className="block text-center text-sm text-[#F97316] font-bold mt-3">Continue shopping</a>
+            <a href="/category/all" className="block text-center text-sm text-[#A95F32] font-bold mt-3">Continue shopping</a>
           </div>
         </div>
       )}

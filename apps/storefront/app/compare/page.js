@@ -90,7 +90,7 @@ export default function ComparePage() {
                 <th className="p-3 text-left text-gray-500 font-semibold">Attribute</th>
                 {products.map((p) => (
                   <th key={p.slug} className="p-3 text-left align-top min-w-[180px]">
-                    <a href={`/product/${encodeURIComponent(p.slug)}`} className="font-bold hover:text-[#F97316]">{p.name}</a>
+                    <a href={`/product/${encodeURIComponent(p.slug)}`} className="font-bold hover:text-[#A95F32]">{p.name}</a>
                     <div className="text-xs text-gray-500 font-normal mt-0.5">{p.brand || ''}</div>
                     <button
                       onClick={() => drop(p.slug)}

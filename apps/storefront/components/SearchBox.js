@@ -86,7 +86,8 @@ export default function SearchBox({ compact = false }) {
 
   return (
     <div ref={boxRef} className="relative flex-1">
-      <div className="flex">
+      <div className="flex items-center rounded-full border border-line bg-surface transition focus-within:border-copper focus-within:ring-2 focus-within:ring-copper/15">
+        <span aria-hidden="true" className="pl-4 pr-2 text-muted">⌕</span>
         <input
           name="q"
           aria-label="Search products"
@@ -95,23 +96,23 @@ export default function SearchBox({ compact = false }) {
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => { if (hasAny) setOpen(true); }}
           onKeyDown={onKeyDown}
-          placeholder={compact ? 'Search tools...' : 'Search drills, motors, pumps, welders...'}
-          className="input rounded-r-none"
+          placeholder={compact ? 'Search...' : 'Search tools, motors, furniture…'}
+          className="w-full bg-transparent border-0 px-1 py-2.5 text-sm text-ink placeholder:text-muted/60 focus:outline-none focus:ring-0"
           autoComplete="off"
           role="combobox"
           aria-expanded={open}
           aria-controls="search-suggest"
           aria-autocomplete="list"
         />
-        <button type="submit" className="bg-[#F97316] text-white px-4 rounded-r-lg font-semibold">
+        <button type="submit" className="m-1 rounded-full bg-ink text-paper px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] transition hover:bg-copper">
           {compact ? 'Go' : 'Search'}
         </button>
       </div>
 
       {open && (
-        <div id="search-suggest" role={hasAny ? 'listbox' : 'status'} className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[60] overflow-hidden text-sm">
+        <div id="search-suggest" role={hasAny ? 'listbox' : 'status'} className="absolute left-0 right-0 top-full mt-2 bg-surface border border-line rounded-2xl shadow-lift z-[60] overflow-hidden text-sm">
           {!hasAny ? (
-            <div className="px-4 py-3 text-gray-500">
+            <div className="px-4 py-3 text-muted">
               No matches for “{q.trim()}”. Press Enter to search everything.
             </div>
           ) : rows.map((r, i) => (
@@ -123,7 +124,7 @@ export default function SearchBox({ compact = false }) {
               aria-selected={i === active}
               onMouseEnter={() => setActive(i)}
               onClick={(e) => { e.preventDefault(); go(r.href); }}
-              className={`flex items-center justify-between gap-3 px-4 py-2 ${i === active ? 'bg-orange-50' : 'hover:bg-gray-50'}`}
+              className={`flex items-center justify-between gap-3 px-4 py-3 ${i === active ? 'bg-copper-light' : 'hover:bg-copper-light/40'}`}
             >
               <span className="truncate">
                 <span className="text-[11px] uppercase tracking-wide text-gray-400 mr-2">{r.type}</span>
@@ -136,7 +137,7 @@ export default function SearchBox({ compact = false }) {
           {hasAny && (
             <button
               type="submit"
-              className="w-full text-left px-4 py-2 bg-gray-50 text-[#F97316] font-bold border-t"
+              className="w-full text-left px-4 py-3 bg-paper text-copper font-bold border-t border-line"
             >
               See all results for “{q.trim()}” →
             </button>

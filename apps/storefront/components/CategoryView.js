@@ -1,10 +1,10 @@
 'use client';
 
-import { fitClass } from '../lib/image';
 
 import { useEffect, useMemo, useState } from 'react';
 import { fetchProducts, fetchBrands } from '../lib/api';
 import { STORE } from '../lib/store';
+import ProductCard from './ProductCard';
 
 const FALLBACK = [];
 
@@ -153,17 +153,17 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-2">
-        <a href="/" className="hover:text-[#F97316]">Home</a>
+        <a href="/" className="hover:text-[#A95F32]">Home</a>
         <span className="mx-1">/</span>
         {initialQ ? (
           <>
-            <a href="/category/all" className="hover:text-[#F97316]">Search</a>
+            <a href="/category/all" className="hover:text-[#A95F32]">Search</a>
             <span className="mx-1">/</span>
             <span className="text-gray-700">&ldquo;{initialQ}&rdquo;</span>
           </>
         ) : sub ? (
           <>
-            <a href={`/category/${encodeURIComponent(slug)}`} className="hover:text-[#F97316]">
+            <a href={`/category/${encodeURIComponent(slug)}`} className="hover:text-[#A95F32]">
               {(parentNode && parentNode.label) || slug.replace(/-/g, ' ')}
             </a>
             <span className="mx-1">/</span>
@@ -189,7 +189,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
           <a
             href={`/category/${encodeURIComponent(slug)}`}
             aria-current={sub ? undefined : 'page'}
-            className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub ? 'border-gray-300 text-gray-600 hover:border-[#F97316]' : 'border-[#F97316] text-[#F97316]'}`}
+            className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub ? 'border-gray-300 text-gray-600 hover:border-[#A95F32]' : 'border-[#A95F32] text-[#A95F32]'}`}
           >
             All {parentNode.label}
           </a>
@@ -198,7 +198,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
               key={k.slug}
               href={`/category/${encodeURIComponent(slug)}/${encodeURIComponent(k.slug)}`}
               aria-current={sub === k.slug ? 'page' : undefined}
-              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub === k.slug ? 'border-[#F97316] text-[#F97316]' : 'border-gray-300 text-gray-600 hover:border-[#F97316]'}`}
+              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub === k.slug ? 'border-[#A95F32] text-[#A95F32]' : 'border-gray-300 text-gray-600 hover:border-[#A95F32]'}`}
             >
               {k.label}{k.count ? <span className="text-gray-400 font-normal"> ({k.count})</span> : null}
             </a>
@@ -223,7 +223,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
           <input value={priceMax} onChange={(e) => setPriceMax(e.target.value.replace(/[^\d]/g, ''))} placeholder="Max ₹" inputMode="numeric" className="input max-w-[100px]" aria-label="Maximum price in rupees" />
         </div>
         {(brand !== 'All' || sort !== 'pop' || q.trim() !== '' || priceMin !== '' || priceMax !== '') && (
-          <button onClick={clearFilters} className="text-xs font-bold text-[#F97316] underline">Clear filters</button>
+          <button onClick={clearFilters} className="text-xs font-bold text-[#A95F32] underline">Clear filters</button>
         )}
       </div>
 
@@ -256,27 +256,8 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
           </div>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {filtered.map((p) => {
-            const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
-            return (
-              <a key={p.slug || p.id} href={`/product/${p.slug || p.id}`} className={`card ${p.stock === 0 ? 'opacity-90' : ''}`}>
-                <div className="relative">
-                  <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className={fitClass(p.image || p.images?.[0], 'h-40 w-full object-cover')} loading="lazy" />
-                  {off > 0 && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off}% OFF</span>}
-                  {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
-                </div>
-                <div className="p-3">
-                  <div className="text-xs text-gray-500 font-semibold">{p.brand || ''}</div>
-                  <div className="text-sm font-bold line-clamp-2 min-h-[2.5rem]">{p.name}</div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="font-extrabold text-lg">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                    {p.mrp && <span className="text-xs text-gray-400 line-through">₹{Number(p.mrp).toLocaleString('en-IN')}</span>}
-                  </div>
-                </div>
-              </a>
-            );
-          })}
+        <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
+          {filtered.map((p) => <ProductCard key={p.slug || p.id} p={p} />)}
         </div>
       )}
       {!loading && hasMore ? (

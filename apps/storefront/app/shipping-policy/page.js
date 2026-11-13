@@ -23,7 +23,7 @@ export default function ShippingPolicy() {
         <p><b>Delivery time:</b> 3–7 working days across India depending on zone (metro 2–4 days, remote 5–7 days). Check your pincode on any product page for an ETA.</p>
         <p><b>Charges:</b> Standard shipping ₹99; free shipping on prepaid orders above ₹4,999. Freight for heavy machinery (pumps, welders 25kg+) is calculated at checkout.</p>
         <p><b>COD:</b> Cash on Delivery available on eligible pincodes up to ₹50,000. Please keep exact change ready.</p>
-        <p><b>Tracking:</b> Track any order from <a href="/track-order" className="text-[#F97316] font-bold underline">Track Order</a> using your receipt ID + phone.</p>
+        <p><b>Tracking:</b> Track any order from <a href="/track-order" className="text-[#A95F32] font-bold underline">Track Order</a> using your receipt ID + phone.</p>
         <p><b>GST invoice:</b> A GST invoice is emailed for every order — share your GSTIN at checkout for input tax credit.</p>
       </div>
     </div>

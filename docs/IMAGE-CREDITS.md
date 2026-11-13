@@ -38,3 +38,15 @@ before launch. The ten `gracewood-*.jpg` furniture photos were supplied by the c
 | `siemens-7-5hp-motor` | https://i.ebayimg.com/images/g/MVsAAeSw-bFq6tVo/s-l1200.webp |
 | `stanley-sdh-600-drill-13mm` | https://etoolstore.in/cdn/shop/products/SDH600_H1.jpg?v=1664878420&width=1946 |
 | `toshon-mig-250-welding` | https://www.liontoolsmart.com/cdn/shop/products/Toshon-make-mig-250-amps-1phase-mosfet_1000x1000.progressive.jpg?v=1576557451 |
+
+## Workshop / people imagery (homepage)
+
+These images illustrate the “people behind your order” story. They are demonstration
+imagery sourced from public pages; replace them with photographs of your own team before
+launch.
+
+| File | Source |
+|---|---|
+| `workshop-lead.jpg` | https://timbercraft.in/cdn/shop/files/custom_furniture_category.png?v=1782155091&width=1200 |
+| `workshop-wide.jpg` | https://timbercraft.in/cdn/shop/files/Manufacturers_not_Retailers.png?v=1782668420&width=1600 |
+| `workshop-hands.jpg` | https://creativ-space.com/images/f7/0a/34df6fa34ab696ddfadd7a90ac41.jpg |

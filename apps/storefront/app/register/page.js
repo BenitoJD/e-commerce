@@ -53,7 +53,7 @@ export default function RegisterPage() {
           <input id="reg-confirm" className="input" type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} aria-label="Confirm password" /></div>
         {err && <p role="alert" className="text-sm text-red-600 font-semibold">{err}</p>}
         <button disabled={busy} className="btn-primary w-full disabled:opacity-60">{busy ? 'Creating account...' : 'Create account'}</button>
-        <p className="text-sm text-center">Already have an account? <a href="/login" className="text-[#F97316] font-semibold">Sign in</a></p>
+        <p className="text-sm text-center">Already have an account? <a href="/login" className="text-[#A95F32] font-semibold">Sign in</a></p>
       </form>
     </div>
   );

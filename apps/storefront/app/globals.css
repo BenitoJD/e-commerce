@@ -2,48 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  src: url('/fonts/manrope-latin.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --brand: #F97316;
+  --paper: #F7F2E9;
+  --surface: #FFFDF8;
+  --ink: #181410;
+  --muted: #6F6357;
+  --line: #E6DAC8;
+  --brand: #A95F32;
+  --brand-dark: #874822;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-paper text-ink antialiased;
+  font-family: var(--font-sans);
+  font-feature-settings: 'kern', 'liga', 'calt';
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+.eyebrow {
+  @apply text-[11px] font-bold uppercase tracking-[0.18em] text-copper;
 }
 
 .btn-primary {
-  @apply bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-5 py-2.5 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2;
+  @apply inline-flex items-center justify-center gap-2 bg-copper text-white font-semibold px-6 py-3 rounded-full transition duration-300 hover:bg-copper-dark hover:-translate-y-0.5 hover:shadow-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
 }
 
 .btn-outline {
-  @apply border border-[#F97316] text-[#F97316] font-semibold px-5 py-2.5 rounded-lg hover:bg-[#FFF7ED] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2;
+  @apply inline-flex items-center justify-center gap-2 border border-ink/25 text-ink font-semibold px-6 py-3 rounded-full transition duration-300 hover:border-copper hover:text-copper hover:bg-copper-light/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
 }
 
 .card {
-  @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden;
+  @apply bg-surface rounded-2xl border border-line/90 transition duration-300 overflow-hidden;
+}
+
+.card:hover {
+  @apply border-copper/30 shadow-soft;
 }
 
 .input {
-  @apply w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-[#F97316];
+  @apply w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder:text-muted/60 transition focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/15;
 }
 
 .label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+  @apply block text-[11px] font-bold uppercase tracking-[0.12em] text-muted mb-1.5;
 }
 
 .badge {
-  @apply inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full;
+  @apply inline-flex items-center text-[10px] font-bold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full;
+}
+
+.link-quiet {
+  @apply text-muted hover:text-copper transition-colors;
+}
+
+.hairline {
+  @apply border-line;
+}
+
+.section-ink {
+  @apply bg-ink text-paper;
+}
+
+.numeric {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-rise-delay { animation: rise 0.9s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-rise, .animate-rise-delay { animation: none; }
 }
 
 /* Keyboard focus must be visible on plain links too, not just form controls. */
 a:focus-visible,
 button:focus-visible,
 summary:focus-visible {
-  outline: 2px solid #F97316;
-  outline-offset: 2px;
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
 }
 
-/* Print: invoices and the warehouse picking list must print as clean documents.
-   `.no-print` is the single switch used by both. */
+/* Print: invoices and the warehouse picking list must print as clean documents. */
 @media print {
   .no-print,
   header,

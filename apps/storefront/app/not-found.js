@@ -20,7 +20,7 @@ const CATEGORIES = [
 export default function NotFound() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-      <div className="text-6xl font-black text-[#F97316]">404</div>
+      <div className="text-6xl font-black text-[#A95F32]">404</div>
       <h1 className="text-2xl font-extrabold mt-2">We couldn&apos;t find that page</h1>
       <p className="text-gray-600 mt-2">
         The link may be broken or the product may have been renamed. Try searching the catalogue instead.

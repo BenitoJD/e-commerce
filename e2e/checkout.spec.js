@@ -76,7 +76,7 @@ test.describe('Cart and checkout', () => {
     // The COD option is visibly disabled for a ₹1.5L machine.
     const codLabel = page.locator('form label').filter({ hasText: /^COD$/ });
     await expect(codLabel).toHaveClass(/cursor-not-allowed/);
-    await expect(page.locator('form label').filter({ hasText: /^UPI$/ })).toHaveClass(/border-\[#F97316\]/);
+    await expect(page.locator('form label').filter({ hasText: /^UPI$/ })).toHaveClass(/border-\[#A95F32\]/);
   });
 
   test('COD order completes, appears in My Orders, invoice renders and tracking works', async ({ page }) => {

@@ -119,7 +119,7 @@ export default function ReturnsPage() {
       <p className="text-sm text-gray-500 mt-1">
         Damaged, wrong or defective item? File it here — we arrange pickup. Returns are accepted
         within <b>7 days of delivery</b>; see the{' '}
-        <a href="/returns-policy" className="text-[#F97316] font-bold underline">returns policy</a>.
+        <a href="/returns-policy" className="text-[#A95F32] font-bold underline">returns policy</a>.
       </p>
 
       <div className="card p-4 mt-5">
@@ -217,7 +217,7 @@ export default function ReturnsPage() {
       </div>
 
       <p className="text-sm text-gray-500 mt-5">
-        Need help instead? WhatsApp <a className="text-[#F97316] font-bold" href={`https://wa.me/${STORE.phoneDigits}`}>{STORE.phoneDisplay}</a> or email {STORE.email}.
+        Need help instead? WhatsApp <a className="text-[#A95F32] font-bold" href={`https://wa.me/${STORE.phoneDigits}`}>{STORE.phoneDisplay}</a> or email {STORE.email}.
       </p>
     </div>
   );

@@ -140,7 +140,7 @@ export default function MyOrdersPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">My Orders</h1>
       <p className="text-sm text-gray-500 mt-1">For your privacy, we first send a one-time code to the phone used at checkout.</p>
-      <p className="text-xs text-gray-500 mt-1">Have an account? <a href="/account" className="text-[#F97316] font-bold underline">Sign in instead</a>.</p>
+      <p className="text-xs text-gray-500 mt-1">Have an account? <a href="/account" className="text-[#A95F32] font-bold underline">Sign in instead</a>.</p>
 
       {step !== 'orders' && (
         <form onSubmit={step === 'phone' ? sendCode : verifyCode} className="card p-5 mt-5 space-y-3">
@@ -196,7 +196,7 @@ export default function MyOrdersPage() {
       {step === 'orders' && Array.isArray(orders) && orders.length === 0 && (
         <div className="card p-8 mt-5 text-center">
           <p className="font-bold">No orders found for {phone}</p>
-          <p className="text-sm text-gray-600 mt-1">Place an order and it will appear here. Prefer an account? <a className="text-[#F97316] font-bold underline" href="/register">Create one</a>.</p>
+          <p className="text-sm text-gray-600 mt-1">Place an order and it will appear here. Prefer an account? <a className="text-[#A95F32] font-bold underline" href="/register">Create one</a>.</p>
           <button onClick={changePhone} className="btn-outline mt-4">Try another number</button>
         </div>
       )}
@@ -262,7 +262,7 @@ export default function MyOrdersPage() {
       )}
 
       <p className="text-sm text-gray-500 mt-6">
-        Know your receipt ID? <a href="/track-order" className="text-[#F97316] font-bold">Track an order →</a>
+        Know your receipt ID? <a href="/track-order" className="text-[#A95F32] font-bold">Track an order →</a>
       </p>
     </div>
   );

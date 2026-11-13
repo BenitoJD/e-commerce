@@ -144,12 +144,25 @@ export default function TrackOrderPage() {
 
           {Array.isArray(data.timeline) && data.timeline.length > 0 && (
             <div className="mt-5 border-t pt-4 space-y-2">
-              {data.timeline.map((t, i) => (
-                <div key={i} className="text-sm flex gap-2">
-                  <span className="text-[#F97316] font-bold">•</span>
-                  <span><b className="capitalize">{t.status || t.event || 'update'}</b> <span className="text-gray-500">{t.at || t.time || t.date || ''}</span>{t.note ? ` — ${t.note}` : ''}</span>
-                </div>
-              ))}
+              {data.timeline.map((t, i) => {
+                // Steps carry a timestamp only when the backend actually recorded one;
+                // never invent or reformat a date that isn't there.
+                const when = t.at || t.time || t.date;
+                const d = when ? new Date(when) : null;
+                const stamp = d && !Number.isNaN(d.getTime())
+                  ? d.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+                  : '';
+                return (
+                  <div key={i} className="text-sm flex gap-2">
+                    <span className="text-[#F97316] font-bold">•</span>
+                    <span>
+                      <b>{t.label || t.status || t.event || 'update'}</b>
+                      {stamp ? <span className="text-gray-500"> — {stamp}</span> : null}
+                      {t.note ? ` — ${t.note}` : ''}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
 

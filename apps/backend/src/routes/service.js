@@ -38,24 +38,28 @@ function digits(s) {
 }
 
 function buildTimeline(order) {
-  const at = order.created_at;
+  const placedAt = order.created_at || null;
+  const deliveredAt = order.delivered_at || null;
+  const refundedAt = order.refunded_at || null;
   const status = String(order.status || '');
-  const isCod = String(order.pay_mode || '') === 'cod';
-  const placed = { status: 'placed', label: 'Order placed', at };
+  const isCod = String(order.pay_mode || order.payMode || '') === 'cod';
+  const placed = { status: 'placed', label: 'Order placed', at: placedAt };
+  // Only claim a timestamp we actually recorded — repeating the order date on every step
+  // reads as if shipping and delivery happened the same day.
   if (status === 'cancelled') {
-    return [placed, { status: 'cancelled', label: 'Cancelled', at }];
+    return [placed, { status: 'cancelled', label: 'Cancelled', at: null }];
   }
   if (status === 'refunded') {
-    return [placed, { status: 'refunded', label: 'Refunded', at }];
+    return [placed, { status: 'refunded', label: 'Refunded', at: refundedAt }];
   }
   const timeline = [placed];
   if (status === 'pending' || status === 'cod_pending') return timeline;
   // COD orders are not "paid" before delivery — don't claim a payment we never took.
-  if (!isCod) timeline.push({ status: 'paid', label: 'Payment confirmed', at });
+  if (!isCod) timeline.push({ status: 'paid', label: 'Payment confirmed', at: null });
   if (status === 'paid') return timeline;
-  timeline.push({ status: 'shipped', label: 'Shipped', at });
+  timeline.push({ status: 'shipped', label: 'Shipped', at: null });
   if (status === 'shipped') return timeline;
-  timeline.push({ status: 'delivered', label: isCod ? 'Delivered — cash collected' : 'Delivered', at });
+  timeline.push({ status: 'delivered', label: isCod ? 'Delivered — cash collected' : 'Delivered', at: deliveredAt });
   return timeline;
 }
 
@@ -67,7 +71,7 @@ router.get('/track', async (req, res) => {
     if (!receipt) return res.status(400).json({ error: 'receipt required' });
     if (!phone) return res.status(400).json({ error: 'phone required' });
     const { rows } = await db.query(
-      'SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders WHERE receipt = $1',
+      'SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at FROM orders WHERE receipt = $1',
       [receipt]
     );
     if (!rows.length) return res.status(404).json({ error: 'Order not found' });

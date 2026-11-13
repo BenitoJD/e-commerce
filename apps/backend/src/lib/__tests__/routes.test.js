@@ -212,6 +212,22 @@ function makeFakeDb() {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, items: o.items, amount_paise: o.amount_paise, razorpay_payment_id: o.razorpay_payment_id, customer: o.customer, created_at: o.created_at, coupon_code: o.coupon_code || null, discount_paise: o.discount_paise || 0, pay_mode: o.pay_mode || null, shipping_paise: o.shipping_paise || 0 }] : [] };
     }
+    if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode, delivered_at, refunded_at FROM orders') && t.includes('WHERE receipt =')) {
+      const o = orders.find((x) => x.receipt === params[0]);
+      return {
+        rows: o ? [{
+          receipt: o.receipt,
+          status: o.status,
+          amount_paise: o.amount_paise,
+          items: o.items,
+          customer: o.customer,
+          created_at: o.created_at,
+          pay_mode: o.pay_mode || null,
+          delivered_at: o.delivered_at || null,
+          refunded_at: o.refunded_at || null,
+        }] : [],
+      };
+    }
     if (t.startsWith('SELECT receipt, status, amount_paise, items, customer, created_at, pay_mode FROM orders') && t.includes('WHERE receipt =')) {
       const o = orders.find((x) => x.receipt === params[0]);
       return { rows: o ? [{ receipt: o.receipt, status: o.status, amount_paise: o.amount_paise, items: o.items, customer: o.customer, created_at: o.created_at, pay_mode: o.pay_mode || null }] : [] };
@@ -900,6 +916,34 @@ test('checkout normalises the customer block and rejects untrackable orders', as
   });
   assert.equal(badPincode.status, 400);
   assert.match(badPincode.json.error, /pincode/i);
+});
+
+test('the tracking timeline only dates steps it actually recorded', async () => {
+  // A delivered order: placed carries the order date, delivered carries delivered_at, and
+  // intermediate steps must not pretend they happened on the order date.
+  const receipt = 'rcpt_timeline_dated';
+  const created = new Date(Date.now() - 5 * 86400000).toISOString();
+  const delivered = new Date(Date.now() - 1 * 86400000).toISOString();
+  fake.orders.push({
+    id: 9501,
+    receipt,
+    status: 'delivered',
+    items: [{ slug: 'drill-a', qty: 1, unit_price_paise: 100000 }],
+    amount_paise: 118000,
+    customer: { name: 'Timeline Buyer', phone: '9812300801' },
+    created_at: created,
+    delivered_at: delivered,
+    pay_mode: 'online',
+  });
+
+  const tracked = await api('GET', `/store/service/track?receipt=${receipt}&phone=9812300801`);
+  assert.equal(tracked.status, 200);
+  const byStatus = Object.fromEntries(tracked.json.timeline.map((t) => [t.status, t]));
+
+  assert.equal(new Date(byStatus.placed.at).toISOString(), created);
+  assert.equal(new Date(byStatus.delivered.at).toISOString(), delivered, 'delivery shows its own date');
+  assert.equal(byStatus.paid.at, null, 'no invented payment timestamp');
+  assert.equal(byStatus.shipped.at, null, 'no invented shipping timestamp');
 });
 
 test('COD orders never claim a payment in the tracking timeline', async () => {

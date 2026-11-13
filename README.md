@@ -125,7 +125,7 @@ node scripts/self-audit.mjs   # 3/3 suites
 ```
 
 Individually:
-cd apps/backend && npm test        # 288 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 289 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB

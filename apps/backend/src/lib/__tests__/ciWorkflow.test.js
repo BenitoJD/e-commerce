@@ -24,3 +24,15 @@ test('CI does not skip tests to make the badge green', () => {
   assert.doesNotMatch(src, /continue-on-error:\s*true/, 'failures must fail the build');
   assert.doesNotMatch(src, /--passWithNoTests|SKIP_TESTS|NODE_ENV: test/, 'no bypass flags');
 });
+
+test('pnpm version comes from package.json, not a pinned workflow value', () => {
+  // pnpm/action-setup errors out ("multiple versions of pnpm specified") when the workflow
+  // pins a version that differs from package.json's packageManager — the first CI run failed
+  // before a single test executed.
+  const action = fs.readFileSync(WORKFLOW, 'utf8');
+  const pnpmBlock = action.slice(action.indexOf('pnpm/action-setup'), action.indexOf('setup-node'));
+  assert.doesNotMatch(pnpmBlock, /version:/, 'let packageManager drive the pnpm version');
+
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  assert.match(pkg.packageManager, /^pnpm@\d+\.\d+\.\d+$/, 'packageManager must pin an exact version');
+});

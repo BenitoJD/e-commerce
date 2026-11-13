@@ -1015,6 +1015,12 @@ export default function AdminPage() {
                         {orderDetail.customer?.pincode ? `PIN ${orderDetail.customer.pincode} • ` : ''}
                         {orderDetail.customer?.phone || ''}
                       </div>
+                      {orderDetail.customerEmail ? <div className="text-gray-600">{orderDetail.customerEmail}</div> : null}
+                      {orderDetail.notes ? (
+                        <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                          <b>Order notes:</b> {orderDetail.notes}
+                        </div>
+                      ) : null}
                     </div>
                     <div className="sm:text-right text-gray-600">
                       <div>Pay mode: <b className="text-gray-800">{orderDetail.payMode === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}</b></div>

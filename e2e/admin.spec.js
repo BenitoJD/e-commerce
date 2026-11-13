@@ -16,7 +16,7 @@ test.describe('Admin console', () => {
 
   test('orders: search, detail, bulk ship, authenticated picking list and CSV export', async ({ page, context }) => {
     const phone = uniquePhone();
-    const receipt = await createCodOrder({ phone }).then((r) => r.receipt);
+    const receipt = await createCodOrder({ phone, notes: 'Call before delivery — gate 3.' }).then((r) => r.receipt);
     await adminLogin(page);
     await page.getByRole('button', { name: 'Orders' }).click();
 
@@ -28,6 +28,7 @@ test.describe('Admin console', () => {
     await page.getByRole('button', { name: /^View$/ }).first().click();
     await expect(page.getByText(new RegExp(`Order ${receipt}`)).first()).toBeVisible();
     await expect(page.getByText(/E2E Buyer/i).first()).toBeVisible();
+    await expect(page.getByText(/Call before delivery — gate 3/i)).toBeVisible();
 
     // Selection is scoped to the visible result set and survives a new tab.
     await page.getByRole('checkbox', { name: `Select order ${receipt}` }).check();

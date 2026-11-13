@@ -99,13 +99,14 @@ async function api(path, { method = 'GET', body, token } = {}) {
   return { status: res.status, json, text };
 }
 
-async function createCodOrder({ phone, slug = P.grinder, qty = 1, name = 'E2E Buyer' } = {}) {
+async function createCodOrder({ phone, slug = P.grinder, qty = 1, name = 'E2E Buyer', notes = '' } = {}) {
   const r = await api('/store/checkout/create', {
     method: 'POST',
     body: {
       items: [{ slug, qty }],
       customer: { name, phone, address: '12 Industrial Estate, Peenya', pincode: '560058', stateCode: '29' },
       payMode: 'cod',
+      ...(notes ? { notes } : {}),
     },
   });
   if (r.status !== 200) throw new Error(`create order failed: ${r.status} ${r.text}`);

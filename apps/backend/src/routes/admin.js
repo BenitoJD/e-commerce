@@ -7,6 +7,8 @@ const { DEFAULT_MINUTES: STALE_DEFAULT_MINUTES } = require('../lib/staleHolds');
 const { transitionOrder } = require('../lib/orderService');
 const { sweepStaleHolds } = require('../lib/sweep');
 const { clampInt } = require('../lib/text');
+const { clampText } = require('../lib/validate');
+const { resolveCategory } = require('../../data/categories');
 const { refundPayment } = require('../lib/refunds');
 const { safeEqualStrings } = require('../lib/security');
 const { buildOrderFilter } = require('../lib/adminFilters');
@@ -512,19 +514,39 @@ router.post('/products', async (req, res) => {
     const specs = b.specs && typeof b.specs === 'object' ? b.specs : {};
     const images = Array.isArray(b.images) ? b.images.filter((s) => typeof s === 'string').slice(0, 10) : [];
     const videos = Array.isArray(b.videos) ? b.videos.filter((s) => typeof s === 'string').slice(0, 5) : [];
+    const description = b.description == null ? null : clampText(b.description, 2000);
+
+    // Category + subcategory are validated against the taxonomy: a child that doesn't belong
+    // to the chosen parent would file the product under a branch it can never appear in.
+    const categorySlug = String(b.category || 'power-tools').trim();
+    const resolved = resolveCategory(categorySlug);
+    if (!resolved) {
+      return res.status(400).json({ error: `unknown category "${categorySlug}"` });
+    }
+    const parentSlug = resolved.parent.slug;
+    let subcategory = null;
+    const rawSub = String(b.subcategory || '').trim();
+    if (rawSub) {
+      const leaf = resolveCategory(`${parentSlug}/${rawSub}`) || resolveCategory(rawSub);
+      if (!leaf || !leaf.child || leaf.parent.slug !== parentSlug) {
+        return res.status(400).json({ error: `"${rawSub}" is not a subcategory of ${parentSlug}` });
+      }
+      subcategory = leaf.child.slug;
+    }
 
     const { rows } = await db.query(
-      `INSERT INTO products (slug, name, brand, category, price_paise, mrp_paise, hsn, stock, specs, images, videos)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      `INSERT INTO products (slug, name, brand, category, subcategory, description, price_paise, mrp_paise, hsn, stock, specs, images, videos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT (slug) DO UPDATE SET
          name = EXCLUDED.name, brand = EXCLUDED.brand, category = EXCLUDED.category,
+         subcategory = EXCLUDED.subcategory, description = EXCLUDED.description,
          price_paise = EXCLUDED.price_paise, mrp_paise = EXCLUDED.mrp_paise, hsn = EXCLUDED.hsn,
          stock = EXCLUDED.stock, specs = EXCLUDED.specs, images = EXCLUDED.images, videos = EXCLUDED.videos
-       RETURNING slug, name, price_paise, stock`,
-      [slug, name, String(b.brand || ''), String(b.category || 'power-tools'), pricePaise, mrpPaise,
+       RETURNING slug, name, price_paise, stock, category, subcategory`,
+      [slug, name, String(b.brand || ''), parentSlug, subcategory, description, pricePaise, mrpPaise,
         String(b.hsn || ''), stock, JSON.stringify(specs), images, videos]
     );
-    console.log(`[admin] product upsert ${slug} ${pricePaise}`);
+    console.log(`[admin] product upsert ${slug} ${pricePaise} (${parentSlug}${subcategory ? '/' + subcategory : ''})`);
     res.status(201).json({ product: rows[0] });
   } catch (err) {
     console.error('[admin] product save error:', err.message);

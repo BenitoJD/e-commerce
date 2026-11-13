@@ -22,8 +22,8 @@ import {
   updateReturnStatus,
   getAdminSubscribers,
   getAdminStockAlerts,
-  saveAdminProduct,
-  deleteAdminProduct,
+  saveAdminProduct,  deleteAdminProduct,
+  fetchCategories,
   getAdminReviews,
   setReviewVerified,
   deleteReview,
@@ -108,13 +108,19 @@ export default function AdminPage() {
   const [catalog, setCatalog] = useState([]);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogHasMore, setCatalogHasMore] = useState(false);
-  const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+  const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
   const [prodMsg, setProdMsg] = useState('');
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const saved = getAdminToken();
     setToken(saved);
     setInput(saved);
+    // The category tree drives the product form's pickers: free-text category slugs let an
+    // operator file a product where nothing can ever link to it.
+    fetchCategories()
+      .then((r) => setCategories((r && r.categories) || []))
+      .catch(() => { /* the form still works, the server validates */ });
   }, []);
 
   function saveToken() {
@@ -314,6 +320,8 @@ export default function AdminPage() {
         name: prodForm.name.trim(),
         brand: prodForm.brand.trim(),
         category: prodForm.category.trim() || 'power-tools',
+        subcategory: prodForm.subcategory.trim() || null,
+        description: prodForm.description.trim() || null,
         price_paise: pricePaise,
         mrp_paise: prodForm.mrpRs ? Math.round(Number(prodForm.mrpRs) * 100) : pricePaise,
         hsn: prodForm.hsn.trim(),
@@ -322,7 +330,7 @@ export default function AdminPage() {
       };
       const r = await saveAdminProduct(token, payload);
       setProdMsg(`Saved ${r.product?.slug || payload.slug}.`);
-      setProdForm({ slug: '', name: '', brand: '', category: 'power-tools', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+      setProdForm({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
       await loadCatalog();
     } catch (err) {
       setError(err.message);
@@ -1050,12 +1058,35 @@ export default function AdminPage() {
                   <input value={prodForm.slug} onChange={(e) => setProdForm({ ...prodForm, slug: e.target.value })} placeholder="slug e.g. bosch-gsb-13-re-drill" className="input" aria-label="Product slug" />
                   <input value={prodForm.name} onChange={(e) => setProdForm({ ...prodForm, name: e.target.value })} placeholder="Product name" className="input" aria-label="Product name" />
                   <input value={prodForm.brand} onChange={(e) => setProdForm({ ...prodForm, brand: e.target.value })} placeholder="Brand" className="input" aria-label="Brand name" />
-                  <input value={prodForm.category} onChange={(e) => setProdForm({ ...prodForm, category: e.target.value })} placeholder="Category (power-tools)" className="input" aria-label="Category slug" />
+                  <select
+                    value={prodForm.category}
+                    onChange={(e) => setProdForm({ ...prodForm, category: e.target.value, subcategory: '' })}
+                    className="input"
+                    aria-label="Category"
+                  >
+                    {categories.length === 0 ? <option value={prodForm.category || 'power-tools'}>{prodForm.category || 'power-tools'}</option> : null}
+                    {categories.map((c) => <option key={c.slug} value={c.slug}>{c.label}</option>)}
+                    {categories.length > 0 && !categories.some((c) => c.slug === prodForm.category)
+                      ? <option value={prodForm.category}>{prodForm.category}</option>
+                      : null}
+                  </select>
+                  <select
+                    value={prodForm.subcategory}
+                    onChange={(e) => setProdForm({ ...prodForm, subcategory: e.target.value })}
+                    className="input"
+                    aria-label="Subcategory"
+                  >
+                    <option value="">No subcategory</option>
+                    {((categories.find((c) => c.slug === prodForm.category) || {}).children || []).map((k) => (
+                      <option key={k.slug} value={k.slug}>{k.label}</option>
+                    ))}
+                  </select>
                   <input value={prodForm.priceRs} onChange={(e) => setProdForm({ ...prodForm, priceRs: e.target.value })} placeholder="Price ₹" type="number" min="1" className="input" aria-label="Selling price in rupees" />
                   <input value={prodForm.mrpRs} onChange={(e) => setProdForm({ ...prodForm, mrpRs: e.target.value })} placeholder="MRP ₹ (optional)" type="number" min="0" className="input" aria-label="MRP in rupees" />
                   <input value={prodForm.hsn} onChange={(e) => setProdForm({ ...prodForm, hsn: e.target.value })} placeholder="HSN code" className="input" aria-label="HSN code" />
                   <input value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} placeholder="Stock qty" type="number" min="0" className="input" aria-label="Stock quantity" />
                   <input value={prodForm.images} onChange={(e) => setProdForm({ ...prodForm, images: e.target.value })} placeholder="Image paths, comma separated" className="input sm:col-span-2" aria-label="Image paths" />
+                  <textarea value={prodForm.description} onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })} placeholder="Description shown on the product page (optional)" rows={3} className="input sm:col-span-2" aria-label="Product description" />
                 </form>
                 <button onClick={onProductSave} className="btn-primary mt-3">Save product</button>
                 {prodMsg ? <p className="text-sm text-green-700 font-semibold mt-2">{prodMsg}</p> : null}
@@ -1093,6 +1124,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => setProdForm({
                               slug: p.slug, name: p.name, brand: p.brand || '', category: p.category || 'power-tools',
+                              subcategory: p.subcategory || '', description: p.description || '',
                               priceRs: String(p.price ?? ''), mrpRs: String(p.mrp ?? ''),
                               hsn: p.hsn || '', stock: String(p.stock ?? ''), images: (p.images || []).join(', '),
                             })}

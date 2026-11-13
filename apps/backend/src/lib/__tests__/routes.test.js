@@ -374,9 +374,13 @@ function makeFakeDb() {
       return { rows: [...products.values()].filter((p) => params[0].includes(p.slug)).map((p) => ({ slug: p.slug, name: p.name, hsn: p.hsn || '' })) };
     }
     if (t.startsWith('INSERT INTO products') && t.includes('ON CONFLICT (slug) DO UPDATE')) {
-      const [slug, name, brand, category, price, mrp, hsn, stock, specs, images, videos] = params;
-      products.set(slug, { slug, name, brand, category, price_paise: price, mrp_paise: mrp, hsn, stock, specs: JSON.parse(specs || '{}'), images: images || [], videos: videos || [] });
-      return { rows: [{ slug, name, price_paise: price, stock }] };
+      const [slug, name, brand, category, subcategory, description, price, mrp, hsn, stock, specs, images, videos] = params;
+      products.set(slug, {
+        slug, name, brand, category, subcategory: subcategory || null, description: description || null,
+        price_paise: price, mrp_paise: mrp, hsn, stock, specs: JSON.parse(specs || '{}'),
+        images: images || [], videos: videos || [],
+      });
+      return { rows: [{ slug, name, price_paise: price, stock, category, subcategory: subcategory || null }] };
     }
     if (t.startsWith('DELETE FROM products WHERE slug')) {
       const had = products.delete(params[0]);
@@ -1722,13 +1726,17 @@ test('admin order detail: items enriched with names, customer and payment ids', 
 test('admin product CRUD: create, update, validation, delete', async () => {
   const adminHeaders = { 'x-admin-token': 'test-admin-token' };
   const payload = {
-    slug: 'new-hammer-500g', name: 'Steel Hammer 500g', brand: 'Stanley', category: 'hand-tools',
+    slug: 'new-hammer-500g', name: 'Steel Hammer 500g', brand: 'Stanley', category: 'power-tools',
+    subcategory: 'drills', description: 'A hammer for site work.',
     price_paise: 34900, mrp_paise: 45000, hsn: '82052000', stock: 12, specs: { weight: '500g' }, images: ['/images/hammer.jpg'],
   };
   const created = await api('POST', '/admin/products', payload, adminHeaders);
   assert.equal(created.status, 201);
   assert.equal(created.json.product.slug, 'new-hammer-500g');
   assert.equal(fake.products.has('new-hammer-500g'), true);
+  // The taxonomy fields must be stored, otherwise the product never shows on a child page.
+  assert.equal(fake.products.get('new-hammer-500g').subcategory, 'drills');
+  assert.equal(fake.products.get('new-hammer-500g').description, 'A hammer for site work.');
 
   // update the same slug (price change), not a duplicate
   const updated = await api('POST', '/admin/products', { ...payload, price_paise: 29900 }, adminHeaders);
@@ -1743,6 +1751,14 @@ test('admin product CRUD: create, update, validation, delete', async () => {
   assert.equal(badPrice.status, 400);
   const mrpBelow = await api('POST', '/admin/products', { ...payload, price_paise: 50000, mrp_paise: 40000 }, adminHeaders);
   assert.equal(mrpBelow.status, 400);
+  // A category outside the taxonomy would hide the product from navigation entirely.
+  const badCategory = await api('POST', '/admin/products', { ...payload, category: 'hand-tools' }, adminHeaders);
+  assert.equal(badCategory.status, 400);
+  assert.match(badCategory.json.error, /unknown category/);
+  // A child filed under the wrong parent is equally unreachable.
+  const wrongParent = await api('POST', '/admin/products', { ...payload, category: 'pumps', subcategory: 'drills' }, adminHeaders);
+  assert.equal(wrongParent.status, 400);
+  assert.match(wrongParent.json.error, /not a subcategory/);
 
   const del = await api('DELETE', '/admin/products/new-hammer-500g', undefined, adminHeaders);
   assert.equal(del.status, 200);

@@ -516,6 +516,11 @@ export async function getAdminStockAlerts(token, slug = '') {
   return handle(res);
 }
 
+export async function fetchCategories() {
+  const res = await fetch(`${BASE}/store/categories`);
+  return handle(res);
+}
+
 export async function getStates() {
   const res = await fetch(`${BASE}/store/states`, { cache: 'no-store' });
   return handle(res);

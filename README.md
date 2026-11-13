@@ -26,7 +26,7 @@ e-commerce/
                       tracking, invoice, returns, admin, account/login/register,
                       FAQ, policies…
     components/       client views (ProductView, CategoryView, BrandView, HomeView…)
-    public/images/    90 generated tool placeholders + 10 Gracewood furniture photos
+    public/images/    30 curated tool photos + 10 Gracewood furniture photos (+ fallbacks)
     lib/              api client, cart, wishlist, store config, server API base
     test/             114 client-logic tests (no install needed)
   e2e/                52 Playwright browser tests (every customer + admin flow)
@@ -184,10 +184,12 @@ every route (home, product, returns, admin, robots.txt, sitemap rewrite).
 Seed is **repeatable**: `npm run seed` refreshes names/prices/images/specs/videos and
 coupon terms, but never overwrites live `stock` or coupon `used_count`/`active`.
 
-Tool images are generated placeholders (`scripts/gen-product-images.mjs`); the six
-Gracewood furniture listings use real photos supplied from the workshop. A test fails if
-any catalog image path has no file behind it. Replace tool placeholders by overwriting
-`apps/storefront/public/images/<slug>.svg` or pointing `images[]` at your own files.
+All 36 listings now carry real photography: 30 curated catalogue shots in
+`apps/storefront/public/images/products/` and ten Gracewood furniture photos supplied by
+the client. They are demo assets gathered through public image search — see
+[`docs/IMAGE-CREDITS.md`](docs/IMAGE-CREDITS.md) for sources and the requirement to swap in
+owned/licensed photography before launch. A test fails if any catalog image path has no file
+behind it.
 
 Fresh-checkout check before trusting a deploy: check out into an empty directory and run
 the suites there — that is how the missing-catalog-files bug was caught.

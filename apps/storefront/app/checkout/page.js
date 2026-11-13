@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCart, cartTotal, clearCart } from '../../lib/cart';
 import { getToken } from '../../lib/auth';
+import { fitClass } from '../../lib/image';
 import { gstInclusiveSplit } from '../../lib/pricing';
 import { isValidGstin } from '../../lib/gstin';
 import { createCheckout, completeMockPayment, validateCoupon, getStates, fetchMe } from '../../lib/api';
@@ -280,7 +281,7 @@ export default function CheckoutPage() {
             {items.map((i) => (
               <li key={i.slug} className="py-2 flex items-center gap-3">
                 {i.image ? (
-                  <img src={i.image} alt={i.name} className="w-12 h-12 rounded border object-cover" loading="lazy" />
+                  <img src={i.image} alt={i.name} className={fitClass(i.image, 'w-12 h-12 rounded border object-cover bg-white')} loading="lazy" />
                 ) : null}
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate">{i.name}</div>

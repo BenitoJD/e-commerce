@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getWishlist, removeFromWishlist, clearWishlist } from '../../lib/wishlist';
+import { fitClass } from '../../lib/image';
 import { addToCart } from '../../lib/cart';
 import { fetchStock } from '../../lib/api';
 
@@ -90,7 +91,7 @@ export default function WishlistPage() {
             return (
             <div key={i.slug} className="card">
               <a href={`/product/${i.slug}`}>
-                {i.image && <img src={i.image} alt={i.name} className="h-40 w-full object-cover" loading="lazy" />}
+                {i.image && <img src={i.image} alt={i.name} className={fitClass(i.image, 'h-40 w-full object-cover')} loading="lazy" />}
               </a>
               <div className="p-3">
                 <div className="text-xs text-gray-500 font-semibold">{i.brand || ''}</div>

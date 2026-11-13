@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getCart, updateQty, removeItem, cartTotal, cartStockStatus, clearCart } from '../../lib/cart';
+import { fitClass } from '../../lib/image';
 import { validateCoupon, checkPincode, fetchStock } from '../../lib/api';
 import { SHIPPING_FEE_RUPEES, shippingFor, shippingHint } from '../../lib/store';
 
@@ -176,7 +177,7 @@ export default function CartPage() {
               const short = available != null && available > 0 && Number(i.qty) > available;
               return (
                 <div key={i.slug} className={`card p-3 flex gap-3 items-center ${soldOut ? 'border-red-200 bg-red-50/40' : ''}`}>
-                  {i.image && <img src={i.image} alt={i.name} className="w-20 h-20 object-cover rounded-lg border" />}
+                  {i.image && <img src={i.image} alt={i.name} className={fitClass(i.image, 'w-20 h-20 object-cover rounded-lg border bg-white')} />}
                   <div className="flex-1">
                     <div className="font-bold text-sm">{i.name}</div>
                     <div className="text-sm text-gray-600">₹{Number(i.price).toLocaleString('en-IN')} each</div>

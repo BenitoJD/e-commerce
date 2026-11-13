@@ -7,6 +7,7 @@ import { addToWishlist, removeFromWishlist, isWishlisted } from '../lib/wishlist
 import { waShareLink } from '../lib/store';
 import { pushRecent, parseRecent } from '../lib/recent';
 import { toggleCompare, parseCompare, COMPARE_KEY } from '../lib/compare';
+import { fitClass, isProductShot } from '../lib/image';
 
 const FALLBACK = {
   slug: 'bosch-gws-600-grinder',
@@ -15,8 +16,8 @@ const FALLBACK = {
   mrp: 4295,
   brand: 'Bosch',
   category: 'power-tools',
-  image: '/images/bosch-gws-600-grinder.svg',
-  images: ['/images/bosch-gws-600-grinder.svg', '/images/bosch-gws-600-grinder-2.svg', '/images/bosch-gws-600-grinder-3.svg'],
+  image: '/images/products/bosch-gws-600-grinder.jpg',
+  images: ['/images/products/bosch-gws-600-grinder.jpg'],
   specs: { Power: '670W', Voltage: '230V', Warranty: '6 months' },
   description: 'Genuine Bosch angle grinder for masonry, metal and workshop use. GST invoice included.'
 };
@@ -279,7 +280,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
       </nav>
       <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <img src={mainImage} alt={p.name} className="rounded-2xl border w-full h-96 object-cover" />
+          <img src={mainImage} alt={p.name} className={`rounded-2xl border w-full h-96 ${isProductShot(mainImage) ? 'object-contain bg-white p-4' : 'object-cover'}`} />
           {images.length > 1 && (
             <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Product images">
               {images.slice(0, 4).map((src, i) => (
@@ -291,7 +292,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                   aria-pressed={i === activeImage}
                   className={`rounded-lg border overflow-hidden ${i === activeImage ? 'ring-2 ring-[#F97316]' : 'hover:border-[#F97316]'}`}
                 >
-                  <img src={src} alt="" className="h-20 w-full object-cover" loading="lazy" />
+                  <img src={src} alt="" className={fitClass(src, 'h-20 w-full object-cover')} loading="lazy" />
                 </button>
               ))}
             </div>
@@ -546,7 +547,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
             {related.map((r) => (
               <a key={r.slug || r.id} href={`/product/${r.slug || r.id}`} className="card">
-                <img src={r.image || r.images?.[0] || FALLBACK.image} alt={r.name} className="h-40 w-full object-cover" loading="lazy" />
+                <img src={r.image || r.images?.[0] || FALLBACK.image} alt={r.name} className={fitClass(r.image || r.images?.[0], 'h-40 w-full object-cover')} loading="lazy" />
                 <div className="p-3">
                   <div className="text-xs text-gray-500 font-semibold">{r.brand || ''}</div>
                   <div className="text-sm font-bold line-clamp-2 min-h-[2.5rem]">{r.name}</div>

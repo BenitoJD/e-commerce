@@ -1,5 +1,7 @@
 'use client';
 
+import { fitClass } from '../lib/image';
+
 import { useEffect, useMemo, useState } from 'react';
 import { fetchProducts, fetchBrands } from '../lib/api';
 import { STORE } from '../lib/store';
@@ -260,7 +262,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
             return (
               <a key={p.slug || p.id} href={`/product/${p.slug || p.id}`} className={`card ${p.stock === 0 ? 'opacity-90' : ''}`}>
                 <div className="relative">
-                  <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />
+                  <img src={p.image || p.images?.[0] || '/images/placeholder.svg'} alt={p.name} className={fitClass(p.image || p.images?.[0], 'h-40 w-full object-cover')} loading="lazy" />
                   {off > 0 && <span className="badge bg-green-600 text-white absolute top-2 left-2">{off}% OFF</span>}
                   {p.stock === 0 ? <span className="badge bg-gray-800 text-white absolute bottom-2 left-2">Out of Stock</span> : null}
                 </div>

@@ -162,14 +162,13 @@ test.describe('Public browsing', () => {
   });
 
   test('product image gallery thumbnails switch the main image', async ({ page }) => {
-    await page.goto(`/product/${P.grinder}`);
-    const thumbs = page.locator('img[alt=""]');
-    // The seeded product has more than one image; the gallery must be interactive.
-    expect(await thumbs.count()).toBeGreaterThan(0);
+    // The Gracewood wardrobe carries three real workshop photos; the gallery must be interactive.
+    await page.goto('/product/gracewood-carved-teak-wardrobe');
     const before = await page.locator('main img').first().getAttribute('src');
-    await thumbs.nth(1).click();
+    await page.getByRole('button', { name: /View image 2 of 3/i }).click();
     const after = await page.locator('main img').first().getAttribute('src');
     expect(after).not.toBe(before);
+    expect(after).toMatch(/gracewood-carved-wardrobe-2/);
   });
 
   test('wishlist add, persist across reload, move to cart and remove', async ({ page }) => {

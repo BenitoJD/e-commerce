@@ -23,7 +23,7 @@ URLs), production build **35 routes**.
 | Courier / AWB tracking | ✅ admin records courier + AWB + tracking URL on the order; Track Order shows it and links to the carrier |
 | Order notes | ✅ optional delivery notes at checkout, persisted with the order and shown to the admin |
 | FAQ | ✅ `/faq` with 12 answers and FAQPage JSON-LD; linked from footer and sitemap |
-| Product gallery | ✅ three images per SKU and clickable thumbnails that switch the main image; the six Gracewood furniture listings use ten real workshop photos |
+| Product gallery | ✅ clickable thumbnails that switch the main image; the six Gracewood furniture listings use ten real workshop photos and all 30 tool listings use curated product photography (see `docs/IMAGE-CREDITS.md`) |
 | Handcrafted furniture catalogue | ✅ **Furniture** category with six Gracewood teak products (beds, L-shape sofa, carved wardrobes, carved door, mirror), nested subcategories, real photos, prices/HSN/specs and sitemap entries |
 | Admin customers & outbox | ✅ Customers tab (orders + lifetime value), Emails tab (status, requeue, send now) |
 | Webhook hardening | ✅ event-id dedupe + transactional order lock (a replayed `payment.failed` can’t restock twice), late captures flagged for manual refund, retried payments re-reserve stock, partial refunds tracked without closing/restocking the order, coupon uses released on failure, shipped/delivered refunds recorded even when the gateway is unavailable |

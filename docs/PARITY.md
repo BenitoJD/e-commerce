@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 167 (nested categories stage 2: tree API + parent/child filtering, 221 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 168 (nested categories stage 3: `/category/<parent>/<child>` pages, breadcrumbs, child chips).
 
 ## Storefront
 
@@ -11,7 +11,8 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Search with suggestions | ✅ `/store/search` + `/store/search/suggest` typeahead (products, brands, categories; keyboard nav; works without JS via form submit); **search URLs server-render their own matches** (with the right total), use a query-specific heading/breadcrumb and are **noindex** |
 | No-results handling | ✅ search/filter empty state offers clear-filters, browse-all and a **WhatsApp enquiry pre-filled with the query** instead of a dead end |
 | Category listing: brand/price/discount/sort filters | ✅ `app/category/[slug]` — **server-rendered** first page with the **true total passed through SSR** (57 products, not the 40 rendered); brand, min/max price, text and sort applied **by the API**; paging respects filters; brand options from `/store/brands`; filter requests debounced (250 ms) |
-| Nested categories (2 levels) | 🚧 **stages 1–2 done**: `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node product counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…` — parent views include all children, child views narrow. Next stage: `/category/<parent>/<child>` routes, nav + sitemap |
+| Nested categories (2 levels) | ✅ `data/categories.js` tree (7 parents, 18 leaf subcategories) matched to the real catalogue; every product carries a taxonomy-valid `subcategory` (guarded); `GET /store/categories` returns the tree **with per-node counts**; `/store/products` accepts `category=pumps`, `category=pumps/submersible`, a bare `submersible`, or `subcategory=…`; **`/category/<parent>/<child>` pages are server-rendered** with their own title/canonical/breadcrumb JSON-LD, and both parent and child pages show **child chips with counts** (`aria-current` on the active one) |
+| Category sitemap entries | 🚧 parent category URLs are listed; subcategory URLs are the remaining stage |
 | Product gallery, specs, EMI plans | ✅ `app/product/[slug]` — **server-rendered** content (name/price/specs in initial HTML) + client interactivity; gallery, EMI 3/6/9/12, **WhatsApp share**, **star rating beside the title**, and a **"You save ₹X (N% off MRP)"** line under the price |
 | Product videos | ✅ `videos[]` column + seed data + embedded player on product page (YouTube/Vimeo, host-allowlisted) |
 | Reviews + ratings, Q&A | ✅ `/store/engage/*` + product page UI; **star rating with review count shown next to the product title** (anchor to the reviews panel), "be the first to review" when none |
@@ -120,7 +121,7 @@ JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 27 routes.
+Build: `cd apps/storefront && npm run build` must compile all 28 routes.
 Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then

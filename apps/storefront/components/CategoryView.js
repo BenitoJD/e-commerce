@@ -16,7 +16,11 @@ const FALLBACK = [
 
 const PAGE_SIZE = 40;
 
-export default function CategoryView({ slug, initialItems = [], initialQ = '', initialTotal = null }) {
+export default function CategoryView({ slug, sub = '', initialItems = [], initialQ = '', initialTotal = null, parents = [] }) {
+  // The API takes the two-level path; a parent-only page keeps its single-segment slug.
+  const categoryPath = sub ? `${slug}/${sub}` : slug;
+  const parentNode = (Array.isArray(parents) ? parents : []).find((c) => c.slug === slug) || null;
+  const childNode = parentNode && sub ? (parentNode.children || []).find((k) => k.slug === sub) || null : null;
   const [items, setItems] = useState(Array.isArray(initialItems) ? initialItems : []);
   const [loading, setLoading] = useState(!(Array.isArray(initialItems) && initialItems.length));
   const [loadingMore, setLoadingMore] = useState(false);
@@ -50,7 +54,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
         // Filters are applied by the API now, so results stay correct past the first
         // page instead of filtering a truncated slice client-side.
         const data = await fetchProducts({
-          category: slug,
+          category: categoryPath,
           limit: PAGE_SIZE,
           offset: 0,
           search: q.trim() || initialQ,
@@ -85,7 +89,7 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
     setLoadingMore(true);
     try {
       const data = await fetchProducts({
-        category: slug,
+        category: categoryPath,
         limit: PAGE_SIZE,
         offset: items.length,
         search: q.trim() || initialQ,
@@ -146,16 +150,50 @@ export default function CategoryView({ slug, initialItems = [], initialQ = '', i
             <span className="mx-1">/</span>
             <span className="text-gray-700">&ldquo;{initialQ}&rdquo;</span>
           </>
+        ) : sub ? (
+          <>
+            <a href={`/category/${encodeURIComponent(slug)}`} className="hover:text-[#F97316]">
+              {(parentNode && parentNode.label) || slug.replace(/-/g, ' ')}
+            </a>
+            <span className="mx-1">/</span>
+            <span className="text-gray-700">{(childNode && childNode.label) || sub.replace(/-/g, ' ')}</span>
+          </>
         ) : (
-          <span className="text-gray-700 capitalize">{slug === 'all' ? 'All products' : slug.replace(/-/g, ' ')}</span>
+          <span className="text-gray-700 capitalize">{slug === 'all' ? 'All products' : (parentNode && parentNode.label) || slug.replace(/-/g, ' ')}</span>
         )}
       </nav>
       <h1 className="text-3xl font-extrabold capitalize">
-        {initialQ ? <>Results for &ldquo;{initialQ}&rdquo;</> : slug.replace(/-/g, ' ')}
+        {initialQ
+          ? <>Results for &ldquo;{initialQ}&rdquo;</>
+          : (childNode ? childNode.label : (parentNode && parentNode.label) || slug.replace(/-/g, ' '))}
       </h1>
       <p className="text-sm text-gray-500 mt-1">
         {(total != null ? total : filtered.length)} product{(total != null ? total : filtered.length) === 1 ? '' : 's'} • GST invoice • EMI available
       </p>
+
+      {/* Child categories: the second level of the taxonomy, always visible so a parent page
+          can be narrowed without going back to the menu. */}
+      {parentNode && parentNode.children && parentNode.children.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href={`/category/${encodeURIComponent(slug)}`}
+            aria-current={sub ? undefined : 'page'}
+            className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub ? 'border-gray-300 text-gray-600 hover:border-[#F97316]' : 'border-[#F97316] text-[#F97316]'}`}
+          >
+            All {parentNode.label}
+          </a>
+          {parentNode.children.map((k) => (
+            <a
+              key={k.slug}
+              href={`/category/${encodeURIComponent(slug)}/${encodeURIComponent(k.slug)}`}
+              aria-current={sub === k.slug ? 'page' : undefined}
+              className={`text-xs font-bold px-3 py-1.5 rounded-full border ${sub === k.slug ? 'border-[#F97316] text-[#F97316]' : 'border-gray-300 text-gray-600 hover:border-[#F97316]'}`}
+            >
+              {k.label}{k.count ? <span className="text-gray-400 font-normal"> ({k.count})</span> : null}
+            </a>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-3 items-center">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter in this category..." className="input max-w-xs" aria-label="Filter products in this category" />

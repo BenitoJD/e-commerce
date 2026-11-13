@@ -1,5 +1,5 @@
 import CategoryView from '../../../components/CategoryView';
-import { getProductsPage, getProductsForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
+import { getProductsPage, getProductsForMeta, getCategoriesForMeta, paiseToRupees, absoluteUrl } from '../../../lib/serverApi';
 import { breadcrumbJsonLd } from '../../../lib/jsonld';
 import { STORE } from '../../../lib/store';
 
@@ -52,7 +52,10 @@ export default async function CategoryPage({ params, searchParams }) {
   const slug = decodeURIComponent(params.slug || '');
   const initialQ = (searchParams && searchParams.q) || '';
   // Pass the query so a search URL server-renders its actual results, not the category.
-  const { items, total } = await getProductsPage(slug, PAGE_SIZE, initialQ);
+  const [{ items, total }, tree] = await Promise.all([
+    getProductsPage(slug, PAGE_SIZE, initialQ),
+    getCategoriesForMeta(),
+  ]);
   return (
     <>
       <script
@@ -64,7 +67,7 @@ export default async function CategoryPage({ params, searchParams }) {
           ]),
         }}
       />
-      <CategoryView slug={slug} initialItems={items} initialQ={initialQ} initialTotal={total} />
+      <CategoryView slug={slug} initialItems={items} initialQ={initialQ} initialTotal={total} parents={tree} />
     </>
   );
 }

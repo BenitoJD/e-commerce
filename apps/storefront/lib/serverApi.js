@@ -72,6 +72,13 @@ export async function getBrandsForMeta() {
   return Array.isArray(data.brands) ? data.brands : [];
 }
 
+// Category tree with product counts (two levels), used for nav, child chips and sitemaps.
+export async function getCategoriesForMeta() {
+  const data = await cachedJson(`${BASE}/store/categories`);
+  if (!data) return [];
+  return Array.isArray(data.categories) ? data.categories : [];
+}
+
 // Discounted products straight from SQL (never truncated to the first product page).
 export async function getDealsForMeta(minOff = 20, limit = 60) {
   const q = new URLSearchParams({ minOff: String(minOff), limit: String(limit) });

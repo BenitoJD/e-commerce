@@ -108,7 +108,7 @@ export default function AdminPage() {
   const [catalog, setCatalog] = useState([]);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogHasMore, setCatalogHasMore] = useState(false);
-  const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+  const [prodForm, setProdForm] = useState({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '', videos: '' });
   const [prodMsg, setProdMsg] = useState('');
   const [categories, setCategories] = useState([]);
 
@@ -327,10 +327,11 @@ export default function AdminPage() {
         hsn: prodForm.hsn.trim(),
         stock: Number(prodForm.stock) || 0,
         images: prodForm.images.split(',').map((s) => s.trim()).filter(Boolean),
+        videos: prodForm.videos.split(',').map((s) => s.trim()).filter(Boolean),
       };
       const r = await saveAdminProduct(token, payload);
       setProdMsg(`Saved ${r.product?.slug || payload.slug}.`);
-      setProdForm({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '' });
+      setProdForm({ slug: '', name: '', brand: '', category: 'power-tools', subcategory: '', description: '', priceRs: '', mrpRs: '', hsn: '', stock: '', images: '', videos: '' });
       await loadCatalog();
     } catch (err) {
       setError(err.message);
@@ -1086,6 +1087,7 @@ export default function AdminPage() {
                   <input value={prodForm.hsn} onChange={(e) => setProdForm({ ...prodForm, hsn: e.target.value })} placeholder="HSN code" className="input" aria-label="HSN code" />
                   <input value={prodForm.stock} onChange={(e) => setProdForm({ ...prodForm, stock: e.target.value })} placeholder="Stock qty" type="number" min="0" className="input" aria-label="Stock quantity" />
                   <input value={prodForm.images} onChange={(e) => setProdForm({ ...prodForm, images: e.target.value })} placeholder="Image paths, comma separated" className="input sm:col-span-2" aria-label="Image paths" />
+                  <input value={prodForm.videos} onChange={(e) => setProdForm({ ...prodForm, videos: e.target.value })} placeholder="Video URLs (mp4/webm or YouTube), comma separated, optional" className="input sm:col-span-2" aria-label="Video URLs" />
                   <textarea value={prodForm.description} onChange={(e) => setProdForm({ ...prodForm, description: e.target.value })} placeholder="Description shown on the product page (optional)" rows={3} className="input sm:col-span-2" aria-label="Product description" />
                 </form>
                 <button onClick={onProductSave} className="btn-primary mt-3">Save product</button>
@@ -1127,6 +1129,7 @@ export default function AdminPage() {
                               subcategory: p.subcategory || '', description: p.description || '',
                               priceRs: String(p.price ?? ''), mrpRs: String(p.mrp ?? ''),
                               hsn: p.hsn || '', stock: String(p.stock ?? ''), images: (p.images || []).join(', '),
+                              videos: (p.videos || []).join(', '),
                             })}
                             className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1"
                           >Edit</button>

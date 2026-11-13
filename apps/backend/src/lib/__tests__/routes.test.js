@@ -1729,6 +1729,7 @@ test('admin product CRUD: create, update, validation, delete', async () => {
     slug: 'new-hammer-500g', name: 'Steel Hammer 500g', brand: 'Stanley', category: 'power-tools',
     subcategory: 'drills', description: 'A hammer for site work.',
     price_paise: 34900, mrp_paise: 45000, hsn: '82052000', stock: 12, specs: { weight: '500g' }, images: ['/images/hammer.jpg'],
+    videos: ['https://cdn.example.com/hammer.mp4'],
   };
   const created = await api('POST', '/admin/products', payload, adminHeaders);
   assert.equal(created.status, 201);
@@ -1737,6 +1738,8 @@ test('admin product CRUD: create, update, validation, delete', async () => {
   // The taxonomy fields must be stored, otherwise the product never shows on a child page.
   assert.equal(fake.products.get('new-hammer-500g').subcategory, 'drills');
   assert.equal(fake.products.get('new-hammer-500g').description, 'A hammer for site work.');
+  // Videos the operator attaches must survive the round trip (the product page plays them).
+  assert.deepEqual(fake.products.get('new-hammer-500g').videos, ['https://cdn.example.com/hammer.mp4']);
 
   // update the same slug (price change), not a duplicate
   const updated = await api('POST', '/admin/products', { ...payload, price_paise: 29900 }, adminHeaders);

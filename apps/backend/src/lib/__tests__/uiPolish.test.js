@@ -28,6 +28,19 @@ test('checkout never hard-requires the state picker', () => {
   assert.doesNotMatch(src, /aria-label="Delivery state"[^>]*\brequired\b(?!=\{)/, 'state select must not be unconditionally required');
 });
 
+test('the admin product form can set every catalogue field the API stores', () => {
+  // The form only renders after the admin token is entered, so it is invisible to the
+  // server-rendered smoke audit — assert the controls statically instead.
+  const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'admin', 'page.js'), 'utf8');
+  for (const label of ['Category', 'Subcategory', 'Product description', 'Video URLs', 'Image paths', 'HSN code']) {
+    assert.ok(src.includes(`aria-label="${label}"`), `admin product form is missing a "${label}" control`);
+  }
+  // The payload must carry what the pickers collect, or the form silently drops it.
+  for (const field of ['subcategory:', 'description:', 'videos:']) {
+    assert.ok(src.includes(field), `product save payload is missing ${field}`);
+  }
+});
+
 test('the header exposes the shopper tools (wishlist, compare, cart)', () => {
   const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'layout.js'), 'utf8');
   for (const href of ['/wishlist', '/compare', '/cart']) {

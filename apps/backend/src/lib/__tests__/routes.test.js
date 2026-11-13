@@ -1213,6 +1213,38 @@ test('COD is refused above the configured cap, and allowed just below it', async
   weapon.stock = originalStock;
 });
 
+test('checkout bounds quantity and merges duplicate lines', async () => {
+  const tooMany = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 1000 }],
+    customer: { name: 'Bulk Buyer', phone: '9812300901' },
+  });
+  assert.equal(tooMany.status, 400);
+  assert.match(tooMany.json.error, /Maximum 999 units per item/);
+
+  const splitAcross = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 600 }, { slug: 'drill-a', qty: 500 }],
+    customer: { name: 'Split Buyer', phone: '9812300902' },
+  });
+  assert.equal(splitAcross.status, 400, 'the merged quantity is what counts');
+  assert.match(splitAcross.json.error, /Maximum 999 units/);
+
+  const merged = await api('POST', '/store/checkout/create', {
+    items: [{ slug: 'drill-a', qty: 2 }, { slug: 'drill-a', qty: 3 }],
+    customer: { name: 'Merged Buyer', phone: '9812300903' },
+  });
+  assert.equal(merged.status, 200);
+  const order = fake.orders.find((o) => o.receipt === merged.json.receipt);
+  assert.equal(order.items.length, 1, 'one line per SKU, not two');
+  assert.equal(order.items[0].qty, 5, 'quantities are summed');
+  assert.equal(merged.json.amount_paise, 5 * 100000, 'priced once at the unit price');
+
+  const missingSlug = await api('POST', '/store/checkout/create', {
+    items: [{ qty: 1 }],
+    customer: { name: 'No Slug', phone: '9812300904' },
+  });
+  assert.equal(missingSlug.status, 400);
+});
+
 test('checkout rejects a malformed GSTIN but accepts a valid or blank one', async () => {
   const base = { items: [{ slug: 'drill-a', qty: 1 }], customer: { name: 'GST Buyer', phone: '9812300301' } };
 

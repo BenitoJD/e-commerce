@@ -17,6 +17,10 @@ function razorpayClient() {
   });
 }
 
+// Upper bound per line: keeps amount_paise (PostgreSQL INTEGER) far from overflow and
+// sends genuine bulk buyers to the quote flow instead.
+const MAX_QTY_PER_ITEM = 999;
+
 // POST /store/checkout/create
 router.post('/create', async (req, res) => {
   try {
@@ -24,6 +28,27 @@ router.post('/create', async (req, res) => {
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items[] with {slug, qty} required' });
     }
+    if (items.length > 50) {
+      return res.status(400).json({ error: 'Too many distinct items in one order (max 50)' });
+    }
+    // Normalise the basket before pricing it: merge repeated slugs into one line (so the
+    // invoice/picking list can't show the same SKU twice) and bound the quantity, which
+    // otherwise overflows the INTEGER amount column for a large enough value.
+    const basket = new Map();
+    for (const it of items) {
+      const slug = String((it && it.slug) || '').trim();
+      if (!slug) return res.status(400).json({ error: 'Every item needs a slug' });
+      const qty = parseInt(it.qty, 10) || 0;
+      if (qty < 1) return res.status(400).json({ error: `Invalid qty for ${slug}` });
+      if (qty > MAX_QTY_PER_ITEM) {
+        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item — contact us for bulk pricing` });
+      }
+      basket.set(slug, (basket.get(slug) || 0) + qty);
+      if (basket.get(slug) > MAX_QTY_PER_ITEM) {
+        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item — contact us for bulk pricing` });
+      }
+    }
+    const normalisedItems = [...basket.entries()].map(([slug, qty]) => ({ slug, qty }));
     if (!customer || !customer.name || !customer.phone) {
       return res.status(400).json({ error: 'customer {name, phone} required' });
     }
@@ -54,8 +79,8 @@ router.post('/create', async (req, res) => {
       gstin: buyerGstin || null,
     };
 
-    // Lookup products
-    const slugs = [...new Set(items.map((i) => i.slug))];
+    // Lookup products (from the normalised basket, not the raw request)
+    const slugs = normalisedItems.map((i) => i.slug);
     const { rows: found } = await db.query(
       `SELECT slug, price_paise, stock FROM products WHERE slug = ANY($1)`,
       [slugs]
@@ -64,13 +89,11 @@ router.post('/create', async (req, res) => {
 
     let amount = 0;
     const lineItems = [];
-    for (const it of items) {
+    for (const it of normalisedItems) {
       const p = bySlug[it.slug];
       if (!p) return res.status(400).json({ error: `Unknown product slug: ${it.slug}` });
-      const qty = parseInt(it.qty, 10) || 0;
-      if (qty < 1) return res.status(400).json({ error: `Invalid qty for ${it.slug}` });
-      amount += p.price_paise * qty;
-      lineItems.push({ slug: it.slug, qty, unit_price_paise: p.price_paise });
+      amount += p.price_paise * it.qty;
+      lineItems.push({ slug: it.slug, qty: it.qty, unit_price_paise: p.price_paise });
     }
     if (amount < 100) return res.status(400).json({ error: 'Order amount too small' });
 

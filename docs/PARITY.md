@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 158 (honest tracking timeline dates, 199 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 159 (checkout basket normalisation + quantity bounds, 200 backend tests).
 
 ## Storefront
 
@@ -36,6 +36,7 @@ Comparison of the live Toolsvilla store against this clone. Last verified: wave 
 | Cart + coupons + GST note | ✅ live stock check in cart (`/store/products/stock`), sold-out/over-quantity blocking, case-insensitive coupons, expiry + usage caps; admin Coupons tab; **checkout shows the inclusive GST component** |
 | Checkout (UPI/cards/netbanking/EMI/COD) | ✅ Razorpay + COD + mock fallback; **order summary with per-line qty/price and "Edit cart"** before payment; COD capped by **one shared policy** (`COD_MAX_PAISE`, mirrored to the UI via `NEXT_PUBLIC_COD_MAX_PAISE`), enforced server-side and reflected in pincode answers |
 | Shipping | ✅ real policy, not just copy: free by default; optional flat fee with free-shipping threshold (`SHIPPING_FEE_PAISE` / `FREE_SHIPPING_ABOVE_PAISE`), added server-side to the charged total and shown on checkout |
+| Checkout integrity | ✅ the basket is **normalised server-side** before pricing: repeated slugs merged into one line, quantity bounded to **1–999 per item** (larger values would overflow the `INTEGER` amount column), max 50 distinct lines, no missing slugs — and genuine bulk buyers are pointed at the quote flow |
 | Order success + live verify | ✅ polling `/store/checkout/verify` |
 | Track order + cancel | ✅ `/track-order`, `/store/service/track`, customer cancel; COD orders never show a phantom "payment confirmed" step; **timeline dates only the steps actually recorded** (`placed` = order date, `delivered` = `delivered_at`, `refunded` = `refunded_at`, intermediate steps undated) and the UI renders readable local times; refund outcome (auto/manual) persisted and flagged in admin |
 | My orders by phone | ✅ `/my-orders` shows **item names and quantities**, pay mode, plus Reorder and WhatsApp help |
@@ -102,7 +103,7 @@ node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
 node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 199 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 200 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an

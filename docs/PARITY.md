@@ -1,6 +1,6 @@
 # Feature Parity vs toolsvilla.com
 
-Comparison of the live Toolsvilla store against this clone. Last verified: wave 159 (checkout basket normalisation + quantity bounds, 200 backend tests).
+Comparison of the live Toolsvilla store against this clone. Last verified: wave 160 (READMEs counts derived from source and guarded; live smoke 31/31).
 
 ## Storefront
 
@@ -100,10 +100,10 @@ One command runs everything that works without Docker/Postgres:
 node scripts/verify-all.mjs    # 6/6: backend suite, storefront suite, compose
                                # structure, production build, mojibake audit,
                                # unbacked-promise audit  (exit code gates deploys)
-node scripts/smoke.mjs         # live routes, needs running servers (30/30 incl. a real 404)
+node scripts/smoke.mjs         # live routes, needs running servers (31/31 incl. a real 404)
 ```
 
-Backend: `cd apps/backend && npm test` — 200 tests (pricing math, GST, EMI, catalog validity,
+Backend: `cd apps/backend && npm test` — 201 tests (pricing math, GST, EMI, catalog validity,
 coupon expiry/usage caps, webhook state machine + signature, LIKE escaping, status
 transitions, refunds, readiness probe, frontend↔backend API contract (every storefront
 call resolves to a mounted route), plus route-level integration tests against an
@@ -118,7 +118,7 @@ JSON-LD builders, API base + server base resolution, misconfiguration guard, NaN
 self-healing storage, wishlist dedupe + stock, store contact config + wa.me links,
 paise→rupee normalisation, readable API errors, video embed allowlist).
 
-Build: `cd apps/storefront && npm run build` must compile all 25 routes.
+Build: `cd apps/storefront && npm run build` must compile all 27 routes.
 Smoke: `BASE_URL=... node scripts/smoke.mjs` — 28 routes, expects 200 + real content.
 
 Fresh-clone check (do this before trusting a deploy): clone into an empty dir, then

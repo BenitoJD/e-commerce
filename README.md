@@ -17,7 +17,7 @@ toolsvilla-clone/
     src/lib/          pricing, stock reservation, order state machine, refunds,
                       rate limiting, security helpers, text helpers
     src/lib/__tests__ unit + route-level integration suites (in-memory DB)
-  apps/storefront/    Next.js 14 App Router (26 routes incl. admin picking list)
+  apps/storefront/    Next.js 14 App Router (27 routes)
     app/              homepage, category, product, cart, checkout, orders,
                       tracking, invoice, returns, admin, policies…
     components/       client views (ProductView, CategoryView, BrandView, HomeView…)
@@ -115,14 +115,14 @@ node scripts/verify-all.mjs   # 6/6: both suites, compose, build, repo audits
 ```
 
 Individually:
-cd apps/backend && npm test        # 200 tests: pricing/GST/EMI, catalog, coupons,
+cd apps/backend && npm test        # 201 tests: pricing/GST/EMI, catalog, coupons,
                                    # webhooks, transitions, refunds, rate limiting,
                                    # security, sitemap, seed plan, API contract, health,
                                    # route-level integration on an in-memory DB
 cd apps/storefront && npm test     # 79 tests: catalog filters, cart self-healing +
                                    # reorder + stock status, wishlist, store config,
                                    # API base resolution, paise→rupee, errors, video allowlist
-cd apps/storefront && npm run build # must compile all 25 routes
+cd apps/storefront && npm run build # must compile all 27 routes
 cd apps/storefront && npm start     # production server (same thing the image runs)
 ```
 
@@ -145,7 +145,7 @@ Route smoke test (needs the site running):
 
 ```bash
 BASE_URL=http://localhost:3000 PRODUCT_SLUG=bosch-gsb-13-re-drill BRAND=Bosch \
-  node scripts/smoke.mjs        # 30/30 routes (29 pages + a branded 404)
+  node scripts/smoke.mjs        # 31/31 routes (30 pages/endpoints + a branded 404)
 ```
 
 ## Razorpay

@@ -43,6 +43,15 @@ Compose includes an `nginx` service (port 80) that serves the storefront at `/` 
 API at `/api/*` (see `infra/nginx.conf`). Razorpay webhook →
 `https://yourdomain.com/api/webhooks/razorpay`. Add TLS with Cloudflare (proxied) or certbot.
 
+The proxy is tuned in three places worth knowing when you change it:
+- **gzip** for text/JSON/SVG (skip binary images), so HTML and API payloads travel compressed;
+- **cache headers**: `/_next/static/` immutable for a year, `/images/` for a week,
+  `robots.txt`/`sitemap.xml` for ten minutes;
+- the webhook block disables buffering and goes straight to `/webhooks/razorpay`, so Razorpay's
+  signature check sees the raw body without a proxy in the way.
+`apps/backend` tests assert these blocks structurally (no nginx binary is needed), including
+that every specific location is declared **before** the catch-all.
+
 **A2 two subdomains, no nginx service** — delete/comment the `nginx:` block in
 `docker-compose.yml`, then use `NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com` with
 Cloudflare Tunnel or a host-level proxy in front of ports 3000/9000.

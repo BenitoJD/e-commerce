@@ -17,9 +17,9 @@ test('discountPct: rounds correctly and never returns NaN', () => {
 test('pickDeals filters at the threshold and sorts by discount', () => {
   const items = [
     { slug: 'a', price: 100, mrp: 200 }, // 50%
-    { slug: 'b', price: 100, mrp: 110 }, // 9% — excluded
+    { slug: 'b', price: 100, mrp: 110 }, // 9%, excluded
     { slug: 'c', price: 300, mrp: 400 }, // 25%
-    { slug: 'd', price: 100, mrp: 125 }, // 20% — exactly at threshold
+    { slug: 'd', price: 100, mrp: 125 }, // 20%, exactly at threshold
   ];
   const deals = pickDeals(items);
   assert.deepEqual(deals.map((d) => d.slug), ['a', 'c', 'd']);

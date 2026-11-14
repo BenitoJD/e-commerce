@@ -1,6 +1,6 @@
 # VPS deploy (Mumbai/Bangalore, Ubuntu 24.04, 4vCPU/8GB)
 
-## Option A — Docker Compose (simplest)
+## Option A, Docker Compose (simplest)
 
 Two routing choices. **A1 single domain through the bundled nginx** (recommended to start):
 
@@ -33,12 +33,12 @@ BASE_URL=https://yourdomain.com PRODUCT_SLUG=<a real slug> BRAND=<a real brand> 
 - **Redeploys drain gracefully.** The backend handles `SIGTERM`/`SIGINT`: it stops the
   stale-hold sweep timer, stops accepting connections, lets in-flight checkouts and Razorpay
   webhooks finish, then drains the Postgres pool and exits 0. A hung request can't block a
-  deploy forever — `SHUTDOWN_TIMEOUT_MS` (default 10000) forces exit after the deadline, and
+  deploy forever, `SHUTDOWN_TIMEOUT_MS` (default 10000) forces exit after the deadline, and
   Compose/`docker stop` allow 10s by default, so keep the two in step if you raise it.
-  Check the logs after a redeploy: `[shutdown] SIGTERM received — draining` then
+  Check the logs after a redeploy: `[shutdown] SIGTERM received, draining` then
   `[shutdown] clean exit`.
 - After `docker compose up`, check `docker compose exec storefront \
-  node -e "console.log(require('./.next/routes-manifest.json').rewrites)"` — the sitemap
+  node -e "console.log(require('./.next/routes-manifest.json').rewrites)"`, the sitemap
   destination should be `http://backend:9000/sitemap.xml`, not `localhost`.
 ```
 Compose includes an `nginx` service (port 80) that serves the storefront at `/` and the
@@ -54,7 +54,7 @@ The proxy is tuned in three places worth knowing when you change it:
 `apps/backend` tests assert these blocks structurally (no nginx binary is needed), including
 that every specific location is declared **before** the catch-all.
 
-**A2 two subdomains, no nginx service** — delete/comment the `nginx:` block in
+**A2 two subdomains, no nginx service**, delete/comment the `nginx:` block in
 `docker-compose.yml`, then use `NEXT_PUBLIC_BACKEND_URL=https://api.yourdomain.com` with
 Cloudflare Tunnel or a host-level proxy in front of ports 3000/9000.
 
@@ -67,7 +67,7 @@ The storefront image runs a full production build + `next start` (not Next's `st
 output). That keeps the image honest with what `npm run build && npm start` does locally;
 the trade-off is a larger image (~hundreds of MB extra node_modules) for zero layout risk.
 
-## Option B — Coolify (Vercel-like on VPS)
+## Option B, Coolify (Vercel-like on VPS)
 1. Install: `curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash` → open http://VPS_IP:8000
 2. Add Project → Postgres plugin (note the connection URL).
 3. Service 1 Backend: repo `BenitoJD/e-commerce`, base dir `apps/backend`, Dockerfile, port 9000, envs DATABASE_URL/RAZORPAY_*/FRONTEND_URL/ADMIN_TOKEN.
@@ -78,8 +78,8 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 6. Razorpay webhook: `https://api.yourdomain.com/webhooks/razorpay`.
 7. No manual seed needed: on first boot the backend creates the schema and, **only when the
    products table is empty**, loads the 30-product catalogue and coupons (`SEED_ON_BOOT=false`
-   disables it). The log line is `[seed] empty catalogue — seeded …`, or
-   `[seed] catalogue already has N products — not seeding` on later boots, so your edits are
+   disables it). The log line is `[seed] empty catalogue, seeded …`, or
+   `[seed] catalogue already has N products, not seeding` on later boots, so your edits are
    never overwritten. `npm run seed` still exists as a manual refresh (it updates catalogue
    content while preserving stock and coupon usage).
 
@@ -89,22 +89,22 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
 - **Database dumps**: `./scripts/db-backup.sh` writes a timestamped, gzip-verified dump to
   `backups/` and prunes older ones (`KEEP`, default 14). It uses `docker compose exec` against
   the postgres service when available, otherwise `pg_dump` with `DATABASE_URL`.
-  A failed dump exits non-zero and deletes its partial file — an empty backup that looks fine
+  A failed dump exits non-zero and deletes its partial file, an empty backup that looks fine
   is worse than none.
 - Nightly cron on the VPS:
   `15 1 * * * cd /srv/e-commerce && ./scripts/db-backup.sh >> /var/log/e-commerce-backup.log 2>&1`
 - **Restore**: `RESTORE_CONFIRM=yes ./scripts/db-restore.sh backups/e-commerce-<stamp>.sql.gz`
   (it refuses without the variable because it replaces live data, and stops on the first SQL
   error). Restart the backend afterwards so pooled connections see the restored data.
-- `backups/` and `*.sql.gz` are gitignored — dumps contain customer PII.
+- `backups/` and `*.sql.gz` are gitignored, dumps contain customer PII.
 
 ## Monitoring
 - **First thing to read after `docker compose up`**: the backend log. A production deploy with
   a missing setting prints one `[config]` / `[security]` / `[webhook]` line per degraded
-  feature — admin disabled, online checkout refusing orders, CORS blocked, or webhooks
+  feature, admin disabled, online checkout refusing orders, CORS blocked, or webhooks
   rejected. A fully configured deploy prints none of them.
-- Liveness: `GET /health` — process is up (always 200 while Node runs).
-- Readiness: `GET /ready` — 200 when Postgres answers, **503 when it does not**.
+- Liveness: `GET /health`, process is up (always 200 while Node runs).
+- Readiness: `GET /ready`, 200 when Postgres answers, **503 when it does not**.
   Point uptime monitors / Docker healthchecks at `/ready`, not `/health`.
 - Both containers ship a Docker `HEALTHCHECK` (backend hits `/ready`, storefront hits `/`)
   and run as the unprivileged `node` user.
@@ -116,7 +116,7 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
   Raise the pool only with Postgres `max_connections` in mind (compose Postgres is shared by
   the API alone here, so 10 is generous).
 - `robots.txt` is generated from `NEXT_PUBLIC_SITE_URL` at build time, so set that before
-  building — otherwise the sitemap link points at localhost.
+  building, otherwise the sitemap link points at localhost.
 
 ## Housekeeping the backend does on its own
 - **Schema + first-boot seed**: `sql/schema.sql` is applied on the first query, and an empty
@@ -127,5 +127,5 @@ the trade-off is a larger image (~hundreds of MB extra node_modules) for zero la
   set `0` to disable) and cancels pending orders older than the sweep window, returning their
   stock and releasing any coupon use. It logs only when it actually releases something.
 - You can also run it on demand from the admin Orders tab (**Release abandoned holds**) or
-  `POST /admin/orders/release-stale?minutes=30` with the admin token — handy straight after a
+  `POST /admin/orders/release-stale?minutes=30` with the admin token, handy straight after a
   sale where carts were abandoned.

@@ -1,6 +1,6 @@
 // Resolves the public origin used in sitemap URLs.
 //
-// FRONTEND_URL is authoritative (it may be a comma-separated allowlist — take the first).
+// FRONTEND_URL is authoritative (it may be a comma-separated allowlist, take the first).
 // Without it, fall back to the request's own origin so a self-hosted deployment can never
 // advertise placeholder URLs like https://www.example.com to search engines.
 function sitemapOrigin(req, env = process.env) {

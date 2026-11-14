@@ -48,7 +48,7 @@ function svgFor(p, i, variant = 1) {
   <text x="300" y="168" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="800" fill="${color}">${esc(initials)}</text>
   <text x="40" y="200" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600" fill="#6B7280">${esc(p.brand || '')}</text>
   ${title}
-  <text x="40" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">View ${variant} of 3 — placeholder image, replace with real photography</text>
+  <text x="40" y="360" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6B7280">View ${variant} of 3, placeholder image, replace with real photography</text>
 </svg>
 `;
 }

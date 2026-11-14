@@ -32,7 +32,7 @@ const FAQS = [
   },
   {
     q: 'Can I cancel an order?',
-    a: 'Yes — before it ships. Open Track Order with your receipt and phone, then choose Cancel order. Paid orders are refunded automatically when the gateway allows it, otherwise our team processes the refund manually.',
+    a: 'Yes, before it ships. Open Track Order with your receipt and phone, then choose Cancel order. Paid orders are refunded automatically when the gateway allows it, otherwise our team processes the refund manually.',
   },
   {
     q: 'Is there a warranty on tools?',
@@ -48,7 +48,7 @@ const FAQS = [
   },
   {
     q: 'Do I need an account to order?',
-    a: 'No — guest checkout is always available. Creating an account lets you save addresses, reuse them at checkout and see your full order history in one place. Guest orders can be looked up from My Orders after verifying your phone number.',
+    a: 'No, guest checkout is always available. Creating an account lets you save addresses, reuse them at checkout and see your full order history in one place. Guest orders can be looked up from My Orders after verifying your phone number.',
   },
   {
     q: 'How do I track my order?',
@@ -56,7 +56,7 @@ const FAQS = [
   },
   {
     q: 'What if a product arrives damaged?',
-    a: 'Report it within 48 hours through the Returns page (reason: damaged) with a photo available if requested. Keep the packaging until the claim is resolved — we arrange pickup and a replacement or refund after inspection.',
+    a: 'Report it within 48 hours through the Returns page (reason: damaged) with a photo available if requested. Keep the packaging until the claim is resolved, we arrange pickup and a replacement or refund after inspection.',
   },
 ];
 

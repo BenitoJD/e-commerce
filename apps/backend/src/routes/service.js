@@ -45,7 +45,7 @@ function buildTimeline(order) {
   const status = String(order.status || '');
   const isCod = String(order.pay_mode || order.payMode || '') === 'cod';
   const placed = { status: 'placed', label: 'Order placed', at: placedAt };
-  // Only claim a timestamp we actually recorded — repeating the order date on every step
+  // Only claim a timestamp we actually recorded, repeating the order date on every step
   // reads as if shipping and delivery happened the same day.
   if (status === 'cancelled') {
     return [placed, { status: 'cancelled', label: 'Cancelled', at: null }];
@@ -55,12 +55,12 @@ function buildTimeline(order) {
   }
   const timeline = [placed];
   if (status === 'pending' || status === 'cod_pending') return timeline;
-  // COD orders are not "paid" before delivery — don't claim a payment we never took.
+  // COD orders are not "paid" before delivery, don't claim a payment we never took.
   if (!isCod) timeline.push({ status: 'paid', label: 'Payment confirmed', at: null });
   if (status === 'paid') return timeline;
   timeline.push({ status: 'shipped', label: 'Shipped', at: null });
   if (status === 'shipped') return timeline;
-  timeline.push({ status: 'delivered', label: isCod ? 'Delivered — cash collected' : 'Delivered', at: deliveredAt });
+  timeline.push({ status: 'delivered', label: isCod ? 'Delivered, cash collected' : 'Delivered', at: deliveredAt });
   return timeline;
 }
 
@@ -236,7 +236,7 @@ router.post('/cancel', async (req, res) => {
       "UPDATE orders SET status = 'cancelled' WHERE receipt = $1 RETURNING receipt, status",
       [receipt]
     );
-    // Reservation was taken at checkout for pending/paid/cod_pending — put it back.
+    // Reservation was taken at checkout for pending/paid/cod_pending, put it back.
     await releaseItems(db, Array.isArray(order.items) ? order.items : []);
     // Give the coupon use back too, or a limited code is consumed by a cancelled order.
     await releaseCouponUse(db, order.coupon_code, order.status);
@@ -257,7 +257,7 @@ router.post('/cancel', async (req, res) => {
   }
 });
 
-// POST /store/contact { name, phone?, message } — persisted for admin triage
+// POST /store/contact { name, phone?, message }, persisted for admin triage
 router.post('/contact', async (req, res) => {
   try {
     const name = String((req.body && req.body.name) || '').trim();
@@ -280,7 +280,7 @@ router.post('/contact', async (req, res) => {
   }
 });
 
-// POST /store/service/returns { receipt, phone, reason, details } — file a return/exchange
+// POST /store/service/returns { receipt, phone, reason, details }, file a return/exchange
 const RETURN_REASONS = ['damaged', 'wrong-item', 'defective', 'not-needed', 'other'];
 const RETURNABLE = ['delivered', 'paid', 'shipped'];
 
@@ -311,12 +311,12 @@ router.post('/returns', async (req, res) => {
       return res.status(409).json({ error: `Orders with status '${order.status}' are not returnable` });
     }
 
-    // The published policy says 7 days from delivery — enforce it instead of accepting
+    // The published policy says 7 days from delivery, enforce it instead of accepting
     // any order that happens to be delivered.
     const window = returnWindow({ deliveredAt: order.delivered_at, createdAt: order.created_at });
     if (!window.allowed) {
       return res.status(409).json({
-        error: `Return window closed — returns are accepted within ${window.windowDays} days of delivery. Contact us on WhatsApp if the item arrived late or faulty.`,
+        error: `Return window closed, returns are accepted within ${window.windowDays} days of delivery. Contact us on WhatsApp if the item arrived late or faulty.`,
       });
     }
 
@@ -327,7 +327,7 @@ router.post('/returns', async (req, res) => {
     );
     if (existing.length) {
       return res.status(409).json({
-        error: `A return request (#${existing[0].id}) already exists for this order — track it with your receipt and phone.`,
+        error: `A return request (#${existing[0].id}) already exists for this order, track it with your receipt and phone.`,
       });
     }
     const ins = await db.query(
@@ -343,7 +343,7 @@ router.post('/returns', async (req, res) => {
   }
 });
 
-// GET /store/service/returns/eligibility?receipt=&phone= — tell the customer *before* they
+// GET /store/service/returns/eligibility?receipt=&phone=, tell the customer *before* they
 // submit whether the 7-day window is still open (and why not, if it isn't).
 router.get('/returns/eligibility', async (req, res) => {
   try {
@@ -386,7 +386,7 @@ router.get('/returns/eligibility', async (req, res) => {
     }
     res.json({
       eligible: window.allowed,
-      reason: window.allowed ? null : `Return window closed — returns are accepted within ${window.windowDays} days of delivery`,
+      reason: window.allowed ? null : `Return window closed, returns are accepted within ${window.windowDays} days of delivery`,
       daysLeft: window.daysLeft,
       deadline: window.deadline ? window.deadline.toISOString() : null,
       windowDays: window.windowDays || WINDOW_DAYS,
@@ -397,7 +397,7 @@ router.get('/returns/eligibility', async (req, res) => {
   }
 });
 
-// GET /store/service/returns?receipt=&phone= — customer-visible return status.
+// GET /store/service/returns?receipt=&phone=, customer-visible return status.
 // Same receipt+phone guard as tracking, so one customer can't read another's RMA.
 router.get('/returns', async (req, res) => {
   try {
@@ -425,7 +425,7 @@ router.get('/returns', async (req, res) => {
   }
 });
 
-// POST /store/service/stock-alert { slug, email } — notify me when back in stock
+// POST /store/service/stock-alert { slug, email }, notify me when back in stock
 router.post('/stock-alert', async (req, res) => {
   try {
     const slug = String((req.body && req.body.slug) || '').trim();

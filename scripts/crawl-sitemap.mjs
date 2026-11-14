@@ -90,7 +90,7 @@ async function main() {
     try { return new URL(locs[0]).origin; } catch { return null; }
   })();
   if (publicOrigin && publicOrigin !== BASE) {
-    console.log(`[crawl] sitemap origin ${publicOrigin} differs from audit base ${BASE} — auditing by path`);
+    console.log(`[crawl] sitemap origin ${publicOrigin} differs from audit base ${BASE}, auditing by path`);
   }
 
   const targets = locs.slice(0, LIMIT).map((loc) => {
@@ -105,7 +105,7 @@ async function main() {
 
   console.log(`[crawl] ${targets.length} URLs from the sitemap (concurrency ${CONCURRENCY})`);
   if (LOCAL_BASE) {
-    console.log('[crawl] localhost base — canonicals are intentionally suppressed, so not required');
+    console.log('[crawl] localhost base, canonicals are intentionally suppressed, so not required');
   }
 
   const results = [];

@@ -1,4 +1,4 @@
-// Admin token persistence — one key, one place.
+// Admin token persistence, one key, one place.
 //
 // The console and the picking list must agree on both the key and the storage. The token
 // lives in localStorage so a new tab (the picking list opens with target="_blank") is

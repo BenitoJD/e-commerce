@@ -1,7 +1,7 @@
 // Product structured data (schema.org), kept pure so it can be unit-tested.
 //
-// Rich results need: name, image, offers (price + availability) and — for star ratings in
-// search — aggregateRating backed by real reviews. Emitting a rating we don't have would
+// Rich results need: name, image, offers (price + availability) and, for star ratings in
+// search, aggregateRating backed by real reviews. Emitting a rating we don't have would
 // be a policy violation, so it is only included when count > 0.
 export function productJsonLd(product, { storeName, absoluteUrl, paiseToRupees, rating = null }) {
   const p = product || {};
@@ -13,7 +13,7 @@ export function productJsonLd(product, { storeName, absoluteUrl, paiseToRupees, 
     sku: p.slug,
     hsnCode: p.hsn || undefined,
     image: Array.isArray(p.images) ? p.images.slice(0, 3).map(absoluteUrl) : undefined,
-    description: `${p.name}${p.brand ? ` by ${p.brand}` : ''} — GST invoice, EMI and pan-India delivery at ${storeName}.`,
+    description: `${p.name}${p.brand ? ` by ${p.brand}` : ''}, GST invoice, EMI and pan-India delivery at ${storeName}.`,
     offers: {
       '@type': 'Offer',
       priceCurrency: 'INR',

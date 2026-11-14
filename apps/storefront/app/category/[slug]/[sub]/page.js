@@ -46,7 +46,7 @@ export async function generateMetadata({ params, searchParams }) {
   // Unknown pair: noindex metadata here, branded 404 in the body (see the parent page note).
   if (tree.length && !child) {
     return {
-      title: `Category not found — ${STORE.name}`,
+      title: `Category not found, ${STORE.name}`,
       description: 'This subcategory does not exist. Browse the parent category or all products.',
       robots: { index: false, follow: true },
       alternates: { canonical },
@@ -60,15 +60,15 @@ export async function generateMetadata({ params, searchParams }) {
   const from = prices.length ? Math.min(...prices) : null;
   const brands = [...new Set(items.map((p) => p.brand).filter(Boolean))].slice(0, 3).join(', ');
   const title = from
-    ? `${label} — Buy Online from ₹${from.toLocaleString('en-IN')} | ${STORE.name}`
-    : `${label} — Buy Online | ${STORE.name}`;
+    ? `${label}, Buy Online from ₹${from.toLocaleString('en-IN')} | ${STORE.name}`
+    : `${label}, Buy Online | ${STORE.name}`;
   const description = [
     `Shop ${label.toLowerCase()} online at ${STORE.name}`,
     parent ? `part of our ${parent.label} range` : null,
     from ? `prices from ₹${from.toLocaleString('en-IN')}` : null,
     brands ? `brands like ${brands}` : null,
     'GST invoice, EMI, UPI and pan-India delivery.',
-  ].filter(Boolean).join(' — ');
+  ].filter(Boolean).join(', ');
 
   return {
     title,

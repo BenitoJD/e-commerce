@@ -21,13 +21,13 @@ export async function generateMetadata({ params, searchParams }) {
 
   // Decide the 404 here: generateMetadata runs before the response is committed, so the
   // status is a real 404. Calling notFound() only in the page body streams a 200 first.
-  // Unknown slug: answer with not-found metadata (noindex) — the page body renders the
+  // Unknown slug: answer with not-found metadata (noindex), the page body renders the
   // branded 404. Throwing notFound() here would skip the noindex and still stream a 200.
   if (!query && slug !== 'all') {
     const tree = await getCategoriesForMeta();
     if (tree.length && !tree.some((c) => c.slug === slug)) {
       return {
-        title: `Category not found — ${STORE.name}`,
+        title: `Category not found, ${STORE.name}`,
         description: 'This category does not exist. Browse all products, deals and brands instead.',
         robots: { index: false, follow: true },
         alternates: { canonical: canonicalUrl(`/category/${encodeURIComponent(slug)}`) },
@@ -38,7 +38,7 @@ export async function generateMetadata({ params, searchParams }) {
   if (query) {
     return {
       title: `Search: ${query} | ${STORE.name}`,
-      description: `Products matching "${query}" at ${STORE.name} — GST invoice, EMI and pan-India delivery.`,
+      description: `Products matching "${query}" at ${STORE.name}, GST invoice, EMI and pan-India delivery.`,
       robots: { index: false, follow: true },
       alternates: { canonical: canonicalUrl(`/category/${encodeURIComponent(slug)}`) },
     };
@@ -50,14 +50,14 @@ export async function generateMetadata({ params, searchParams }) {
   const from = prices.length ? Math.min(...prices) : null;
   const brands = [...new Set(items.map((p) => p.brand).filter(Boolean))].slice(0, 3).join(', ');
   const title = from
-    ? `${label} — Buy Online from ₹${from.toLocaleString('en-IN')} | ${STORE.name}`
-    : `${label} — Buy Online | ${STORE.name}`;
+    ? `${label}, Buy Online from ₹${from.toLocaleString('en-IN')} | ${STORE.name}`
+    : `${label}, Buy Online | ${STORE.name}`;
   const description = [
     `Shop ${label.toLowerCase()} online at ${STORE.name}`,
     from ? `prices from ₹${from.toLocaleString('en-IN')}` : null,
     brands ? `brands like ${brands}` : null,
     'GST invoice, EMI, UPI and pan-India delivery.',
-  ].filter(Boolean).join(' — ');
+  ].filter(Boolean).join(', ');
   return {
     title,
     description: description.slice(0, 300),

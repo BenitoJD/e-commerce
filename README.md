@@ -1,10 +1,10 @@
-# E-Commerce — Machinery & Tools Store
+# E-Commerce: Machinery & Tools Store
 
 [![verify](https://github.com/BenitoJD/e-commerce/actions/workflows/verify.yml/badge.svg)](https://github.com/BenitoJD/e-commerce/actions/workflows/verify.yml)
 
 Production-shaped ecommerce monorepo for the Indian tools/machinery market:
 Next.js storefront + Express/Postgres backend + Razorpay payments, customer accounts,
-OTP guest order access, transactional email and a browser E2E suite — deployable on a
+OTP guest order access, transactional email and a browser E2E suite, deployable on a
 single VPS.
 
 Feature parity matrix: [`docs/PARITY.md`](docs/PARITY.md).
@@ -73,7 +73,7 @@ Compose runs postgres + backend + storefront + nginx (single domain: store at `/
 API at `/api/*`). Drop the `nginx:` block for a two-subdomain Cloudflare Tunnel setup.
 Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
-`NEXT_PUBLIC_*` values are baked in at **build** time — changing them requires a rebuild.
+`NEXT_PUBLIC_*` values are baked in at **build** time, changing them requires a rebuild.
 
 ## Demo video
 
@@ -87,8 +87,8 @@ and the workshop story. Re-record with `node scripts/record-demo.mjs`.
 The storefront is an editorial shop, not a template: warm ivory paper, ink and copper,
 **Fraunces** serif headlines with **Manrope** for interface text (both self-hosted in
 `public/fonts/`), generous spacing, quiet product cards and full-bleed photography. The
-homepage leads with the people behind the work — the workshop story, named team members
-and a direct WhatsApp line — then the collection, the weekly edit and the brands. Product
+homepage leads with the people behind the work, the workshop story, named team members
+and a direct WhatsApp line, then the collection, the weekly edit and the brands. Product
 pages keep a sticky-feeling buy column, warm specification tables and a genuine
 human-support card. Motion is restrained and respects `prefers-reduced-motion`; focus
 states, one-h1 pages, mobile layouts and `alt` text are covered by the E2E suite.
@@ -99,7 +99,7 @@ states, one-h1 pages, mobile layouts and `alt` text are covered by the E2E suite
   prefills checkout), full order history, password reset by emailed link (development
   prints the link). Passwords are scrypt-hashed; session tokens are random 32-byte values
   stored only as SHA-256 hashes; a reset revokes every session. Guest checkout remains the
-  default — an account is never required.
+  default, an account is never required.
 - **Guest order access**: “My Orders”, quote status and the order list now require a
   **6-digit OTP** bound to the phone (5-minute expiry, 5 attempts, one request/minute).
   Knowing a phone number alone no longer reveals receipts or lets someone cancel orders.
@@ -127,7 +127,7 @@ business invoices · server-authoritative totals.
 After the sale: order success with live status polling · track order with courier/AWB +
 customer cancel · account order history or OTP-verified guest lookup, both with **reorder**
 and per-order WhatsApp help · printable GST invoice (buyer GSTIN, item lines, shipping,
-coupon, payment mode — totals reconcile) · returns/exchange form with **status lookup** ·
+coupon, payment mode, totals reconcile) · returns/exchange form with **status lookup** ·
 back-in-stock alerts that email the waiting list when stock returns.
 
 Trust: 10 policy pages, a searchable **FAQ** with FAQPage structured data, GST invoice
@@ -175,7 +175,7 @@ node scripts/self-audit.mjs   # 3/3 suites
 # running both, so a green badge can't hide skipped checks.
 
 # Needs a running stack (API + storefront + Postgres). Drives the real customer and operator
-# journeys — COD order with coupon, stock reserve/release, invoice maths, tracking, admin
+# journeys, COD order with coupon, stock reserve/release, invoice maths, tracking, admin
 # state machine, returns window, cancellation, signed webhook, quotes, reviews, 404s, SEO:
 API_URL=http://127.0.0.1:9000 BASE_URL=http://localhost:3000 \
 ADMIN_TOKEN=<admin token> RAZORPAY_WEBHOOK_SECRET=<test secret> node scripts/e2e-local.cjs
@@ -204,13 +204,13 @@ coupon terms, but never overwrites live `stock` or coupon `used_count`/`active`.
 
 All 36 listings now carry real photography: 30 curated catalogue shots in
 `apps/storefront/public/images/products/` and ten Gracewood furniture photos supplied by
-the client. They are demo assets gathered through public image search — see
+the client. They are demo assets gathered through public image search, see
 [`docs/IMAGE-CREDITS.md`](docs/IMAGE-CREDITS.md) for sources and the requirement to swap in
 owned/licensed photography before launch. A test fails if any catalog image path has no file
 behind it.
 
 Fresh-checkout check before trusting a deploy: check out into an empty directory and run
-the suites there — that is how the missing-catalog-files bug was caught.
+the suites there, that is how the missing-catalog-files bug was caught.
 
 Route smoke test and SEO audit (need the site running):
 
@@ -224,9 +224,9 @@ node scripts/crawl-sitemap.mjs http://localhost:3000   # every advertised URL
 ## Stale tabs after a rebuild
 
 Next.js hashes JS chunks per build, so a browser tab left open across a deploy can request
-chunks that no longer exist — the classic *"Application error: a client-side exception"*.
+chunks that no longer exist, the classic *"Application error: a client-side exception"*.
 The storefront now detects `ChunkLoadError` in both error boundaries, reloads once (with a
-30-second loop guard), and falls back to a **“A new version is available — Reload page”**
+30-second loop guard), and falls back to a **“A new version is available, Reload page”**
 screen. The E2E setup also checks that every JS/CSS asset referenced by the main routes
 actually exists, so a stale `next start` fails fast with a rebuild/restart instruction
 instead of silently serving a broken app.
@@ -240,7 +240,7 @@ cd apps/storefront && rm -rf .next && npx next build && npx next start -p 3000
 ## Razorpay
 
 Development needs no keys: without them checkout issues a mock order id so the UI can be
-exercised. **Production is different** — a missing key makes online checkout return 503
+exercised. **Production is different**, a missing key makes online checkout return 503
 instead of faking a payment, and payment webhooks are rejected outright unless
 `RAZORPAY_WEBHOOK_SECRET` is set (otherwise anyone could post a fake `payment.captured`).
 Both are reported in the boot log. Live keys + webhook secret go in the backend env; enable
@@ -256,4 +256,4 @@ OTP SMS (accounts work without one), and your GSTIN/phone/email/address (one pla
 
 ## Repository
 
-https://github.com/BenitoJD/e-commerce — push helper: `scripts/push-to-github.ps1`.
+https://github.com/BenitoJD/e-commerce, push helper: `scripts/push-to-github.ps1`.

@@ -107,7 +107,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
     }
   }
 
-  // Brand options come from the catalogue itself, not from the filtered results — otherwise
+  // Brand options come from the catalogue itself, not from the filtered results, otherwise
   // choosing one brand would remove every other option from the dropdown.
   const [brandOptions, setBrandOptions] = useState([]);
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function CategoryView({ slug, sub = '', initialItems = [], initia
 
   const clearFilters = () => {
     // On a search results URL, server-rendered `initialItems` are the (possibly empty)
-    // matches. Restoring them is not "clearing" anything — go back to the full catalogue.
+    // matches. Restoring them is not "clearing" anything, go back to the full catalogue.
     if (String(initialQ || '').trim()) {
       window.location.href = '/category/all';
       return;

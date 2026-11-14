@@ -1,7 +1,7 @@
 // Checkout state-picker helpers.
 //
 // The state field is only meaningful when the list actually loaded. If `GET /store/states`
-// fails, a `required` empty select would block the whole checkout — so requirement is
+// fails, a `required` empty select would block the whole checkout, so requirement is
 // derived from the data, never hardcoded.
 export function normalizeStates(response) {
   const rows = Array.isArray(response) ? response : (response && response.states) || [];

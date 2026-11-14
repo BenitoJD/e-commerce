@@ -5,7 +5,7 @@ const { buildCategoryTree } = require('../lib/categoryTree');
 
 const router = express.Router();
 
-// GET /store/categories — the two-level tree with product counts per node.
+// GET /store/categories, the two-level tree with product counts per node.
 router.get('/', async (req, res) => {
   try {
     const { rows } = await db.query(

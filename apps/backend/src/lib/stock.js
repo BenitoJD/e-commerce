@@ -1,5 +1,5 @@
 // Stock reservation helpers (thin wrappers over pg; logic reviewed, not unit-tested
-// because they need a live database — covered by code review + staging checks).
+// because they need a live database, covered by code review + staging checks).
 const db = require('../db');
 
 async function withTransaction(fn) {
@@ -36,7 +36,7 @@ async function reserveItems(exec, lineItems) {
   }
 }
 
-// Best-effort release (restock) — never throws; logs failures.
+// Best-effort release (restock), never throws; logs failures.
 async function releaseItems(exec, lineItems) {
   for (const it of (lineItems || [])) {
     const qty = parseInt(it.qty, 10) || 0;

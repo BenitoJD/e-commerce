@@ -323,9 +323,20 @@ async function main() {
   await context.close();
   const raw = await video.path();
   const mp4 = path.join(OUT_DIR, 'ecommerce-demo.mp4');
-  execFileSync('ffmpeg', ['-y', '-i', raw, '-c:v', 'libx264', '-preset', 'slow', '-crf', '19', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', mp4], { stdio: 'inherit' });
-  execFileSync('ffmpeg', ['-y', '-ss', '1', '-i', mp4, '-frames:v', '1', '-q:v', '2', path.join(OUT_DIR, 'poster.jpg')], { stdio: 'inherit' });
+  const share = path.join(OUT_DIR, 'ecommerce-demo-720p.mp4');
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', raw,
+    '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+    '-map', '0:v:0', '-map', '1:a:0', '-c:v', 'libx264', '-preset', 'slow', '-crf', '19',
+    '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '96k', '-shortest',
+    '-metadata', 'title=E-Commerce: Storefront Demo', '-metadata', 'artist=E-Commerce',
+    '-metadata', 'comment=Made to work. Made to stay.',
+    '-movflags', '+faststart', mp4], { stdio: 'inherit' });
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', mp4, '-vf', 'scale=1280:720',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p',
+    '-c:a', 'copy', '-movflags', '+faststart', share], { stdio: 'inherit' });
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-ss', '1', '-i', mp4, '-frames:v', '1', '-update', '1', '-q:v', '2', path.join(OUT_DIR, 'poster.jpg')], { stdio: 'inherit' });
   console.log('VIDEO', mp4);
+  console.log('SHARE', share);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

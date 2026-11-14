@@ -45,12 +45,12 @@ fi
 
 # A dump that is empty (or not gzip) must fail loudly.
 if ! gzip -t "$OUT" 2>/dev/null; then
-  echo "[backup] $OUT is not valid gzip — removing" >&2
+  echo "[backup] $OUT is not valid gzip, removing" >&2
   rm -f "$OUT"
   exit 1
 fi
 if [ "$(gzip -dc "$OUT" | wc -c)" -lt 1000 ]; then
-  echo "[backup] $OUT looks empty — keeping it but check the dump privileges" >&2
+  echo "[backup] $OUT looks empty, keeping it but check the dump privileges" >&2
   exit 2
 fi
 

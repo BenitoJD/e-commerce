@@ -36,11 +36,11 @@ test('PARITY.md states the current verification wave and the overall status', ()
 });
 
 test('the documented test counts agree with each other', () => {
-  // The header said 297 while the Tests section still said 245 — two places, one truth.
+  // The header said 297 while the Tests section still said 245, two places, one truth.
   const src = fs.readFileSync(DOC, 'utf8');
   const header = src.match(/backend \*\*(\d+)\*\* tests, storefront \*\*(\d+)\*\* tests/);
-  const section = src.match(/npm test` — (\d+) tests/);
-  const sectionFront = src.match(/Storefront:[\s\S]*?npm test` — (\d+) tests/);
+  const section = src.match(/npm test`, (\d+) tests/);
+  const sectionFront = src.match(/Storefront:[\s\S]*?npm test`, (\d+) tests/);
   assert.ok(header, 'header must state backend/storefront counts');
   assert.ok(section, 'Tests section must state the backend count');
   assert.ok(sectionFront, 'Tests section must state the storefront count');

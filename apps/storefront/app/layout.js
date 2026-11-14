@@ -13,7 +13,7 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   icons: { icon: '/favicon.svg' },
   title: {
-    default: `${STORE.name} — Machinery, Tools & Handcrafted Furniture`,
+    default: `${STORE.name}, Machinery, Tools & Handcrafted Furniture`,
     template: '%s'
   },
   description: 'Buy power tools, motors, agriculture equipment, cleaning machines and handcrafted teak furniture online in India. GST invoice, EMI, UPI & bulk quotes.'
@@ -110,7 +110,7 @@ export default function RootLayout({ children }) {
               <div>
                 <a href="/" className="font-display text-4xl tracking-[-0.035em] text-paper">{storeName}</a>
                 <p className="mt-5 max-w-xs text-sm leading-relaxed text-paper/60">
-                  Machinery, tools and handcrafted furniture — chosen by people who use them,
+                  Machinery, tools and handcrafted furniture, chosen by people who use them,
                   finished by people who care.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -119,7 +119,7 @@ export default function RootLayout({ children }) {
                   ))}
                 </div>
                 <p className="mt-8 font-display text-lg italic text-paper/80">“Buy it once. Keep it for years.”</p>
-                <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-paper/40">— The {storeName} workshop</p>
+                <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-paper/40">- The {storeName} workshop</p>
               </div>
 
               <div>
@@ -159,7 +159,7 @@ export default function RootLayout({ children }) {
                 <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-copper">Talk to us</div>
                 <p className="mt-4 font-display text-2xl text-paper">A person answers.</p>
                 <p className="mt-2 text-sm leading-relaxed text-paper/60">
-                  Monday–Saturday, 9am–7pm IST.<br />Before you buy, after it arrives — same number.
+                  Monday–Saturday, 9am–7pm IST.<br />Before you buy, after it arrives, same number.
                 </p>
                 <a href={waLink('Hi, I have a question about a product.')} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full bg-copper px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-paper hover:text-ink">
                   WhatsApp the team →

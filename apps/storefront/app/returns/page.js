@@ -6,7 +6,7 @@ import { STORE } from '../../lib/store';
 
 const RETURN_STATUS_LABEL = {
   requested: 'Received',
-  approved: 'Approved — pickup will be arranged',
+  approved: 'Approved, pickup will be arranged',
   rejected: 'Rejected',
   picked_up: 'Picked up',
   refunded: 'Refunded',
@@ -103,7 +103,7 @@ export default function ReturnsPage() {
       });
       setState({
         busy: false,
-        ok: `Return request #${r.id} received for ${r.receipt}. Our team reviews it within 1 working day — you'll get a call to arrange pickup.`,
+        ok: `Return request #${r.id} received for ${r.receipt}. Our team reviews it within 1 working day, you'll get a call to arrange pickup.`,
         err: '',
         id: r.id,
       });
@@ -117,14 +117,14 @@ export default function ReturnsPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-extrabold">Return or Exchange</h1>
       <p className="text-sm text-gray-500 mt-1">
-        Damaged, wrong or defective item? File it here — we arrange pickup. Returns are accepted
+        Damaged, wrong or defective item? File it here, we arrange pickup. Returns are accepted
         within <b>7 days of delivery</b>; see the{' '}
         <a href="/returns-policy" className="text-[#A95F32] font-bold underline">returns policy</a>.
       </p>
 
       <div className="card p-4 mt-5">
         <div className="font-bold text-sm">Can I still return this order?</div>
-        <p className="text-xs text-gray-500 mt-1">Check before you fill the form — it takes a second.</p>
+        <p className="text-xs text-gray-500 mt-1">Check before you fill the form, it takes a second.</p>
         <div className="mt-2 flex flex-wrap items-end gap-2">
           <div className="flex-1 min-w-[180px]">
             <label className="label">Receipt / Order ID</label>
@@ -156,7 +156,7 @@ export default function ReturnsPage() {
         {elig.info ? (
           <p role="status" className={`text-sm font-semibold mt-2 ${elig.info.eligible ? 'text-green-700' : 'text-amber-700'}`}>
             {elig.info.eligible
-              ? `Eligible — about ${elig.info.daysLeft} day${elig.info.daysLeft === 1 ? '' : 's'} left in the ${elig.info.windowDays}-day window.`
+              ? `Eligible, about ${elig.info.daysLeft} day${elig.info.daysLeft === 1 ? '' : 's'} left in the ${elig.info.windowDays}-day window.`
               : (elig.info.reason || 'Not eligible for a return right now.')}
           </p>
         ) : null}
@@ -210,7 +210,7 @@ export default function ReturnsPage() {
             <div className="flex justify-between"><span className="text-gray-500">Return #{lookup.info.id}</span>
               <span className="badge bg-gray-100">{RETURN_STATUS_LABEL[String(lookup.info.status)] || lookup.info.status}</span>
             </div>
-            <div className="text-gray-600 mt-1">Reason: {lookup.info.reason || '—'}</div>
+            <div className="text-gray-600 mt-1">Reason: {lookup.info.reason || 'N/A'}</div>
             {lookup.info.details ? <div className="text-gray-500 text-xs mt-1">{lookup.info.details}</div> : null}
           </div>
         ) : null}

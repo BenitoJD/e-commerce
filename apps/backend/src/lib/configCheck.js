@@ -20,17 +20,17 @@ function configWarnings(env = process.env) {
 
   const token = String(env.ADMIN_TOKEN || '');
   if (!token) {
-    warnings.push('[config] ADMIN_TOKEN is not set — the admin console is disabled (all /admin routes return 503).');
+    warnings.push('[config] ADMIN_TOKEN is not set, the admin console is disabled (all /admin routes return 503).');
   } else if (token.length < MIN_ADMIN_TOKEN) {
-    warnings.push(`[config] ADMIN_TOKEN is shorter than ${MIN_ADMIN_TOKEN} characters — use a long random value; the admin API is reachable from the internet.`);
+    warnings.push(`[config] ADMIN_TOKEN is shorter than ${MIN_ADMIN_TOKEN} characters, use a long random value; the admin API is reachable from the internet.`);
   } else if (DEFAULT_ADMIN_TOKENS.has(token.toLowerCase())) {
-    warnings.push('[config] ADMIN_TOKEN still uses a well-known default — change it before exposing the admin console.');
+    warnings.push('[config] ADMIN_TOKEN still uses a well-known default, change it before exposing the admin console.');
   }
 
   if (!paymentsConfigured(env)) {
     warnings.push(mockPaymentsAllowed(env)
-      ? '[config] Razorpay keys are not set — online checkout returns mock orders (ALLOW_MOCK_PAYMENTS=true). Switch this off before taking real orders.'
-      : '[config] Razorpay keys are not set — online checkout will REFUSE orders (503) until they are configured.');
+      ? '[config] Razorpay keys are not set, online checkout returns mock orders (ALLOW_MOCK_PAYMENTS=true). Switch this off before taking real orders.'
+      : '[config] Razorpay keys are not set, online checkout will REFUSE orders (503) until they are configured.');
   }
 
   const cors = corsWarning(env);
@@ -40,13 +40,13 @@ function configWarnings(env = process.env) {
   if (webhook) warnings.push(webhook);
 
   if (!env.AUTH_SECRET) {
-    warnings.push('[config] AUTH_SECRET is not set — session and OTP tokens fall back to a development secret. Set a long random value.');
+    warnings.push('[config] AUTH_SECRET is not set, session and OTP tokens fall back to a development secret. Set a long random value.');
   }
   if (!(env.SMTP_HOST && env.SMTP_FROM)) {
-    warnings.push('[config] SMTP is not configured — order emails are recorded in the admin outbox but not delivered.');
+    warnings.push('[config] SMTP is not configured, order emails are recorded in the admin outbox but not delivered.');
   }
   if (!smsConfigured(env)) {
-    warnings.push('[config] No SMS provider is configured — guest OTP order lookup is unavailable; customers should create an account.');
+    warnings.push('[config] No SMS provider is configured, guest OTP order lookup is unavailable; customers should create an account.');
   }
 
   return warnings;

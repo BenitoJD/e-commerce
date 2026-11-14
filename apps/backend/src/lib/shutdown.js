@@ -13,7 +13,7 @@ function createShutdown({ server, pool, interval, intervals = [], timeoutMs = 10
       return Promise.resolve(false);
     }
     started = true;
-    log(`[shutdown] ${signal} received — draining`);
+    log(`[shutdown] ${signal} received, draining`);
 
     // Stop background timers first so they can't touch the DB while the pool drains.
     for (const timer of [interval, ...intervals].filter(Boolean)) {
@@ -24,7 +24,7 @@ function createShutdown({ server, pool, interval, intervals = [], timeoutMs = 10
     }
 
     const hardStop = setTimeout(() => {
-      log('[shutdown] deadline reached — forcing exit');
+      log('[shutdown] deadline reached, forcing exit');
       exit(1);
     }, timeoutMs);
     if (hardStop && typeof hardStop.unref === 'function') hardStop.unref();

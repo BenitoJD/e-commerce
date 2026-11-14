@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Printing is a first-class flow here (GST invoices + the warehouse picking list), so the
-// print rules must be global and the `.no-print` switch must actually be defined — an
+// print rules must be global and the `.no-print` switch must actually be defined, an
 // undefined class silently prints the buttons and controls onto paper.
 const STOREFRONT = path.resolve(__dirname, '..', '..', '..', '..', '..', 'apps', 'storefront');
 

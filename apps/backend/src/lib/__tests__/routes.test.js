@@ -127,7 +127,7 @@ function makeFakeDb() {
         conds.push((p) => String(p.subcategory || '') === leaf);
       }
       let rows = [...products.values()].filter((p) => conds.every((fn) => fn(p)));
-      // ORDER BY is inlined (allowlisted) — apply the same intent here.
+      // ORDER BY is inlined (allowlisted), apply the same intent here.
       if (t.includes('price_paise ASC')) rows.sort((a, b) => a.price_paise - b.price_paise);
       else if (t.includes('price_paise DESC')) rows.sort((a, b) => b.price_paise - a.price_paise);
       rows = rows.slice(offset, offset + limit);
@@ -1341,7 +1341,7 @@ test('shipping fee is charged when configured and waived above the threshold', a
     assert.equal(small.json.amount_paise, 100000 + 14900, 'total must include shipping');
 
     const big = await api('POST', '/store/checkout/create', {
-      items: [{ slug: 'motor-b', qty: 1 }], // ₹5,000 — above the ₹4,000 threshold
+      items: [{ slug: 'motor-b', qty: 1 }], // ₹5,000, above the ₹4,000 threshold
       customer: { name: 'Ravi', phone: '9876543210' },
     });
     assert.equal(big.status, 200, 'expected the above-threshold order to be accepted');
@@ -1936,7 +1936,7 @@ test('production without Razorpay keys refuses online checkout instead of faking
     assert.equal(fake.orders.length, ordersBefore, 'no order should be created');
     assert.equal(fake.products.get('drill-a').stock, stockBefore, 'stock must not be reserved');
 
-    // Cash on Delivery still works — the shopper gets an alternative, not a dead end.
+    // Cash on Delivery still works, the shopper gets an alternative, not a dead end.
     const cod = await api('POST', '/store/checkout/create', {
       items: [{ slug: 'drill-a', qty: 1 }],
       customer: { name: 'Online Buyer', phone: '9812300777', pincode: '560001' },

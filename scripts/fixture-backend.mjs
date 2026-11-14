@@ -112,7 +112,7 @@ function invoiceFor(receipt) {
 function sitemapXml() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.test';
   // Same fixed pages the real backend advertises (shared data module), plus every product and
-  // every brand present in the catalogue — so the audit crawls the same URL set production does.
+  // every brand present in the catalogue, so the audit crawls the same URL set production does.
   const brands = [...new Set(PRODUCTS.map((p) => p.brand).filter(Boolean))].sort();
   const urls = [
     '/',

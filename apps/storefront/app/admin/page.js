@@ -48,7 +48,7 @@ function inrFromPaise(paise) {
 
 function inrMaybe(v) {
   // stats may return paise or rupees; if value looks like paise (>10000) treat as paise
-  if (v == null) return '—';
+  if (v == null) return 'N/A';
   const n = Number(v);
   if (Number.isNaN(n)) return String(v);
   if (n >= 10000) return inrFromPaise(n);
@@ -174,7 +174,7 @@ export default function AdminPage() {
       const n = (r && r.released && r.released.length) || 0;
       setBulkMsg(n
         ? `Released ${n} abandoned hold${n === 1 ? '' : 's'} (stock is back on sale).`
-        : 'No abandoned holds older than 30 minutes — nothing to release.');
+        : 'No abandoned holds older than 30 minutes, nothing to release.');
       await loadOrders();
     } catch (e) {
       setBulkMsg(`Release failed: ${e.message}`);
@@ -669,7 +669,7 @@ export default function AdminPage() {
         return;
       }
       const r = await convertQuote(token, id, paise);
-      setConvertMsg(`Quote converted → order ${r.receipt}${r.reused ? ' (already existed)' : ''} — collect advance via Razorpay Payment Link, then mark shipped.`);
+      setConvertMsg(`Quote converted → order ${r.receipt}${r.reused ? ' (already existed)' : ''}, collect advance via Razorpay Payment Link, then mark shipped.`);
       await loadQuotes();
     } catch (e) {
       setError(e.message);
@@ -780,15 +780,15 @@ export default function AdminPage() {
                   <div className="grid sm:grid-cols-3 gap-3">
                     <div className="card p-4">
                       <div className="text-xs text-gray-500 font-semibold uppercase">Revenue</div>
-                      <div className="text-2xl font-extrabold mt-1">{revenue != null ? inrMaybe(revenue) : '—'}</div>
+                      <div className="text-2xl font-extrabold mt-1">{revenue != null ? inrMaybe(revenue) : 'N/A'}</div>
                     </div>
                     <div className="card p-4">
                       <div className="text-xs text-gray-500 font-semibold uppercase">Total orders</div>
-                      <div className="text-2xl font-extrabold mt-1">{stats.totalOrders ?? stats.total_orders ?? stats.ordersTotal ?? '—'}</div>
+                      <div className="text-2xl font-extrabold mt-1">{stats.totalOrders ?? stats.total_orders ?? stats.ordersTotal ?? 'N/A'}</div>
                     </div>
                     <div className="card p-4">
                       <div className="text-xs text-gray-500 font-semibold uppercase">New quotes</div>
-                      <div className="text-2xl font-extrabold mt-1">{newQuotesCount ?? stats.totalQuotes ?? stats.quotes ?? '—'}</div>
+                      <div className="text-2xl font-extrabold mt-1">{newQuotesCount ?? stats.totalQuotes ?? stats.quotes ?? 'N/A'}</div>
                     </div>
                   </div>
 
@@ -944,18 +944,18 @@ export default function AdminPage() {
                           />
                         </td>
                         <td className="p-2 font-mono text-xs">{o.receipt || o.id || o._id}<br /><span className="text-gray-400">{o.created_at || o.createdAt ? new Date(o.created_at || o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>{(o.razorpay_payment_id || o.razorpayPaymentId) ? <><br /><span className="text-gray-400" title="Razorpay payment ID">pay_{String(o.razorpay_payment_id || o.razorpayPaymentId).slice(-8)}</span></> : null}</td>
-                        <td className="p-2">{o.amount_paise != null ? inrFromPaise(o.amount_paise) : (o.amount != null ? inrMaybe(o.amount) : '—')}{(o.coupon_code || o.couponCode) ? <div className="text-xs text-green-700 font-semibold">{o.coupon_code || o.couponCode}{o.discount_paise || o.discountPaise ? ` −₹${(Number(o.discount_paise ?? o.discountPaise) / 100).toLocaleString('en-IN')}` : ''}</div> : null}</td>
-                        <td className="p-2 text-xs">{o.customer?.name || o.name || o.email || o.phone || '—'}</td>
-                        <td className="p-2"><span className="badge bg-gray-100">{o.status || '—'}</span>
+                        <td className="p-2">{o.amount_paise != null ? inrFromPaise(o.amount_paise) : (o.amount != null ? inrMaybe(o.amount) : 'N/A')}{(o.coupon_code || o.couponCode) ? <div className="text-xs text-green-700 font-semibold">{o.coupon_code || o.couponCode}{o.discount_paise || o.discountPaise ? ` −₹${(Number(o.discount_paise ?? o.discountPaise) / 100).toLocaleString('en-IN')}` : ''}</div> : null}</td>
+                        <td className="p-2 text-xs">{o.customer?.name || o.name || o.email || o.phone || 'N/A'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{o.status || 'N/A'}</span>
                           {o.refund_mode ? (
                             <div className={`text-[11px] font-bold mt-1 ${o.refund_mode === 'manual' ? 'text-red-600' : 'text-green-700'}`}>
-                              refund: {o.refund_mode === 'manual' ? 'manual — action needed' : 'auto'}
+                              refund: {o.refund_mode === 'manual' ? 'manual, action needed' : 'auto'}
                             </div>
                           ) : null}
                         </td>
                         <td className="p-2">
                           <button onClick={() => onOrderDetail(o.id)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">View</button>
-                          {/* Operators need the GST invoice for support and filing — don't make them build the URL by hand. */}
+                          {/* Operators need the GST invoice for support and filing, don't make them build the URL by hand. */}
                           <a
                             href={`/invoice/${encodeURIComponent(o.receipt || '')}`}
                             target="_blank"
@@ -1017,7 +1017,7 @@ export default function AdminPage() {
                   <div className="grid sm:grid-cols-2 gap-4 mt-3 text-sm">
                     <div>
                       <div className="font-bold mb-1">Ship to</div>
-                      <div>{orderDetail.customer?.name || '—'}</div>
+                      <div>{orderDetail.customer?.name || 'N/A'}</div>
                       <div className="text-gray-600">{orderDetail.customer?.address || ''}</div>
                       <div className="text-gray-600">
                         {orderDetail.customer?.pincode ? `PIN ${orderDetail.customer.pincode} • ` : ''}
@@ -1034,11 +1034,11 @@ export default function AdminPage() {
                       <div>Pay mode: <b className="text-gray-800">{orderDetail.payMode === 'cod' ? 'Cash on Delivery' : 'Online (Razorpay)'}</b></div>
                       {orderDetail.refundMode ? (
                         <div className={orderDetail.refundMode === 'manual' ? 'text-red-600 font-bold' : 'text-green-700'}>
-                          Refund: {orderDetail.refundMode === 'manual' ? 'manual — not yet paid out' : orderDetail.refundMode === 'auto' ? 'auto (gateway)' : 'none'}
+                          Refund: {orderDetail.refundMode === 'manual' ? 'manual, not yet paid out' : orderDetail.refundMode === 'auto' ? 'auto (gateway)' : 'none'}
                         </div>
                       ) : null}
-                      <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || '—'}</b></div>
-                      <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || '—'}</b></div>
+                      <div>Razorpay order: <b className="text-gray-800">{orderDetail.razorpayOrderId || 'N/A'}</b></div>
+                      <div>Payment ID: <b className="text-gray-800">{orderDetail.razorpayPaymentId || 'N/A'}</b></div>
                       {(() => {
                         // Explain the charge: items − discount + shipping must equal the total.
                         const m = reconcileOrder(orderDetail);
@@ -1050,7 +1050,7 @@ export default function AdminPage() {
                             <div className="flex justify-between gap-4 font-bold border-t mt-1 pt-1"><span>Total charged</span><span>{inrFromPaise(m.totalPaise)}</span></div>
                             {!m.matches ? (
                               <div role="alert" className="text-red-600 font-bold mt-1">
-                                Reconciles to {inrFromPaise(m.expectedPaise)} — differs by {inrFromPaise(Math.abs(m.differencePaise))}. Check the invoice before replying.
+                                Reconciles to {inrFromPaise(m.expectedPaise)}, differs by {inrFromPaise(Math.abs(m.differencePaise))}. Check the invoice before replying.
                               </div>
                             ) : null}
                           </div>
@@ -1072,7 +1072,7 @@ export default function AdminPage() {
                       {(orderDetail.items || []).map((it, i) => (
                         <tr key={it.slug || i} className="border-b last:border-0">
                           <td className="py-2 pr-2">{it.name || it.slug}</td>
-                          <td className="py-2 pr-2 text-gray-600">{it.hsn || '—'}</td>
+                          <td className="py-2 pr-2 text-gray-600">{it.hsn || 'N/A'}</td>
                           <td className="py-2 pr-2 text-right">{it.qty}</td>
                           <td className="py-2 text-right">{inrFromPaise(it.linePaise)}</td>
                         </tr>
@@ -1111,14 +1111,14 @@ export default function AdminPage() {
                   <tbody>
                     {quotes.map((q, i) => (
                       <tr key={q.id || q._id || i} className="border-b last:border-0">
-                        <td className="p-2 font-mono text-xs">{q.id || q._id || '—'}</td>
-                        <td className="p-2 text-xs">{q.name || q.customer || '—'}<br />{q.phone || q.email || ''}</td>
+                        <td className="p-2 font-mono text-xs">{q.id || q._id || 'N/A'}</td>
+                        <td className="p-2 text-xs">{q.name || q.customer || 'N/A'}<br />{q.phone || q.email || ''}</td>
                         <td className="p-2 text-xs">
                           {(q.product_slug || q.product) ? <div className="font-mono">{q.product_slug || q.product}{q.qty ? ` × ${q.qty}` : ''}</div> : null}
                           {q.product_name ? <div className="italic">“{q.product_name}”</div> : null}
-                          <div>{q.message || q.details || '—'}</div>
+                          <div>{q.message || q.details || 'N/A'}</div>
                         </td>
-                        <td className="p-2"><span className="badge bg-gray-100">{q.status || '—'}</span></td>
+                        <td className="p-2"><span className="badge bg-gray-100">{q.status || 'N/A'}</span></td>
                         <td className="p-2">
                           {['contacted', 'quoted', 'won', 'lost'].map((s) => (
                             <button key={s} onClick={() => onQuoteAction(q.id || q._id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
@@ -1183,8 +1183,8 @@ export default function AdminPage() {
                       <tr key={c.code || i} className="border-b last:border-0">
                         <td className="p-2 font-mono font-bold">{c.code}</td>
                         <td className="p-2">{c.pct_off}%</td>
-                        <td className="p-2">{c.max_discount_paise ? `₹${(Number(c.max_discount_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
-                        <td className="p-2">{c.min_order_paise ? `₹${(Number(c.min_order_paise) / 100).toLocaleString('en-IN')}` : '—'}</td>
+                        <td className="p-2">{c.max_discount_paise ? `₹${(Number(c.max_discount_paise) / 100).toLocaleString('en-IN')}` : 'N/A'}</td>
+                        <td className="p-2">{c.min_order_paise ? `₹${(Number(c.min_order_paise) / 100).toLocaleString('en-IN')}` : 'N/A'}</td>
                         <td className="p-2">{c.expires_at ? new Date(c.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : 'never'}</td>
                         <td className="p-2">{Number(c.used_count) || 0}{c.max_uses ? ` / ${c.max_uses}` : ''}</td>
                         <td className="p-2"><span className="badge bg-gray-100">{c.active ? 'active' : 'off'}</span></td>
@@ -1270,7 +1270,7 @@ export default function AdminPage() {
                         <td className="p-2 font-mono text-xs">{p.slug}</td>
                         <td className="p-2 text-xs">{p.name}</td>
                         <td className="p-2">₹{Number(p.price || 0).toLocaleString('en-IN')}</td>
-                        <td className="p-2">{p.stock ?? '—'}</td>
+                        <td className="p-2">{p.stock ?? 'N/A'}</td>
                         <td className="p-2">
                           <button
                             onClick={() => setProdForm({
@@ -1323,11 +1323,11 @@ export default function AdminPage() {
                   <tbody>
                     {returns.map((r, i) => (
                       <tr key={r.id || i} className="border-b last:border-0">
-                        <td className="p-2 font-mono text-xs">{r.id || '—'}</td>
-                        <td className="p-2 text-xs">{r.receipt || '—'}<br />{r.phone || ''}</td>
-                        <td className="p-2 text-xs">{r.reason || '—'}</td>
-                        <td className="p-2 text-xs max-w-[240px]">{r.details || '—'}</td>
-                        <td className="p-2"><span className="badge bg-gray-100">{r.status || '—'}</span></td>
+                        <td className="p-2 font-mono text-xs">{r.id || 'N/A'}</td>
+                        <td className="p-2 text-xs">{r.receipt || 'N/A'}<br />{r.phone || ''}</td>
+                        <td className="p-2 text-xs">{r.reason || 'N/A'}</td>
+                        <td className="p-2 text-xs max-w-[240px]">{r.details || 'N/A'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{r.status || 'N/A'}</span></td>
                         <td className="p-2">
                           {['approved', 'rejected', 'picked_up', 'refunded', 'closed'].map((s) => (
                             <button key={s} onClick={() => onReturnStatus(r.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
@@ -1376,10 +1376,10 @@ export default function AdminPage() {
                   <tbody>
                     {messages.map((m, i) => (
                       <tr key={m.id || i} className="border-b last:border-0">
-                        <td className="p-2 font-mono text-xs">{m.id || '—'}</td>
-                        <td className="p-2 text-xs">{m.name || '—'}<br />{m.phone || ''}</td>
-                        <td className="p-2 text-xs">{m.message || '—'}</td>
-                        <td className="p-2"><span className="badge bg-gray-100">{m.status || '—'}</span></td>
+                        <td className="p-2 font-mono text-xs">{m.id || 'N/A'}</td>
+                        <td className="p-2 text-xs">{m.name || 'N/A'}<br />{m.phone || ''}</td>
+                        <td className="p-2 text-xs">{m.message || 'N/A'}</td>
+                        <td className="p-2"><span className="badge bg-gray-100">{m.status || 'N/A'}</span></td>
                         <td className="p-2">
                           {['contacted', 'closed'].map((s) => (
                             <button key={s} onClick={() => onMessageStatus(m.id, s)} className="btn-outline !py-1 !px-2 text-xs mr-1 mb-1">{s}</button>
@@ -1422,7 +1422,7 @@ export default function AdminPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-2">No subscribers yet — the footer form feeds this list.</p>
+                  <p className="text-xs text-gray-500 mt-2">No subscribers yet, the footer form feeds this list.</p>
                 )}
               </div>
             </div>
@@ -1453,8 +1453,8 @@ export default function AdminPage() {
                   <tbody>
                     {modReviews.map((r, i) => (
                       <tr key={r.id || i} className="border-b last:border-0">
-                        <td className="p-2 font-mono text-xs">{r.id || '—'}</td>
-                        <td className="p-2 text-xs">{r.product_slug || ''}<br />{r.name || '—'}</td>
+                        <td className="p-2 font-mono text-xs">{r.id || 'N/A'}</td>
+                        <td className="p-2 text-xs">{r.product_slug || ''}<br />{r.name || 'N/A'}</td>
                         <td className="p-2 text-xs">★{r.rating} <b>{r.title || ''}</b><br />{r.body || ''}</td>
                         <td className="p-2"><span className="badge bg-gray-100">{r.verified ? 'yes' : 'no'}</span></td>
                         <td className="p-2">
@@ -1475,7 +1475,7 @@ export default function AdminPage() {
                   <option value="true">Answered</option>
                 </select>
                 <button onClick={loadModReviews} className="btn-outline !py-1 !px-2 text-xs">Reload</button>
-                <span className="text-xs text-gray-500">{modQuestions.length} question(s) — reply via API (POST /store/engage/answers/:id with x-admin-token); delete spam here.</span>
+                <span className="text-xs text-gray-500">{modQuestions.length} question(s), reply via API (POST /store/engage/answers/:id with x-admin-token); delete spam here.</span>
               </div>
               <div className="overflow-x-auto card mt-2">
                 <table className="w-full text-sm">
@@ -1491,8 +1491,8 @@ export default function AdminPage() {
                   <tbody>
                     {modQuestions.map((q, i) => (
                       <tr key={q.id || i} className="border-b last:border-0">
-                        <td className="p-2 font-mono text-xs">{q.id || '—'}</td>
-                        <td className="p-2 text-xs">{q.product_slug || ''}<br />{q.name || '—'}</td>
+                        <td className="p-2 font-mono text-xs">{q.id || 'N/A'}</td>
+                        <td className="p-2 text-xs">{q.product_slug || ''}<br />{q.name || 'N/A'}</td>
                         <td className="p-2 text-xs">{q.question || ''}</td>
                         <td className="p-2 text-xs">{q.answer ? <span className="text-green-700">Yes</span> : <span className="text-gray-400">No</span>}</td>
                         <td className="p-2">
@@ -1525,10 +1525,10 @@ export default function AdminPage() {
                         <tr key={c.id} className="border-b last:border-0">
                           <td className="py-2 font-semibold">{c.name}</td>
                           <td>{c.email}</td>
-                          <td>{c.phone || '—'}</td>
+                          <td>{c.phone || 'N/A'}</td>
                           <td>{c.order_count}</td>
                           <td>₹{Math.round(Number(c.lifetime_paise || 0) / 100).toLocaleString('en-IN')}</td>
-                          <td>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : '—'}</td>
+                          <td>{c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1598,7 +1598,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Customers who tapped &quot;notify me&quot; while out of stock — message them once you restock.
+                Customers who tapped &quot;notify me&quot; while out of stock, message them once you restock.
               </p>
               {alerts.length ? (
                 <ul className="mt-3 text-xs text-gray-700 max-h-64 overflow-y-auto divide-y">

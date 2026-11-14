@@ -1,7 +1,7 @@
 // Stale stock holds.
 //
 // Checkout reserves stock when the order is created. If the customer abandons the payment
-// sheet, no webhook ever arrives, so the order stays 'pending' — and its stock stays reserved
+// sheet, no webhook ever arrives, so the order stays 'pending', and its stock stays reserved
 // forever. A handful of abandoned checkouts can zero out a product that is physically on the
 // shelf. These helpers decide which holds are old enough to release.
 const DEFAULT_MINUTES = 30;

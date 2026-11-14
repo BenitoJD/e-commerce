@@ -75,7 +75,7 @@ export default function HomeView({ initialProducts = null }) {
               Made to work.<br /><em className="font-normal not-italic text-copper">Made to stay.</em>
             </h1>
             <p className="mt-7 max-w-xl text-[15px] leading-[1.8] text-muted lg:text-base">
-              Machinery, tools and handcrafted teak furniture — chosen by people who use them,
+              Machinery, tools and handcrafted teak furniture, chosen by people who use them,
               finished by people who care. Honest advice, GST invoices, delivery across India.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -200,7 +200,7 @@ export default function HomeView({ initialProducts = null }) {
             <div className="mt-9 divide-y divide-paper/10 border-y border-paper/10">
               {[
                 ['Karthik', 'Founder & buyer', '“I run the machines before we list them. If I would not use it, we do not sell it.”'],
-                ['Meera', 'Finishing & quality', '“Every teak piece is inspected twice — once at the bench, once before packing.”'],
+                ['Meera', 'Finishing & quality', '“Every teak piece is inspected twice, once at the bench, once before packing.”'],
                 ['Arjun', 'Customer care', '“You get me on WhatsApp, not a script. Before and after the sale.”'],
               ].map(([name, role, line]) => (
                 <div key={name} className="grid gap-1 py-4 sm:grid-cols-[130px_1fr] sm:gap-6">

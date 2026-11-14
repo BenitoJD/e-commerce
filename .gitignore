@@ -8,7 +8,7 @@ build/
 .env.local
 coverage/
 
-# Docker / VPS volumes (scoped to the repo root — never blanket "data/",
+# Docker / VPS volumes (scoped to the repo root, never blanket "data/",
 # which would also swallow apps/backend/data/*.js catalog files)
 /pgdata/
 /redisdata/

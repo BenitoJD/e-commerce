@@ -52,7 +52,7 @@ export default function PickingListPage() {
       </div>
 
       {!token ? (
-        <p className="mt-6 text-red-600 font-semibold">Admin token missing — open the admin console first, then retry.</p>
+        <p className="mt-6 text-red-600 font-semibold">Admin token missing, open the admin console first, then retry.</p>
       ) : null}
       {error ? <p role="alert" className="mt-4 text-red-600 font-semibold">{error}</p> : null}
       {loading ? <p className="mt-6 text-gray-500">Loading orders…</p> : null}
@@ -63,7 +63,7 @@ export default function PickingListPage() {
             {orderCount} order{orderCount === 1 ? '' : 's'} • {rows.length} line{rows.length === 1 ? '' : 's'} • {totalUnits} unit{totalUnits === 1 ? '' : 's'}
           </p>
           {rows.length === 0 ? (
-            <p className="mt-4 text-gray-600">Nothing to pick — the selected orders have no line items.</p>
+            <p className="mt-4 text-gray-600">Nothing to pick, the selected orders have no line items.</p>
           ) : (
             <table className="w-full text-sm mt-3">
               <thead>
@@ -78,7 +78,7 @@ export default function PickingListPage() {
                 {rows.map((r) => (
                   <tr key={r.slug} className="border-b last:border-0">
                     <td className="py-2">{r.name}</td>
-                    <td className="py-2 font-mono text-xs">{r.hsn || '—'}</td>
+                    <td className="py-2 font-mono text-xs">{r.hsn || 'N/A'}</td>
                     <td className="py-2 text-right font-bold">{r.qty}</td>
                     <td className="py-2 text-right no-print">☐</td>
                   </tr>

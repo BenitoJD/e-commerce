@@ -21,7 +21,7 @@ function parseOrigins(value) {
 // CORS policy. With an allowlist configured, only those origins may call the API from a
 // browser. Without one, development keeps the permissive behaviour, but PRODUCTION must not
 // fall back to "*": that lets any website call the store's API. The single-domain deployment
-// proxies /api through nginx, so same-origin requests need no CORS headers at all — an empty
+// proxies /api through nginx, so same-origin requests need no CORS headers at all, an empty
 // list simply blocks cross-origin callers until the operator sets FRONTEND_URL.
 function corsOrigin(env = process.env) {
   const origins = parseOrigins(env.FRONTEND_URL);
@@ -33,7 +33,7 @@ function corsOrigin(env = process.env) {
 function corsWarning(env = process.env) {
   if (parseOrigins(env.FRONTEND_URL).length) return null;
   if (String(env.NODE_ENV || '') !== 'production') return null;
-  return '[security] FRONTEND_URL is not set — cross-origin browser requests are blocked. '
+  return '[security] FRONTEND_URL is not set, cross-origin browser requests are blocked. '
     + 'Set it to your storefront origin (e.g. https://yourdomain.com) if the API is called '
     + 'from another origin.';
 }

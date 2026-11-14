@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /store/quotes?phone= — a buyer's own quote requests (B2B status lookup).
+// GET /store/quotes?phone=, a buyer's own quote requests (B2B status lookup).
 // This route used to return every quote in the database, which leaked other
 // customers' names and phone numbers. It is now scoped to the caller's phone.
 router.get('/', async (req, res) => {

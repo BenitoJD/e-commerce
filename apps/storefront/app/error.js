@@ -24,8 +24,8 @@ export default function Error({ error, reset }) {
       <h1 className="text-2xl font-extrabold mt-3">{chunk ? 'A new version is available' : 'Something went wrong'}</h1>
       <p className="text-gray-600 mt-2">
         {chunk
-          ? 'The store was updated while this page was open. Reload to continue — your cart is saved on this device.'
-          : 'This page failed to load. Your cart is safe — try again, and if it keeps happening message us on WhatsApp.'}
+          ? 'The store was updated while this page was open. Reload to continue. Your cart is saved on this device.'
+          : 'This page failed to load. Your cart is safe. Try again, and if it keeps happening, message us on WhatsApp.'}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         {chunk ? <button onClick={() => window.location.reload()} className="btn-primary">Reload page</button> : null}

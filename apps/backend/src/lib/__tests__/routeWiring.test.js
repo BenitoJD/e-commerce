@@ -5,7 +5,7 @@ const path = require('node:path');
 
 // Wiring audit: every page must be reachable (linked or in the sitemap), every sitemap entry
 // must map to a real page, and nothing may be orphaned. This is the "did we miss a feature"
-// guard — a page that exists but nothing links to it is effectively missing.
+// guard, a page that exists but nothing links to it is effectively missing.
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const APP = path.join(ROOT, 'apps', 'storefront', 'app');
 const COMPONENTS = path.join(ROOT, 'apps', 'storefront', 'components');

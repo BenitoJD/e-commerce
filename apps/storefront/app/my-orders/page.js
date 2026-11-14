@@ -20,7 +20,7 @@ function statusBadge(status) {
 }
 
 function fmtDate(v) {
-  if (!v) return '—';
+  if (!v) return 'N/A';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -208,7 +208,7 @@ export default function MyOrdersPage() {
             return (
               <div key={receipt || i} className="card p-4 flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[180px]">
-                  <div className="font-bold">Receipt: {receipt || '—'}</div>
+                  <div className="font-bold">Receipt: {receipt || 'N/A'}</div>
                   <div className="text-sm text-gray-500 mt-0.5">
                     {fmtDate(o.created_at || o.createdAt || o.date)} • {inr(o.amount_paise ?? o.amountPaise ?? (o.amount != null ? Number(o.amount) * 100 : 0))} • {count} item{Number(count) === 1 ? '' : 's'}
                   </div>

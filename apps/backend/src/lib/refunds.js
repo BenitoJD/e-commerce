@@ -35,7 +35,7 @@ async function refundPayment(order) {
     console.log(`[refund] auto-refunded ${order.receipt} -> ${refund && refund.id}`);
     return { ok: true, mode: 'auto', id: (refund && refund.id) || null };
   } catch (err) {
-    // e.g. already refunded in dashboard — leave order marked cancelled/refunded, flag manual review.
+    // e.g. already refunded in dashboard, leave order marked cancelled/refunded, flag manual review.
     console.error(`[refund] auto-refund failed for ${order.receipt}:`, err && err.message);
     return { ok: false, mode: 'manual', reason: (err && err.message) || 'gateway error' };
   }

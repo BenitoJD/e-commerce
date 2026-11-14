@@ -1,6 +1,6 @@
 // First-boot seeding.
 //
-// The schema is created lazily on the first query, but nothing loaded the catalogue — so a
+// The schema is created lazily on the first query, but nothing loaded the catalogue, so a
 // fresh `docker compose up` (empty volume) served an empty store until someone remembered
 // to run `npm run seed`. This seeds ONLY when the products table is empty: an operator's
 // edits, prices and stock are never overwritten by a redeploy.
@@ -29,9 +29,9 @@ async function seedOnBoot(db, { env = process.env, log = console.log } = {}) {
   try {
     const result = await seedIfEmpty(db);
     if (result.seeded) {
-      log(`[seed] empty catalogue — seeded ${result.products} products and ${result.coupons} coupons`);
+      log(`[seed] empty catalogue, seeded ${result.products} products and ${result.coupons} coupons`);
     } else {
-      log(`[seed] catalogue already has ${result.products} products — not seeding`);
+      log(`[seed] catalogue already has ${result.products} products, not seeding`);
     }
     return result;
   } catch (err) {

@@ -54,11 +54,11 @@ router.post('/create', async (req, res) => {
       const qty = parseInt(it.qty, 10) || 0;
       if (qty < 1) return res.status(400).json({ error: `Invalid qty for ${slug}` });
       if (qty > MAX_QTY_PER_ITEM) {
-        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item — contact us for bulk pricing` });
+        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item, contact us for bulk pricing` });
       }
       basket.set(slug, (basket.get(slug) || 0) + qty);
       if (basket.get(slug) > MAX_QTY_PER_ITEM) {
-        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item — contact us for bulk pricing` });
+        return res.status(400).json({ error: `Maximum ${MAX_QTY_PER_ITEM} units per item, contact us for bulk pricing` });
       }
     }
     const normalisedItems = [...basket.entries()].map(([slug, qty]) => ({ slug, qty }));
@@ -82,13 +82,13 @@ router.post('/create', async (req, res) => {
     // The check character matters: a typo prints a legally useless invoice.
     const buyerGstin = normalizeGstin(customer.gstin);
     if (buyerGstin && !isValidGstin(buyerGstin)) {
-      return res.status(400).json({ error: 'GSTIN looks invalid — check the 15-character number on your registration certificate' });
+      return res.status(400).json({ error: 'GSTIN looks invalid, check the 15-character number on your registration certificate' });
     }
     // State matters for GST: the invoice's place of supply (and CGST/SGST vs IGST) is
     // decided by it. Optional so older clients keep working, validated when supplied.
     const state = resolveState(customer.stateCode || customer.state || '');
     if ((customer.stateCode || customer.state) && !state) {
-      return res.status(400).json({ error: 'Unknown state — pick your delivery state from the list' });
+      return res.status(400).json({ error: 'Unknown state, pick your delivery state from the list' });
     }
     // Email is nullable for backwards compatibility, but a real store needs it for the
     // order confirmation and shipping updates. A signed-in account supplies it implicitly.
@@ -153,7 +153,7 @@ router.post('/create', async (req, res) => {
     amount += shippingPaise;
 
     // COD policy: capped at COD_MAX_PAISE (default ₹20,000). High-value machinery has to
-    // be prepaid — otherwise refused deliveries cost us freight both ways.
+    // be prepaid, otherwise refused deliveries cost us freight both ways.
     const codMax = codMaxPaise();
     if (isCod && amount > codMax) {
       return res.status(400).json({
@@ -221,7 +221,7 @@ router.post('/create', async (req, res) => {
     const orderId = created.id;
 
     // Confirmation goes into the outbox (delivery is retried independently). No email on
-    // file means nothing is queued — the response still succeeds.
+    // file means nothing is queued, the response still succeeds.
     try {
       if (buyerEmail) {
         await notifyOrder(db, { receipt: created.receipt, items: lineItems, amount_paise: amount, customer: buyer, customer_email: buyerEmail, pay_mode: isCod ? 'cod' : 'online' }, 'placed');
@@ -245,7 +245,7 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    // Razorpay order — or, in development, a mock one.
+    // Razorpay order, or, in development, a mock one.
     let razorpayOrderId;
     const client = razorpayClient();
     if (client) {

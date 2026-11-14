@@ -24,7 +24,7 @@ test('repo docs stay valid UTF-8 and free of mojibake', () => {
     assert.equal(text.includes('\uFFFD'), false, `${rel} contains U+FFFD (bad decode)`);
     assert.equal(/Ãƒ|Ã¢â‚¬|â€š/.test(text), false, `${rel} looks double-encoded`);
     const bytes = Buffer.byteLength(text, 'utf8');
-    assert.ok(bytes < 200 * 1024, `${rel} is suspiciously large (${bytes} bytes) — probably re-encoded`);
+    assert.ok(bytes < 200 * 1024, `${rel} is suspiciously large (${bytes} bytes), probably re-encoded`);
   }
 });
 

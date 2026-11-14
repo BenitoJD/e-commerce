@@ -1,7 +1,7 @@
 // Tiny TTL cache for server-side data fetches.
 //
 // Server-rendered pages must show fresh prices/stock, so they can't be statically
-// generated — but a burst of traffic (a WhatsApp share going viral, a Google crawl)
+// generated, but a burst of traffic (a WhatsApp share going viral, a Google crawl)
 // would otherwise hit Postgres once per request. A few seconds of caching collapses
 // those bursts without showing stale data for long.
 export function createTtlCache({ ttlMs = 15000, max = 200, now = () => Date.now() } = {}) {

@@ -8,7 +8,7 @@ function inr(paise) {
 }
 
 // Header search with typeahead. Falls back to a normal form submit (so it still works
-// without JS) — suggestions are an enhancement, not a requirement.
+// without JS), suggestions are an enhancement, not a requirement.
 export default function SearchBox({ compact = false }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);

@@ -162,7 +162,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
     setAlertBusy(true);
     try {
       await stockAlert(p.slug || slug, email);
-      setAlertMsg(`Saved — our team will contact ${email} as soon as it's back in stock.`);
+      setAlertMsg(`Saved, our team will contact ${email} as soon as it's back in stock.`);
       setAlertEmail('');
     } catch (err) {
       setAlertMsg(err.message || 'Could not save. Try again.');
@@ -344,7 +344,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           ) : null}
           <p className="mt-1 text-xs text-muted">Inclusive of all taxes · GST invoice available for input credit</p>
           <p className={`text-sm font-bold mt-2 ${outOfStock ? 'text-red-600' : lowStock ? 'text-amber-600' : 'text-green-700'}`}>
-            {outOfStock ? 'Out of stock' : lowStock ? `Only ${stockNum} left — order soon` : stockNum !== null ? 'In stock' : 'In stock'}
+            {outOfStock ? 'Out of stock' : lowStock ? `Only ${stockNum} left, order soon` : stockNum !== null ? 'In stock' : 'In stock'}
           </p>
 
           {outOfStock && (
@@ -397,7 +397,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                 });
                 const alreadyIn = current.some((x) => String(x.slug) === String(p.slug || slug));
                 if (!alreadyIn && next.length === current.length && current.length >= 4) {
-                  setCompareMsg('You can compare up to 4 products — remove one to add another.');
+                  setCompareMsg('You can compare up to 4 products, remove one to add another.');
                 }
                 try { localStorage.setItem(COMPARE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
                 window.dispatchEvent(new Event('compare-updated'));
@@ -414,7 +414,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
             {compareMsg ? <p role="status" className="text-xs font-semibold text-amber-700 w-full">{compareMsg}</p> : null}
             <a
               href={waShareLink(
-                `${p.name} — ₹${Number(p.price || 0).toLocaleString('en-IN')}`,
+                `${p.name}, ₹${Number(p.price || 0).toLocaleString('en-IN')}`,
                 `${process.env.NEXT_PUBLIC_SITE_URL || ''}/product/${encodeURIComponent(p.slug || slug)}`
               )}
               target="_blank"
@@ -518,7 +518,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
                 )}
               </div>
               <p className="text-sm text-gray-700 mt-1">{r.body || r.text || ''}</p>
-              <p className="text-xs text-gray-500 mt-2">— {r.name || r.author || 'Verified buyer'}{r.createdAt ? ` • ${new Date(r.createdAt).toLocaleDateString('en-IN')}` : ''}</p>
+              <p className="text-xs text-gray-500 mt-2">- {r.name || r.author || 'Verified buyer'}{r.createdAt ? ` • ${new Date(r.createdAt).toLocaleDateString('en-IN')}` : ''}</p>
             </div>
           ))}
         </div>
@@ -542,7 +542,7 @@ export default function ProductView({ slug: slugProp, initialProduct = null }) {
           ) : qa.map((it, i) => (
             <div key={it.id || it._id || i} className="rounded-2xl border border-line bg-surface p-5">
               <p className="text-sm font-bold">Q: {it.question || it.title || it.body}</p>
-              <p className="text-xs text-gray-500 mt-1">— {it.name || it.author || 'Customer'}</p>
+              <p className="text-xs text-gray-500 mt-1">- {it.name || it.author || 'Customer'}</p>
               {(it.answer || it.reply) && <p className="text-sm text-gray-700 mt-2 bg-green-50 border border-green-100 rounded-lg p-2">A: {it.answer || it.reply}</p>}
             </div>
           ))}

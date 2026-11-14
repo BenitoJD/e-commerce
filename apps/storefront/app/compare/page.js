@@ -10,7 +10,7 @@ import {
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 // Side-by-side comparison of up to four products. The list lives in localStorage, so the
-// page is client-rendered and noindexed — it is a working surface, not a landing page.
+// page is client-rendered and noindexed, it is a working surface, not a landing page.
 export default function ComparePage() {
   const [picked, setPicked] = useState([]);
   const [products, setProducts] = useState([]);
@@ -113,7 +113,7 @@ export default function ComparePage() {
               <tr className="border-b">
                 <td className="p-3 text-gray-500">MRP</td>
                 {products.map((p) => (
-                  <td key={p.slug} className="p-3 text-gray-500 line-through">{p.mrp ? inr(p.mrp) : '—'}</td>
+                  <td key={p.slug} className="p-3 text-gray-500 line-through">{p.mrp ? inr(p.mrp) : 'N/A'}</td>
                 ))}
               </tr>
               <tr className="border-b">
@@ -127,14 +127,14 @@ export default function ComparePage() {
               <tr className="border-b">
                 <td className="p-3 text-gray-500">HSN</td>
                 {products.map((p) => (
-                  <td key={p.slug} className="p-3 font-mono text-xs">{p.hsn || '—'}</td>
+                  <td key={p.slug} className="p-3 font-mono text-xs">{p.hsn || 'N/A'}</td>
                 ))}
               </tr>
               {rows.map((key) => (
                 <tr key={key} className="border-b last:border-0">
                   <td className="p-3 text-gray-500 capitalize">{key}</td>
                   {products.map((p) => (
-                    <td key={p.slug} className="p-3">{p.specs && p.specs[key] != null ? String(p.specs[key]) : '—'}</td>
+                    <td key={p.slug} className="p-3">{p.specs && p.specs[key] != null ? String(p.specs[key]) : 'N/A'}</td>
                   ))}
                 </tr>
               ))}

@@ -28,7 +28,7 @@ export default function GlobalError({ error, reset }) {
           </h1>
           <p style={{ color: '#4B5563', margin: '0 0 20px' }}>
             {chunk
-              ? 'The store was updated while this page was open. Reload to continue — your cart is saved on this device.'
+              ? 'The store was updated while this page was open. Reload to continue. Your cart is saved on this device.'
               : 'This page could not load. Your cart is safe; reload or go back to the homepage.'}
           </p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>

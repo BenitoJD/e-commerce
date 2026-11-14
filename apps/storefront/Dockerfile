@@ -1,7 +1,7 @@
 # Production image without Next's `standalone` output.
 # Rationale: in a pnpm monorepo the traced standalone tree mirrors the repo layout
 # (standalone/apps/storefront/server.js) and depends on symlinks that vary by
-# filesystem — a silent "works on my machine" trap. Running `next start` against a
+# filesystem, a silent "works on my machine" trap. Running `next start` against a
 # regular build is the same server Next would run, just with node_modules present.
 FROM node:20-alpine AS base
 WORKDIR /app

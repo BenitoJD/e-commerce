@@ -65,7 +65,7 @@ test.describe('Cart and checkout', () => {
     await page.getByRole('button', { name: /Pay ₹/ }).click();
     await expect(page.getByRole('alert').filter({ hasText: /GSTIN looks invalid/i })).toBeVisible();
 
-    // Still on checkout — no phantom order was created.
+    // Still on checkout, no phantom order was created.
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Checkout/i);
   });
 

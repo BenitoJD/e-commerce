@@ -21,7 +21,7 @@ function amountMatches(orderPaise, entityPaise) {
 }
 
 // Decide the outcome of a Razorpay event given the current order status.
-// Returns { to: <newStatus|null>, release: <bool>, reason } — null `to` means ack, no change.
+// Returns { to: <newStatus|null>, release: <bool>, reason }, null `to` means ack, no change.
 function decideTransition(currentStatus, event, amountsEqual) {
   const from = String(currentStatus || '');
   if (event === 'payment.captured') {

@@ -27,7 +27,7 @@ test('CI does not skip tests to make the badge green', () => {
 
 test('pnpm version comes from package.json, not a pinned workflow value', () => {
   // pnpm/action-setup errors out ("multiple versions of pnpm specified") when the workflow
-  // pins a version that differs from package.json's packageManager — the first CI run failed
+  // pins a version that differs from package.json's packageManager, the first CI run failed
   // before a single test executed.
   const action = fs.readFileSync(WORKFLOW, 'utf8');
   const pnpmBlock = action.slice(action.indexOf('pnpm/action-setup'), action.indexOf('setup-node'));

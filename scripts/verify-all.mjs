@@ -89,7 +89,7 @@ for (const check of CHECKS) {
 
   results.push({ name: check.name, ok, ms, detail });
   const status = ok ? 'ok  ' : 'FAIL';
-  console.log(`${status} ${String(ms).padStart(7)}ms  ${check.name}${detail ? ` — ${detail}` : ''}`);
+  console.log(`${status} ${String(ms).padStart(7)}ms  ${check.name}${detail ? `, ${detail}` : ''}`);
   if (!ok) {
     const tail = output.trim().split(/\r?\n/).slice(-25).join('\n');
     console.log(`--- ${check.name} output (tail) ---\n${tail}\n---`);

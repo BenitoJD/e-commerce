@@ -106,7 +106,7 @@ export default function CheckoutPage() {
         if (r && r.valid === false) {
           setCoupon(null);
           try { localStorage.removeItem('tw_coupon'); } catch { /* ignore */ }
-          setCouponNotice(`Coupon ${coupon.code} is no longer valid (${r.reason || 'expired or used up'}) — it was removed.`);
+          setCouponNotice(`Coupon ${coupon.code} is no longer valid (${r.reason || 'expired or used up'}), it was removed.`);
         }
       })
       .catch(() => { /* network blip: let the server decide at order creation */ });
@@ -180,7 +180,7 @@ export default function CheckoutPage() {
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setErr('Enter a valid email address for order updates.'); return; }
     // GSTIN is optional, but a wrong one prints a tax invoice the buyer cannot use.
     if (form.gstin.trim() && !isValidGstin(form.gstin)) {
-      setErr('That GSTIN looks invalid — check the 15-character number on your GST certificate.');
+      setErr('That GSTIN looks invalid. Check the 15-character number on your GST certificate.');
       return;
     }
 
@@ -257,7 +257,7 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-extrabold">Checkout</h1>
       {items.length === 0 && (
         <div role="alert" className="card p-4 mt-4 border-amber-300 bg-amber-50 text-sm">
-          <b>Your cart is empty — add a product before checking out.</b>
+          <b>Your cart is empty, add a product before checking out.</b>
           <a href="/category/all" className="block text-[#A95F32] font-bold mt-2">Browse products →</a>
         </div>
       )}
@@ -267,7 +267,7 @@ export default function CheckoutPage() {
       )}
       {coupon && (
         <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm flex justify-between items-center">
-          <span><b>{coupon.code}</b> applied — you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>
+          <span><b>{coupon.code}</b> applied, you save <b className="text-green-700">₹{discount.toLocaleString('en-IN')}</b></span>
           <a href="/cart" className="text-xs font-bold text-[#A95F32] underline">Change</a>
         </div>
       )}
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
             <label className="label" htmlFor="saved-address">Saved address</label>
             <select id="saved-address" className="input" defaultValue="" onChange={(e) => applySavedAddress(e.target.value)} aria-label="Use a saved address">
               <option value="">Enter a new address</option>
-              {saved.map((a) => <option key={a.id} value={a.id}>{a.label} — {a.address}, {a.pincode}</option>)}
+              {saved.map((a) => <option key={a.id} value={a.id}>{a.label}, {a.address}, {a.pincode}</option>)}
             </select>
           </div>
         )}
@@ -365,7 +365,7 @@ export default function CheckoutPage() {
           <p className="text-xs text-gray-500 mt-2">UPI / Card / EMI go through Razorpay secure checkout. COD pays cash on delivery.</p>
           {shown > COD_MAX_RUPEES ? (
             <p className="text-xs text-amber-700 font-semibold mt-1">
-              COD is available up to ₹{COD_MAX_RUPEES.toLocaleString('en-IN')} — this order needs online payment.
+              COD is available up to ₹{COD_MAX_RUPEES.toLocaleString('en-IN')}. This order needs online payment.
             </p>
           ) : null}
         </div>

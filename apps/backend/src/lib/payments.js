@@ -26,9 +26,9 @@ function paymentsConfigured(env = process.env) {
 }
 
 // What the checkout should do for an online payment, decided before touching stock.
-//   'live'  — keys present, create a real Razorpay order
-//   'mock'  — development without keys (explicitly allowed)
-//   'error' — production without keys: refuse with a clear message instead of pretending
+//   'live' , keys present, create a real Razorpay order
+//   'mock' , development without keys (explicitly allowed)
+//   'error', production without keys: refuse with a clear message instead of pretending
 function onlinePaymentMode(env = process.env) {
   if (paymentsConfigured(env)) return 'live';
   return mockPaymentsAllowed(env) ? 'mock' : 'error';

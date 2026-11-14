@@ -20,9 +20,9 @@ export async function generateMetadata() {
   const deals = toDealItems(await getDealsForMeta(20, 40));
   const maxOff = deals.length ? deals[0].discountPct : 0;
   const title = maxOff
-    ? `Deals of the Day — up to ${maxOff}% off tools | ${STORE.name}`
+    ? `Deals of the Day, up to ${maxOff}% off tools | ${STORE.name}`
     : `Deals of the Day | ${STORE.name}`;
-  const description = `Today's discounts on power tools, motors, pumps and machinery — ${deals.length} products at 20%+ off with GST invoice, EMI and pan-India delivery.`;
+  const description = `Today's discounts on power tools, motors, pumps and machinery, ${deals.length} products at 20%+ off with GST invoice, EMI and pan-India delivery.`;
   return {
     title,
     description,

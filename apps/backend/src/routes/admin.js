@@ -106,7 +106,7 @@ router.get('/orders', async (req, res) => {
   }
 });
 
-// GET /admin/orders/export.csv — accounting export (Tally/Excel).
+// GET /admin/orders/export.csv, accounting export (Tally/Excel).
 // Declared before /orders/:id or "export.csv" would be read as an order id.
 router.get('/orders/export.csv', async (req, res) => {
   try {
@@ -142,7 +142,7 @@ router.get('/orders/export.csv', async (req, res) => {
       const shippingPaise = Number(o.shipping_paise || 0);
       // Same treatment as the invoice: the charged total (goods + freight) is GST-inclusive
       // at 18%, so the taxable value is derived from it directly. Shipping is shown as its
-      // own column for reference only — it is NOT excluded from the taxable value, because
+      // own column for reference only, it is NOT excluded from the taxable value, because
       // the invoice doesn't exclude it either and the two must agree.
       const taxablePaise = Math.round((amountPaise * 100) / (100 + GST_RATE));
       const gstPaise = amountPaise - taxablePaise;
@@ -196,7 +196,7 @@ router.patch('/orders/:id', async (req, res) => {
   }
 });
 
-// POST /admin/orders/bulk-status {ids: [], status} — ship/cancel many orders at once.
+// POST /admin/orders/bulk-status {ids: [], status}, ship/cancel many orders at once.
 // Declared before '/orders/:id' so "bulk-status" is never parsed as an order id.
 router.post('/orders/bulk-status', async (req, res) => {
   try {
@@ -226,7 +226,7 @@ router.post('/orders/bulk-status', async (req, res) => {
   }
 });
 
-// POST /admin/orders/release-stale?minutes=30 — release stock held by abandoned checkouts.
+// POST /admin/orders/release-stale?minutes=30, release stock held by abandoned checkouts.
 // A pending order whose payment sheet was closed has no webhook coming, so nothing would
 // ever release its reservation without this.
 router.post('/orders/release-stale', async (req, res) => {
@@ -260,7 +260,7 @@ router.patch('/orders/:id/shipping', async (req, res) => {
   }
 });
 
-// GET /admin/orders/:id — full order for packing slips, disputes and support calls
+// GET /admin/orders/:id, full order for packing slips, disputes and support calls
 router.get('/orders/:id', async (req, res) => {
   // The id is numeric; without this a receipt or slug reaches Postgres and surfaces as a 500
   // "invalid input syntax for type integer" instead of a clear client error.
@@ -397,7 +397,7 @@ router.patch('/products/:slug/stock', async (req, res) => {
   }
 });
 
-// POST /admin/quotes/:id/convert { unit_price_paise? } — agreed deal becomes a pending order
+// POST /admin/quotes/:id/convert { unit_price_paise? }, agreed deal becomes a pending order
 router.post('/quotes/:id/convert', async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM bulk_quotes WHERE id = $1', [req.params.id]);
@@ -416,7 +416,7 @@ router.post('/quotes/:id/convert', async (req, res) => {
       }
     }
     if (!productSlug) {
-      return res.status(400).json({ error: 'Quote has no catalogue product linked — edit the quote to attach one' });
+      return res.status(400).json({ error: 'Quote has no catalogue product linked, edit the quote to attach one' });
     }
     const { rows: prows } = await db.query(
       'SELECT slug, price_paise FROM products WHERE slug = $1',
@@ -455,7 +455,7 @@ router.post('/quotes/:id/convert', async (req, res) => {
   }
 });
 
-// GET /admin/subscribers — newsletter list (marketing needs the raw emails)
+// GET /admin/subscribers, newsletter list (marketing needs the raw emails)
 router.get('/subscribers', async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -468,7 +468,7 @@ router.get('/subscribers', async (req, res) => {
   }
 });
 
-// GET /admin/contact?status= — list enquiries
+// GET /admin/contact?status=, list enquiries
 router.get('/contact', async (req, res) => {
   try {
     const { status } = req.query;
@@ -508,7 +508,7 @@ router.patch('/contact/:id', async (req, res) => {
   }
 });
 
-// GET /admin/questions?answered=&limit= — moderation queue (latest first)
+// GET /admin/questions?answered=&limit=, moderation queue (latest first)
 router.get('/questions', async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 200);
@@ -529,7 +529,7 @@ router.get('/questions', async (req, res) => {
   }
 });
 
-// DELETE /admin/questions/:id — remove spam/abuse
+// DELETE /admin/questions/:id, remove spam/abuse
 router.delete('/questions/:id', async (req, res) => {
   try {
     const { rows } = await db.query('DELETE FROM questions WHERE id = $1 RETURNING id', [req.params.id]);
@@ -544,7 +544,7 @@ router.delete('/questions/:id', async (req, res) => {
 
 const RETURN_STATUSES = ['requested', 'approved', 'rejected', 'picked_up', 'refunded', 'closed'];
 
-// GET /admin/stock-alerts?slug= — people waiting for restock
+// GET /admin/stock-alerts?slug=, people waiting for restock
 router.get('/stock-alerts', async (req, res) => {
   try {
     const { slug } = req.query;
@@ -566,7 +566,7 @@ router.get('/stock-alerts', async (req, res) => {
   }
 });
 
-// POST /admin/products — create or update a product (admin catalogue management)
+// POST /admin/products, create or update a product (admin catalogue management)
 router.post('/products', async (req, res) => {
   try {
     const b = req.body || {};
@@ -628,7 +628,7 @@ router.post('/products', async (req, res) => {
   }
 });
 
-// DELETE /admin/products/:slug — remove a product from the catalogue
+// DELETE /admin/products/:slug, remove a product from the catalogue
 router.delete('/products/:slug', async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -668,7 +668,7 @@ router.get('/notifications', async (req, res) => {
   }
 });
 
-// POST /admin/notifications/flush — deliver queued mail now (the worker also runs on a timer)
+// POST /admin/notifications/flush, deliver queued mail now (the worker also runs on a timer)
 router.post('/notifications/flush', async (req, res) => {
   try {
     const summary = await flushNotifications({ limit: 100 });
@@ -694,7 +694,7 @@ router.post('/notifications/:id/resend', async (req, res) => {
   }
 });
 
-// GET /admin/customers — registered buyers with their order totals.
+// GET /admin/customers, registered buyers with their order totals.
 router.get('/customers', async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -754,7 +754,7 @@ router.patch('/returns/:id', async (req, res) => {
   }
 });
 
-// GET /admin/reviews?verified=&limit= — moderation queue (latest first)
+// GET /admin/reviews?verified=&limit=, moderation queue (latest first)
 router.get('/reviews', async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
@@ -777,7 +777,7 @@ router.get('/reviews', async (req, res) => {
   }
 });
 
-// PATCH /admin/reviews/:id {verified: bool} — approve/unapprove
+// PATCH /admin/reviews/:id {verified: bool}, approve/unapprove
 router.patch('/reviews/:id', async (req, res) => {
   try {
     const { rows } = await db.query(
@@ -792,7 +792,7 @@ router.patch('/reviews/:id', async (req, res) => {
   }
 });
 
-// DELETE /admin/reviews/:id — remove spam/abuse
+// DELETE /admin/reviews/:id, remove spam/abuse
 router.delete('/reviews/:id', async (req, res) => {
   try {
     const { rows } = await db.query('DELETE FROM reviews WHERE id = $1 RETURNING id', [req.params.id]);
@@ -852,7 +852,7 @@ router.post('/coupons', async (req, res) => {
   }
 });
 
-// PATCH /admin/coupons/:code { active } — quick enable/disable
+// PATCH /admin/coupons/:code { active }, quick enable/disable
 router.patch('/coupons/:code', async (req, res) => {
   try {
     const { rows } = await db.query(

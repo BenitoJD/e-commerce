@@ -85,7 +85,7 @@ router.post('/razorpay', async (req, res) => {
 
       if (eventName === 'payment.captured') {
         if (!paymentAmountMatches) {
-          console.log(`[webhook] captured amount mismatch on ${order.receipt} — manual review`);
+          console.log(`[webhook] captured amount mismatch on ${order.receipt}, manual review`);
           return { ack: true, note: 'amount mismatch' };
         }
         if (from === 'pending') {
@@ -114,7 +114,7 @@ router.post('/razorpay', async (req, res) => {
               "UPDATE orders SET status = 'refunded', razorpay_payment_id = $1, refund_mode = 'manual', refunded_at = NOW(), refunded_paise = amount_paise WHERE id = $2",
               [rzpPaymentId, order.id]
             );
-            return { ack: true, note: 'captured after failure with no stock — manual refund required' };
+            return { ack: true, note: 'captured after failure with no stock, manual refund required' };
           }
         }
         if (from === 'cancelled' || from === 'refunded') {
@@ -124,7 +124,7 @@ router.post('/razorpay', async (req, res) => {
             "UPDATE orders SET razorpay_payment_id = $1, refund_mode = 'manual', refunded_at = COALESCE(refunded_at, NOW()) WHERE id = $2",
             [rzpPaymentId, order.id]
           );
-          return { ack: true, note: 'late capture on cancelled order — manual refund flagged' };
+          return { ack: true, note: 'late capture on cancelled order, manual refund flagged' };
         }
         await tx.query(
           'UPDATE orders SET razorpay_payment_id = COALESCE($1, razorpay_payment_id) WHERE id = $2',

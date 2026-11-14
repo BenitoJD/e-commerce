@@ -9,7 +9,7 @@ import { canonicalUrl } from '../../../lib/seo';
 
 export async function generateMetadata({ params }) {
   const name = decodeURIComponent(params.name || '');
-  const title = `${name} Products — Buy Online at ${STORE.name}`;
+  const title = `${name} Products, Buy Online at ${STORE.name}`;
   const description = `Genuine ${name} tools and equipment with GST invoice, warranty support, EMI and pan-India delivery at ${STORE.name}.`;
   return {
     title,
@@ -24,7 +24,7 @@ export default async function BrandPage({ params }) {
   // Brand filter server-side: filtering a 100-product page would silently truncate large brands.
   // The first page size matches the client's PAGE constant so "Load more" lines up.
   const { items, total } = await getBrandPage(name, 40);
-  // An unknown brand used to render HTTP 200 with "No products found" — a soft 404 that
+  // An unknown brand used to render HTTP 200 with "No products found", a soft 404 that
   // search engines index. Real brands always have at least one product.
   if (!items.length && !total) notFound();
   return (

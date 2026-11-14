@@ -2,7 +2,7 @@
 //
 // Checkout increments coupons.used_count when a coupon is applied. Cancelling the order must
 // give that use back, otherwise a limited coupon is silently consumed by orders that never
-// completed — and a customer who cancels cannot reuse their own code.
+// completed, and a customer who cancels cannot reuse their own code.
 //
 // The caller passes the order's *previous* status so a re-cancel (or cancel-then-refund)
 // cannot decrement twice.

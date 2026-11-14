@@ -46,7 +46,7 @@ export default function NotFound() {
         </a>
       </div>
 
-      <p className="text-xs text-gray-400 mt-8">{STORE.name} — machinery &amp; power tools</p>
+      <p className="text-xs text-gray-400 mt-8">{STORE.name}, machinery &amp; power tools</p>
     </div>
   );
 }

@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /store/search/suggest?q= — lightweight typeahead (products + brands + categories)
+// GET /store/search/suggest?q=, lightweight typeahead (products + brands + categories)
 // Kept deliberately small so the header can call it on every keystroke.
 router.get('/suggest', async (req, res) => {
   try {

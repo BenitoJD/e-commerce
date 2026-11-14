@@ -4,7 +4,7 @@
 // them into the numbers an owner actually opens the console for (today's takings,
 // the week's trend, and anything waiting on a human).
 function toDate(value) {
-  // new Date(null) is the 1970 epoch, not "invalid" — guard the empty cases explicitly.
+  // new Date(null) is the 1970 epoch, not "invalid", guard the empty cases explicitly.
   if (value == null || value === '') return null;
   const d = value instanceof Date ? value : new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;

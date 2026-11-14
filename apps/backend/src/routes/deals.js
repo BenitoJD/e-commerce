@@ -4,7 +4,7 @@ const { clampInt } = require('../lib/text');
 
 const router = express.Router();
 
-// GET /store/deals?minOff=20&limit=60 — discounted products, computed in SQL.
+// GET /store/deals?minOff=20&limit=60, discounted products, computed in SQL.
 // The storefront previously filtered the first 100 products, so a deal beyond that page
 // never appeared. Ordering/limiting belongs in the database.
 router.get('/', async (req, res) => {

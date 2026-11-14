@@ -5,7 +5,7 @@ const path = require('node:path');
 
 // Field-level contract for the product page: every `p.<field>` it reads must either be a
 // column of the products table, or a value the storefront derives client-side. This is the
-// guard that last round's invoice bug needed a sibling of — a page can read a field the API
+// guard that last round's invoice bug needed a sibling of, a page can read a field the API
 // never returns and quietly render a blank.
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const SCHEMA = path.join(ROOT, 'apps', 'backend', 'sql', 'schema.sql');

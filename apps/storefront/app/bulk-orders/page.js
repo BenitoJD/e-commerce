@@ -21,7 +21,7 @@ export default function BulkOrders() {
       <div className="card p-6 mt-5 space-y-3 text-sm text-gray-700">
         <p><b>What you get:</b> Wholesale slab pricing on 5+ units, GST invoice for full input tax credit, freight/transport support and a dedicated account manager.</p>
         <p><b>How it works:</b> 1) Tell us products + quantities → 2) Get a formal quote in 24 hrs (valid 7 days) → 3) Pay via UPI/card/bank transfer → 4) Dispatched with GST invoice.</p>
-        <p><b>Categories:</b> Power tools, motors & pumps, agri sprayers, welders, pressure washers — mixed Brand lots OK.</p>
+        <p><b>Categories:</b> Power tools, motors & pumps, agri sprayers, welders, pressure washers, mixed Brand lots OK.</p>
         <a href="/bulk-quote" className="btn-primary inline-block">Get a Bulk Quote →</a>
       </div>
     </div>

@@ -10,8 +10,8 @@ const P = {
   grinder: 'bosch-gws-600-grinder', // ₹3,499
   drill: 'dewalt-dwd024-drill',
   router: 'makita-m3600-router',
-  washer: 'karcher-hd5-pressure-washer', // ₹27,999 — above the COD cap
-  scrubber: 'roots-scrubber-e50', // ₹1,49,999 — above the COD cap
+  washer: 'karcher-hd5-pressure-washer', // ₹27,999, above the COD cap
+  scrubber: 'roots-scrubber-e50', // ₹1,49,999, above the COD cap
 };
 
 let seq = 0;

@@ -113,7 +113,7 @@ const STORE = {
 function orderSummaryLines(order) {
   const items = Array.isArray(order.items) ? order.items : [];
   return items
-    .map((it) => `  • ${it.qty} × ${it.name || it.slug} — ${formatInr((it.unit_price_paise || 0) * (it.qty || 0))}`)
+    .map((it) => `  • ${it.qty} × ${it.name || it.slug}, ${formatInr((it.unit_price_paise || 0) * (it.qty || 0))}`)
     .join('\n');
 }
 
@@ -129,32 +129,32 @@ function orderEmail(order, kind) {
 
   const texts = {
     placed: {
-      subject: `Order confirmed: ${receipt} — ${STORE.name}`,
-      body: `Hi ${name},\n\nThank you for your order ${receipt}. We have received it and will keep you updated.\n\n${items}\n\nTotal: ${total}${order.pay_mode === 'cod' ? ' (Cash on Delivery)' : ''}\n\nTrack: ${trackUrl}\nGST invoice: ${invoiceUrl}\n\n— ${STORE.name}`,
+      subject: `Order confirmed: ${receipt}, ${STORE.name}`,
+      body: `Hi ${name},\n\nThank you for your order ${receipt}. We have received it and will keep you updated.\n\n${items}\n\nTotal: ${total}${order.pay_mode === 'cod' ? ' (Cash on Delivery)' : ''}\n\nTrack: ${trackUrl}\nGST invoice: ${invoiceUrl}\n\n- ${STORE.name}`,
     },
     paid: {
-      subject: `Payment received for ${receipt} — ${STORE.name}`,
-      body: `Hi ${name},\n\nWe received your payment for order ${receipt}. Total: ${total}.\n\nItems:\n${items}\n\nWe will notify you when it ships.\n\n— ${STORE.name}`,
+      subject: `Payment received for ${receipt}, ${STORE.name}`,
+      body: `Hi ${name},\n\nWe received your payment for order ${receipt}. Total: ${total}.\n\nItems:\n${items}\n\nWe will notify you when it ships.\n\n- ${STORE.name}`,
     },
     shipped: {
-      subject: `Order ${receipt} has shipped — ${STORE.name}`,
-      body: `Hi ${name},\n\nGood news — order ${receipt} has left our warehouse. Delivery typically takes 3–7 working days.\n\nTrack: ${trackUrl}\n\n— ${STORE.name}`,
+      subject: `Order ${receipt} has shipped, ${STORE.name}`,
+      body: `Hi ${name},\n\nGood news, order ${receipt} has left our warehouse. Delivery typically takes 3–7 working days.\n\nTrack: ${trackUrl}\n\n- ${STORE.name}`,
     },
     delivered: {
-      subject: `Order ${receipt} delivered — ${STORE.name}`,
-      body: `Hi ${name},\n\nOrder ${receipt} was delivered. We hope everything arrived in good condition.\n\nNeed help or a return? https://${STORE.siteUrl.replace(/^https?:\/\//, '')}/returns\nInvoice: ${invoiceUrl}\n\n— ${STORE.name}`,
+      subject: `Order ${receipt} delivered, ${STORE.name}`,
+      body: `Hi ${name},\n\nOrder ${receipt} was delivered. We hope everything arrived in good condition.\n\nNeed help or a return? https://${STORE.siteUrl.replace(/^https?:\/\//, '')}/returns\nInvoice: ${invoiceUrl}\n\n- ${STORE.name}`,
     },
     cancelled: {
-      subject: `Order ${receipt} cancelled — ${STORE.name}`,
-      body: `Hi ${name},\n\nOrder ${receipt} has been cancelled. If you paid online, any refund is processed to the original payment method (3–5 working days once initiated).\n\n— ${STORE.name}`,
+      subject: `Order ${receipt} cancelled, ${STORE.name}`,
+      body: `Hi ${name},\n\nOrder ${receipt} has been cancelled. If you paid online, any refund is processed to the original payment method (3–5 working days once initiated).\n\n- ${STORE.name}`,
     },
     refunded: {
-      subject: `Refund processed for ${receipt} — ${STORE.name}`,
-      body: `Hi ${name},\n\nA refund has been recorded for order ${receipt}. Refunds usually reach the original payment method in 3–5 working days.\n\n— ${STORE.name}`,
+      subject: `Refund processed for ${receipt}, ${STORE.name}`,
+      body: `Hi ${name},\n\nA refund has been recorded for order ${receipt}. Refunds usually reach the original payment method in 3–5 working days.\n\n- ${STORE.name}`,
     },
     return_requested: {
-      subject: `Return request received for ${receipt} — ${STORE.name}`,
-      body: `Hi ${name},\n\nWe received your return/exchange request for order ${receipt}. Our team will contact you on the order phone number.\n\n— ${STORE.name}`,
+      subject: `Return request received for ${receipt}, ${STORE.name}`,
+      body: `Hi ${name},\n\nWe received your return/exchange request for order ${receipt}. Our team will contact you on the order phone number.\n\n- ${STORE.name}`,
     },
   };
   const chosen = texts[kind] || texts.placed;
@@ -188,8 +188,8 @@ async function notifyPasswordReset(to, link) {
 async function notifyStockBack(to, productName, productSlug = '') {
   return queueEmail(null, {
     to,
-    subject: `${productName} is back in stock — ${STORE.name}`,
-    body: `Good news — ${productName} is available again at ${STORE.name}.\n\nShop now: ${STORE.siteUrl}/product/${encodeURIComponent(productSlug)}\n\n— ${STORE.name}`,
+    subject: `${productName} is back in stock, ${STORE.name}`,
+    body: `Good news, ${productName} is available again at ${STORE.name}.\n\nShop now: ${STORE.siteUrl}/product/${encodeURIComponent(productSlug)}\n\n- ${STORE.name}`,
     type: 'stock_back',
     dedupeKey: null,
   });

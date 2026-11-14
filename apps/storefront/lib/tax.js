@@ -2,7 +2,7 @@
 //
 // A compliant Indian invoice shows either CGST + SGST (supply within one state) or IGST
 // (inter-state), plus the place of supply. This store's prices are GST-inclusive, so the
-// tax amount already exists — what was missing was the split and the place of supply.
+// tax amount already exists, what was missing was the split and the place of supply.
 //
 // When the buyer supplies a GSTIN we know their state from its first two digits. When they
 // don't (most B2C sales), we fall back to the seller's own state, which is what a B2C

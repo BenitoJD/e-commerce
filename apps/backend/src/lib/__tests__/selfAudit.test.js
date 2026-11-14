@@ -28,7 +28,7 @@ test('self-audit listens where the build baked its sitemap rewrite', () => {
 });
 
 test('contract tests normalise line endings before matching multi-line markers', () => {
-  // A fresh checkout on Windows uses CRLF, so a marker containing "\n" never matched —
+  // A fresh checkout on Windows uses CRLF, so a marker containing "\n" never matched -
   // a failure that only appeared in the fresh-checkout run, never locally.
   const src = fs.readFileSync(path.join(ROOT, 'apps', 'backend', 'src', 'lib', '__tests__', 'trackingContract.test.js'), 'utf8');
   assert.match(src, /replace\(\/\\r\\n\/g, '\\n'\)/, 'multi-line marker matching must normalise CRLF');

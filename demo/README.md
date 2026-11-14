@@ -8,13 +8,13 @@
 
 ## Walkthrough
 
-1. Opening title — *Made to work. Made to stay.*
-2. Homepage — the collection, weekly edit and brand story
-3. Power Tools category — real product photography and filters
-4. Product page — image, pricing, EMI, delivery check, specifications
+1. Opening title, *Made to work. Made to stay.*
+2. Homepage, the collection, weekly edit and brand story
+3. Power Tools category, real product photography and filters
+4. Product page, image, pricing, EMI, delivery check, specifications
 5. Cart and guest checkout
 6. Order confirmation and GST tax invoice
-7. Brand directory — search and A–Z filtering
+7. Brand directory, search and A–Z filtering
 8. Admin overview
 9. The people behind the order
 10. Closing title

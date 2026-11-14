@@ -3,7 +3,7 @@
 // Two rules encoded below:
 //  1. Descriptive product fields are REFRESHED on re-seed (price/name/image fixes must
 //     reach an existing deployment).
-//  2. `stock` is NEVER overwritten — live inventory belongs to the operator, and a
+//  2. `stock` is NEVER overwritten, live inventory belongs to the operator, and a
 //     re-seed must not silently restock sold-out items.
 
 const PRODUCT_COLUMNS = ['slug', 'name', 'brand', 'category', 'subcategory', 'description', 'price_paise', 'mrp_paise', 'hsn', 'stock', 'specs', 'images', 'videos'];

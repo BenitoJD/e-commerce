@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
   const p = await getProductForMeta(slug);
   if (!p) {
     return {
-      title: `Product not found — ${STORE.name}`,
+      title: `Product not found, ${STORE.name}`,
       description: `This product could not be found at ${STORE.name}. Browse power tools, motors, pumps and machinery.`,
       // Next streams this dynamic route (status stays 200) so the body shows the branded
       // 404; noindex keeps the dead URL out of the index regardless.
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }) {
   const specs = p.specs && typeof p.specs === 'object'
     ? Object.entries(p.specs).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ')
     : '';
-  const title = `${p.name} — ₹${price.toLocaleString('en-IN')} | ${STORE.name}`;
+  const title = `${p.name}, ₹${price.toLocaleString('en-IN')} | ${STORE.name}`;
   const description = `Buy ${p.name}${p.brand ? ` by ${p.brand}` : ''} online at ₹${price.toLocaleString('en-IN')}${save}. ${specs ? specs + '. ' : ''}GST invoice, EMI and pan-India delivery.`;
   const image = Array.isArray(p.images) && p.images[0] ? absoluteUrl(p.images[0]) : undefined;
   return {

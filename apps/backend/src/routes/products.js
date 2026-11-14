@@ -88,7 +88,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /store/products/stock?slugs=a,b,c — live availability for the cart.
+// GET /store/products/stock?slugs=a,b,c, live availability for the cart.
 // Must be declared before '/:slug' or Express would treat "stock" as a slug.
 router.get('/stock', async (req, res) => {
   try {

@@ -182,10 +182,10 @@ export default function CartPage() {
                     <div className="font-bold text-sm">{i.name}</div>
                     <div className="text-sm text-gray-600">₹{Number(i.price).toLocaleString('en-IN')} each</div>
                     {soldOut ? (
-                      <div className="text-xs font-bold text-red-600 mt-1">Out of stock — remove to continue</div>
+                      <div className="text-xs font-bold text-red-600 mt-1">Out of stock, remove to continue</div>
                     ) : short ? (
                       <div className="text-xs font-bold text-amber-700 mt-1">
-                        Only {available} left — reduce quantity to continue
+                        Only {available} left, reduce quantity to continue
                       </div>
                     ) : null}
                     <div className="mt-2 flex items-center gap-2">

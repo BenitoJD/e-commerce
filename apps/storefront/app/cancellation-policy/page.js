@@ -9,7 +9,7 @@ export const metadata = {
   alternates: { canonical: canonicalUrl('/cancellation-policy') },
   openGraph: {
     title: `Cancellation Policy | ${STORE.name}`,
-    description: 'Cancel before dispatch for a full refund — refunds reach the source account in 3–5 working days.',
+    description: 'Cancel before dispatch for a full refund, refunds reach the source account in 3–5 working days.',
     url: absoluteUrl('/cancellation-policy'),
   },
 };
@@ -20,7 +20,7 @@ export default function CancellationPolicy() {
       <h1 className="text-3xl font-extrabold">Cancellation Policy</h1>
       <div className="card p-6 mt-5 space-y-3 text-sm text-gray-700">
         <p>
-          <b>Before dispatch — free cancellation.</b> You can cancel any order while it is still
+          <b>Before dispatch, free cancellation.</b> You can cancel any order while it is still
           being prepared (status <i>Pending</i>, <i>Paid</i> or <i>Cash on Delivery pending</i>).
           No fee is charged and any amount already paid is refunded in full.
         </p>
@@ -29,12 +29,12 @@ export default function CancellationPolicy() {
           enter your receipt number and the phone used at checkout, and use the <i>Cancel order</i>
           button. You can also{' '}
           <a href="/contact-us" className="text-[#A95F32] font-bold underline">contact us</a> with your
-          receipt number — we action it the same day during working hours.
+          receipt number, we action it the same day during working hours.
         </p>
         <p>
           <b>After dispatch.</b> Once an order is marked <i>Shipped</i> it cannot be cancelled,
           because the parcel is already with the courier. You can still refuse delivery or raise a
-          return after it arrives — see the{' '}
+          return after it arrives, see the{' '}
           <a href="/returns-policy" className="text-[#A95F32] font-bold underline">returns policy</a>{' '}
           (7 days from delivery).
         </p>
@@ -51,7 +51,7 @@ export default function CancellationPolicy() {
         </p>
         <p>
           <b>If we cancel your order.</b> Rarely, an item may be out of stock or damaged before
-          dispatch. In that case we cancel and refund in full, and tell you why — we never swap an
+          dispatch. In that case we cancel and refund in full, and tell you why, we never swap an
           order for a substitute without asking.
         </p>
         <p className="text-xs text-gray-500">

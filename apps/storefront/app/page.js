@@ -12,8 +12,8 @@ export async function generateMetadata() {
   const prices = items.map((p) => paiseToRupees(p.price_paise)).filter((n) => n > 0);
   const from = prices.length ? Math.min(...prices) : null;
   const title = from
-    ? `${STORE.name} — Machinery, Tools & Teak Furniture from ₹${from.toLocaleString('en-IN')}`
-    : `${STORE.name} — Machinery, Tools & Handcrafted Furniture`;
+    ? `${STORE.name}, Machinery, Tools & Teak Furniture from ₹${from.toLocaleString('en-IN')}`
+    : `${STORE.name}, Machinery, Tools & Handcrafted Furniture`;
   const description = 'Buy power tools, motors, pumps, welders, cleaning machines and handcrafted teak furniture online in India. GST invoice, EMI, UPI, COD and pan-India delivery.';
   return {
     title,

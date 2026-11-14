@@ -1,5 +1,5 @@
 // Authentication primitives: password hashing, session tokens, OTP codes and short-lived
-// order-access tokens. No external auth dependency — node:crypto only.
+// order-access tokens. No external auth dependency, node:crypto only.
 const crypto = require('crypto');
 
 const SESSION_DAYS = 30;

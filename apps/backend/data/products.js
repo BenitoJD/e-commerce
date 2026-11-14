@@ -1,7 +1,7 @@
 // Canonical 30-product catalog (extracted from src/seed.js).
 // NOTE: src/seed.js originally contained 29 products; one entry
 // (bosch-gws-600-grinder) was added to reach the specified 30.
-// `videos` holds public embed URLs (YouTube/Vimeo). Optional — only demo-fitted SKUs have entries.
+// `videos` holds public embed URLs (YouTube/Vimeo). Optional, only demo-fitted SKUs have entries.
 const products = [
   { slug: 'bosch-gsb-13-re-drill', description: 'Bosch GSB 13 RE 600W Impact Drill. A power tool for workshops, farms and sites. Specifications: power 600W, voltage 230V. Warranty: 6 months. Supplied with a GST invoice so business buyers can claim input tax credit.', name: 'Bosch GSB 13 RE 600W Impact Drill', brand: 'Bosch', category: 'power-tools', subcategory: 'drills', price_paise: 549500, mrp_paise: 699500, hsn: '84672100', stock: 50, specs: { power: '600W', voltage: '230V', warranty: '6 months' }, images: ['/images/products/bosch-gsb-13-re-drill.jpg'] },
   { slug: 'makita-9553nb-grinder', description: 'Makita 9553NB 100mm Angle Grinder 710W. A power tool for workshops, farms and sites. Specifications: power 710W, voltage 230V. Warranty: 6 months. Supplied with a GST invoice so business buyers can claim input tax credit.', name: 'Makita 9553NB 100mm Angle Grinder 710W', brand: 'Makita', category: 'power-tools', subcategory: 'grinders', price_paise: 689900, mrp_paise: 825000, hsn: '84672900', stock: 40, specs: { power: '710W', voltage: '230V', warranty: '6 months' }, images: ['/images/products/makita-9553nb-grinder.jpg'] },

@@ -20,7 +20,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Turn a failed response body into a message a shopper can actually read.
-// Backend returns {"error": "..."} — show that, never a raw JSON/HTML dump.
+// Backend returns {"error": "..."}, show that, never a raw JSON/HTML dump.
 export function parseErrorMessage(status, bodyText) {
   const raw = String(bodyText == null ? '' : bodyText).trim();
   if (raw) {
@@ -33,7 +33,7 @@ export function parseErrorMessage(status, bodyText) {
   }
   if (status === 401 || status === 403) return 'You are not authorised to do that.';
   if (status === 404) return 'Not found.';
-  if (status === 429) return 'Too many requests — please wait a moment.';
+  if (status === 429) return 'Too many requests, please wait a moment.';
   if (status >= 500) return 'Something went wrong on our side. Please try again.';
   return `Request failed (${status}).`;
 }
@@ -201,7 +201,7 @@ export async function getAdminOrders(token, status = '', search = '', { from = '
   return handle(res);
 }
 
-// CSV downloads need the token, so the browser can't just link to the URL — fetch it
+// CSV downloads need the token, so the browser can't just link to the URL, fetch it
 // with headers and hand back the text for a Blob download.
 export async function releaseStaleHolds(token, minutes = 30) {
   const res = await fetch(`${BASE}/admin/orders/release-stale?minutes=${encodeURIComponent(minutes)}`, {

@@ -58,7 +58,7 @@ export function parseCompare(raw) {
 }
 
 // Union of spec keys across products, so the table shows a row for every attribute any
-// compared product declares (a product missing it renders "—").
+// compared product declares (a product missing it renders "N/A").
 export function specRows(products) {
   const keys = new Set();
   for (const p of Array.isArray(products) ? products : []) {

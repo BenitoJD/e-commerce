@@ -9,7 +9,7 @@ function clampInt(v, def, min, max) {
   return Math.min(Math.max(n, min), max);
 }
 
-// Allowlisted ORDER BY fragments only — user input can never reach SQL as code.
+// Allowlisted ORDER BY fragments only, user input can never reach SQL as code.
 function sortClause(sort) {
   if (sort === 'low') return 'price_paise ASC, id DESC';
   if (sort === 'high') return 'price_paise DESC, id DESC';

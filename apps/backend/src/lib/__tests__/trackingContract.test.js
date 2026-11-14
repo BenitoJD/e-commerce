@@ -5,7 +5,7 @@ const path = require('node:path');
 
 // Field-level contracts for the customer tracking screens. Both pages read one flat object
 // per order (plus a timeline), and a renamed field would blank the UI without failing a
-// build — the same failure mode found on the invoice and product pages.
+// build, the same failure mode found on the invoice and product pages.
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 const SERVICE = path.join(ROOT, 'apps', 'backend', 'src', 'routes', 'service.js');
 const TRACK_PAGE = path.join(ROOT, 'apps', 'storefront', 'app', 'track-order', 'page.js');
@@ -13,7 +13,7 @@ const ORDERS_PAGE = path.join(ROOT, 'apps', 'storefront', 'app', 'my-orders', 'p
 
 function blockAfter(marker) {
   // Normalise line endings: the repo may be checked out with CRLF on Windows, and a marker
-  // containing "\n" would then never match — the failure only showed up on a fresh checkout.
+  // containing "\n" would then never match, the failure only showed up on a fresh checkout.
   const src = fs.readFileSync(SERVICE, 'utf8').replace(/\r\n/g, '\n');
   const start = src.indexOf(marker);
   assert.ok(start > -1, `marker not found: ${marker}`);

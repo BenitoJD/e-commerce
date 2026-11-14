@@ -3,7 +3,7 @@ const db = require('../db');
 
 const router = express.Router();
 
-// GET /store/brands — every brand with its product count.
+// GET /store/brands, every brand with its product count.
 // The storefront used to derive this from the first 100 products, which silently hid
 // brands beyond that page. Aggregating in SQL stays correct as the catalogue grows.
 router.get('/', async (req, res) => {

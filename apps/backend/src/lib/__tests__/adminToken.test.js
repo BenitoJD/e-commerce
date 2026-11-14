@@ -5,7 +5,7 @@ const path = require('node:path');
 
 // The admin console and every admin sub-page must share one token key AND one storage.
 // A page that invents its own key (or reads localStorage while the console writes
-// sessionStorage) silently behaves as "logged out" — exactly the bug this guards against.
+// sessionStorage) silently behaves as "logged out", exactly the bug this guards against.
 const STOREFRONT = path.resolve(__dirname, '..', '..', '..', '..', '..', 'apps', 'storefront');
 const ADMIN_PAGES = [
   'app/admin/page.js',

@@ -27,7 +27,7 @@ const ROUTES = [
   '/deals',
   '/brands',
   BRAND ? `/brand/${BRAND}` : null,
-  // Content pages are client-rendered with layout metadata — the place canonicals go missing.
+  // Content pages are client-rendered with layout metadata, the place canonicals go missing.
   '/about-us',
   '/contact-us',
   '/shipping-policy',
@@ -49,7 +49,7 @@ function metaAudit(route, body, problems) {
   const h1s = countH1(body);
   if (h1s !== 1) problems.push(`expected exactly one <h1>, found ${h1s}`);
 
-  // Every <img> needs an alt attribute. An empty alt="" is fine (decorative) — a missing
+  // Every <img> needs an alt attribute. An empty alt="" is fine (decorative), a missing
   // attribute is what screen readers announce as the raw URL.
   const bodyOnly = body.slice(body.indexOf('<body') > -1 ? body.indexOf('<body') : 0).replace(/<script[\s\S]*?<\/script>/gi, ' ');
   const imgs = bodyOnly.match(/<img\b[^>]*>/gi) || [];

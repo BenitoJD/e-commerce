@@ -1,6 +1,6 @@
 // Postgres pool configuration.
 //
-// Previously the pool was `new Pool({ connectionString })` — no maximum, no connection
+// Previously the pool was `new Pool({ connectionString })`, no maximum, no connection
 // timeout and no statement timeout. Under load (or one slow query) requests would queue
 // indefinitely instead of failing fast, and nothing bounded how many clients a single
 // container opened against Postgres.

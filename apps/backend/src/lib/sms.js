@@ -3,7 +3,7 @@
 // Twilio's REST API is implemented directly (no SDK): it is the smallest honest adapter
 // for an Indian store that wants real phone verification without a vendor SDK. When it is
 // not configured, the OTP endpoint stays in development mode (code in the response) or
-// refuses in production — it never claims a message was sent when it wasn't.
+// refuses in production, it never claims a message was sent when it wasn't.
 function smsConfigured(env = process.env) {
   return String(env.SMS_PROVIDER || '').toLowerCase() === 'twilio'
     && Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM);

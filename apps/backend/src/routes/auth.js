@@ -219,10 +219,10 @@ router.post('/otp/verify', async (req, res) => {
         ORDER BY created_at DESC LIMIT 1`,
       [phone]
     );
-    if (!rows.length) return res.status(400).json({ error: 'The code expired — request a new one' });
+    if (!rows.length) return res.status(400).json({ error: 'The code expired, request a new one' });
     const record = rows[0];
     if (record.attempts >= OTP_MAX_ATTEMPTS) {
-      return res.status(429).json({ error: 'Too many attempts — request a new code' });
+      return res.status(429).json({ error: 'Too many attempts, request a new code' });
     }
     if (!otpMatches(phone, code, record.code_hash)) {
       await db.query('UPDATE otp_codes SET attempts = attempts + 1 WHERE id = $1', [record.id]);
@@ -236,7 +236,7 @@ router.post('/otp/verify', async (req, res) => {
   }
 });
 
-// GET /store/auth/orders — authenticated customer order history.
+// GET /store/auth/orders, authenticated customer order history.
 router.get('/orders', async (req, res) => {
   try {
     const user = await sessionUser(db, bearerToken(req));

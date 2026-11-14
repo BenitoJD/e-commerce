@@ -3,7 +3,7 @@
 //
 // Two failure modes this catches that plain YAML parsing does not:
 //  1. Duplicate keys (YAML silently keeps the last one, so a duplicated build arg hides).
-//  2. Keys placed at the wrong indent level — e.g. a build arg accidentally promoted to a
+//  2. Keys placed at the wrong indent level, e.g. a build arg accidentally promoted to a
 //     service-level key, which `docker compose` rejects at deploy time with a confusing error.
 //
 // Uses the bundled Python + PyYAML when available; otherwise does a conservative textual

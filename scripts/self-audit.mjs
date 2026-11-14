@@ -3,7 +3,7 @@
 // Boots the fixture backend (real catalogue data), starts the built storefront against it,
 // then runs smoke.mjs (routes + rendered-artefact scan) and audit-pages.mjs (canonical, title,
 // H1, JSON-LD, img alt). Both processes are always cleaned up, and the exit code reflects the
-// worst result — so "it passed" is reproducible instead of a manual ritual.
+// worst result, so "it passed" is reproducible instead of a manual ritual.
 //
 //   node scripts/verify-all.mjs        # build first (this script needs .next)
 //   node scripts/self-audit.mjs
@@ -25,7 +25,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shop.test';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'fixture-admin-token';
 
 // /sitemap.xml is rewritten to BACKEND_INTERNAL_URL at BUILD time and baked into the build,
-// so the fixture has to listen where the build expects it — otherwise the proxy 500s.
+// so the fixture has to listen where the build expects it, otherwise the proxy 500s.
 function bakedBackendPort() {
   try {
     const manifest = JSON.parse(readFileSync(path.join(STOREFRONT, '.next', 'routes-manifest.json'), 'utf8'));
@@ -81,7 +81,7 @@ function runScript(label, file, args, env) {
 
 async function main() {
   if (!existsSync(path.join(STOREFRONT, '.next', 'BUILD_ID'))) {
-    console.error('[self-audit] apps/storefront/.next/BUILD_ID missing — run `node scripts/verify-all.mjs` first.');
+    console.error('[self-audit] apps/storefront/.next/BUILD_ID missing, run `node scripts/verify-all.mjs` first.');
     process.exit(2);
   }
 

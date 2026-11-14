@@ -76,7 +76,7 @@ export default function TrackOrderPage() {
     try {
       const wasPaid = String(data?.status || '').toLowerCase() === 'paid';
       const r = await cancelOrder(String(data?.receipt || receipt).trim(), phone.trim());
-      let msg = `Order ${r.receipt || receipt} cancelled${r.status ? ` — status: ${r.status}` : ''}.`;
+      let msg = `Order ${r.receipt || receipt} cancelled${r.status ? `, status: ${r.status}` : ''}.`;
       if (r.refund === 'auto') msg += ' Refund initiated to source (3–5 working days).';
       else if (wasPaid) msg += ` Our team will process your refund; contact ${STORE.email} with your receipt.`;
       // Refresh the timeline first: lookup() clears the notice at its start, so setting the
@@ -171,8 +171,8 @@ export default function TrackOrderPage() {
                     <span className="text-[#A95F32] font-bold">•</span>
                     <span>
                       <b>{t.label || t.status || t.event || 'update'}</b>
-                      {stamp ? <span className="text-gray-500"> — {stamp}</span> : null}
-                      {t.note ? ` — ${t.note}` : ''}
+                      {stamp ? <span className="text-gray-500">, {stamp}</span> : null}
+                      {t.note ? `, ${t.note}` : ''}
                     </span>
                   </div>
                 );
@@ -185,7 +185,7 @@ export default function TrackOrderPage() {
               <b className="text-sm">Items ({data.items.length})</b>
               <ul className="mt-2 space-y-1 text-sm text-gray-700">
                 {data.items.map((it, i) => (
-                  <li key={i}>{it.qty ? `${it.qty} × ` : ''}{it.name || it.slug}{it.price ? ` — ₹${Number(it.price).toLocaleString('en-IN')}` : ''}</li>
+                  <li key={i}>{it.qty ? `${it.qty} × ` : ''}{it.name || it.slug}{it.price ? `, ₹${Number(it.price).toLocaleString('en-IN')}` : ''}</li>
                 ))}
               </ul>
             </div>

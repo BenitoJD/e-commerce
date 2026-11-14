@@ -1,6 +1,6 @@
 // Single source of truth for store contact details.
 // Override with NEXT_PUBLIC_STORE_PHONE / _EMAIL / _GSTIN (build args in Docker).
-// Defaults are placeholders — replace before going live (see docs/VPS-DEPLOY.md).
+// Defaults are placeholders, replace before going live (see docs/VPS-DEPLOY.md).
 function digits(s, fb) {
   const d = String(s == null ? '' : s).replace(/\D/g, '');
   return d || fb;
@@ -51,7 +51,7 @@ export function shippingHint(payableRupees, {
     return { free: true, gapRupees: 0, text: 'Free shipping across India.' };
   }
   if (freeAbove > 0 && payable >= freeAbove) {
-    return { free: true, gapRupees: 0, text: `Free shipping unlocked — no delivery charge.` };
+    return { free: true, gapRupees: 0, text: `Free shipping unlocked, no delivery charge.` };
   }
   if (freeAbove > payable) {
     return {

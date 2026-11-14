@@ -30,7 +30,7 @@ test('checkout never hard-requires the state picker', () => {
 
 test('the admin product form can set every catalogue field the API stores', () => {
   // The form only renders after the admin token is entered, so it is invisible to the
-  // server-rendered smoke audit — assert the controls statically instead.
+  // server-rendered smoke audit, assert the controls statically instead.
   const src = fs.readFileSync(path.join(STOREFRONT, 'app', 'admin', 'page.js'), 'utf8');
   for (const label of ['Category', 'Subcategory', 'Product description', 'Video URLs', 'Image paths', 'HSN code']) {
     assert.ok(src.includes(`aria-label="${label}"`), `admin product form is missing a "${label}" control`);

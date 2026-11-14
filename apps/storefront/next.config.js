@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 // Resolve the server-side API base inline: `next start` loads this file at boot, and the
-// production image only ships .next/public/package.json — so a require() of app code
+// production image only ships .next/public/package.json, so a require() of app code
 // (lib/serverApiBase.cjs) would crash the container with MODULE_NOT_FOUND.
 // Browser and server need different bases in a container deploy:
 //   NEXT_PUBLIC_BACKEND_URL -> what the browser uses (often "/api")

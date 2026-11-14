@@ -203,7 +203,7 @@ export default function AccountPage() {
                   <b>{a.label}{a.is_default ? ' • Default' : ''}</b>
                   {!a.is_default && <button onClick={() => makeDefault(a)} className="text-xs text-[#A95F32] font-bold">Make default</button>}
                 </div>
-                <p className="mt-1">{a.name} — {a.phone}</p>
+                <p className="mt-1">{a.name}, {a.phone}</p>
                 <p className="text-gray-600">{a.address}, {a.pincode}, {a.state}</p>
                 <button onClick={() => removeAddress(a.id)} className="text-xs text-red-600 font-bold mt-2">Remove</button>
               </div>

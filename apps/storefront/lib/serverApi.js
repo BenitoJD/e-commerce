@@ -26,7 +26,7 @@ async function cachedJson(url) {
 }
 
 // Server-rendered views receive products straight from the API, but the components read
-// rupee fields — productMapping converts paise→rupees (see that module for why).
+// rupee fields, productMapping converts paise→rupees (see that module for why).
 
 // Invoice data for server rendering. Deliberately NOT cached: it carries a customer's
 // name/address/GSTIN and a stale copy could show someone else's details after a re-issue.
@@ -69,7 +69,7 @@ export async function getRatingForMeta(slug) {
   return count > 0 ? { avg, count } : null;
 }
 
-// Brand directory straight from SQL aggregation — never truncates at one product page.
+// Brand directory straight from SQL aggregation, never truncates at one product page.
 export async function getBrandsForMeta() {
   const data = await cachedJson(`${BASE}/store/brands`);
   if (!data) return [];

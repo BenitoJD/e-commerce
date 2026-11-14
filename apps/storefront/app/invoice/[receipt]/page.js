@@ -9,7 +9,7 @@ const inr = (paise) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(paise || 0) / 100);
 
 function fmtDate(v) {
-  if (!v) return '—';
+  if (!v) return 'N/A';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -28,7 +28,7 @@ export default async function InvoicePage({ params }) {
     || (rawPayMode === 'cod' ? 'Cash on Delivery'
       : rawPayMode === 'online' ? 'Online (Razorpay)'
         : (String(inv?.status || '').toLowerCase() === 'cod_pending' ? 'Cash on Delivery'
-          : (inv?.razorpayPaymentId || inv?.razorpay_payment_id) ? 'Online (Razorpay)' : '—'));
+          : (inv?.razorpayPaymentId || inv?.razorpay_payment_id) ? 'Online (Razorpay)' : 'N/A'));
   const gstRate = inv?.gst?.rate ?? 18;
   const discountPaise = Number(inv?.discountPaise ?? inv?.discount_paise ?? 0) || 0;
   const couponCode = inv?.couponCode ?? inv?.coupon_code ?? null;
@@ -79,20 +79,20 @@ export default async function InvoicePage({ params }) {
           <div className="grid sm:grid-cols-2 gap-4 border-b py-4">
             <div>
               <div className="font-bold mb-1">Billed To</div>
-              <div className="font-semibold">{customer.name || '—'}</div>
+              <div className="font-semibold">{customer.name || 'N/A'}</div>
               <div className="text-gray-600">{customer.address || ''}</div>
               <div className="text-gray-600">
                 {customer.pincode || ''}
                 {customer.state ? ` • ${customer.state}` : ''}
               </div>
-              <div className="text-gray-600">Phone: {customer.phone || '—'}</div>
+              <div className="text-gray-600">Phone: {customer.phone || 'N/A'}</div>
               {customer.gstin ? (
                 <div className="text-gray-600 font-semibold">GSTIN: {customer.gstin}</div>
               ) : null}
             </div>
             <div className="sm:text-right">
               <div className="font-bold mb-1">Payment</div>
-              <div className="text-gray-600">Payment ID: <b className="text-gray-800">{inv.razorpayPaymentId || inv.razorpay_payment_id || '—'}</b></div>
+              <div className="text-gray-600">Payment ID: <b className="text-gray-800">{inv.razorpayPaymentId || inv.razorpay_payment_id || 'N/A'}</b></div>
               <div className="text-gray-600">Mode: {payMode}</div>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default async function InvoicePage({ params }) {
                 return (
                   <tr key={it.slug || i} className="border-b last:border-0">
                     <td className="py-2 pr-2 font-semibold">{it.name || it.slug}</td>
-                    <td className="py-2 pr-2 text-gray-600">{it.hsn || '—'}</td>
+                    <td className="py-2 pr-2 text-gray-600">{it.hsn || 'N/A'}</td>
                     <td className="py-2 pr-2 text-right">{it.qty ?? 1}</td>
                     <td className="py-2 pr-2 text-right">{inr(rate)}</td>
                     <td className="py-2 text-right font-semibold">{inr(line)}</td>
@@ -153,7 +153,7 @@ export default async function InvoicePage({ params }) {
 
           <div className="flex justify-between items-end mt-8 pt-6 border-t">
             <p className="text-xs text-gray-500 max-w-sm">
-              18% GST invoice — eligible for input tax credit on business purchases.
+              18% GST invoice, eligible for input tax credit on business purchases.
               For help contact {STORE.email} with your receipt number.
             </p>
             <div className="text-right">

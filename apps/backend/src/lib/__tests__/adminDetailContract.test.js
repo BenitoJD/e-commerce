@@ -48,7 +48,7 @@ test('admin order detail sends every field the panel reads', () => {
 
 test('the reconcile helper’s inputs are all present in the detail payload', () => {
   // The charge breakdown goes through lib/orderMath.reconcileOrder(), which reads these
-  // keys off the order object — a rename there would show ₹0 without any page-level read
+  // keys off the order object, a rename there would show ₹0 without any page-level read
   // changing, so assert the helper's inputs directly.
   const helper = fs.readFileSync(path.join(ROOT, 'apps', 'storefront', 'lib', 'orderMath.js'), 'utf8');
   const inputs = new Set();

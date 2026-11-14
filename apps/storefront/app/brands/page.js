@@ -8,8 +8,8 @@ import { canonicalUrl } from '../../lib/seo';
 // how crawlers discover /brand/<name> pages without relying on the sitemap alone.
 export async function generateMetadata() {
   const brands = await getBrandsForMeta();
-  const title = `Shop by Brand — ${brands.length} machinery, tool & furniture brands | ${STORE.name}`;
-  const description = `Browse ${brands.length} genuine brands — ${brands.slice(0, 6).map((b) => b.name).join(', ')} and more. Machinery, tools and handcrafted furniture with GST invoice, warranty support and pan-India delivery.`;
+  const title = `Shop by Brand, ${brands.length} machinery, tool & furniture brands | ${STORE.name}`;
+  const description = `Browse ${brands.length} genuine brands, ${brands.slice(0, 6).map((b) => b.name).join(', ')} and more. Machinery, tools and handcrafted furniture with GST invoice, warranty support and pan-India delivery.`;
   return {
     title,
     description,

@@ -5,7 +5,7 @@ const path = require('node:path');
 
 // Two bugs found by reading the image definition, neither reproducible locally:
 //  1. next.config.js required ./lib/serverApiBase.cjs, but the runner image only ships
-//     .next/public/package.json — `next start` would crash with MODULE_NOT_FOUND.
+//     .next/public/package.json, `next start` would crash with MODULE_NOT_FOUND.
 //  2. BACKEND_INTERNAL_URL was passed as a compose build arg but never declared as ARG in
 //     the Dockerfile, so the /sitemap.xml rewrite was baked as http://localhost:9000.
 const REPO = path.resolve(__dirname, '..', '..', '..', '..', '..');

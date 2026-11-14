@@ -75,6 +75,13 @@ Point your domain at the VPS, then set the Razorpay webhook to
 `https://yourdomain.com/api/webhooks/razorpay`. Details: `docs/VPS-DEPLOY.md`.
 `NEXT_PUBLIC_*` values are baked in at **build** time — changing them requires a rebuild.
 
+## Demo video
+
+A 74-second, 1080p captioned walkthrough lives in [`demo/`](demo/): `ecommerce-demo.mp4`
+(master), `ecommerce-demo-720p.mp4` (share copy) and `poster.jpg`. It covers the homepage,
+catalogue, product page, cart, guest checkout, GST invoice, brand directory, admin overview
+and the workshop story. Re-record with `node scripts/record-demo.mjs`.
+
 ## Design language
 
 The storefront is an editorial shop, not a template: warm ivory paper, ink and copper,

@@ -29,3 +29,6 @@ Thumbs.db
 test-results/
 e2e-report/
 playwright-report/
+
+# Demo recording intermediates (the final MP4s live in demo/)
+/demo/raw/
